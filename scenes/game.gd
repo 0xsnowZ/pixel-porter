@@ -34,6 +34,7 @@ var is_touching: bool = false
 const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
 # UI references
+@onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
 @onready var level_label: Label = $TopBar/Margin/HBox/LevelLabel
 @onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
 @onready var restart_button: Button = $BottomBar/Margin/HBox/RestartButton
@@ -42,7 +43,8 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var win_modal: PanelContainer = $WinModal
 @onready var win_title: Label = $WinModal/VBox/WinTitle
 @onready var win_stats: Label = $WinModal/VBox/WinStats
-@onready var next_level_button: Button = $WinModal/VBox/NextLevelBtn
+@onready var win_menu_button: Button = $WinModal/VBox/WinActions/WinMenuBtn
+@onready var next_level_button: Button = $WinModal/VBox/WinActions/NextLevelBtn
 @onready var restart_dialog: ConfirmationDialog = $RestartConfirmDialog
 
 
@@ -59,6 +61,8 @@ func _ready() -> void:
 	grid.level_won.connect(_on_level_won)
 	grid.level_reset.connect(_on_level_reset)
 
+	menu_button.pressed.connect(_on_menu_pressed)
+	win_menu_button.pressed.connect(_on_menu_pressed)
 	restart_button.pressed.connect(_on_restart_pressed)
 	prev_button.pressed.connect(_on_prev_level_pressed)
 	next_button.pressed.connect(_on_next_level_pressed)
@@ -268,6 +272,10 @@ func _on_next_level_pressed() -> void:
 		var next_idx: int = current_level_index + 1
 		if not save_mgr or save_mgr.is_level_unlocked(next_idx):
 			load_level(next_idx)
+
+
+func _on_menu_pressed() -> void:
+	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
 func _process(_delta: float) -> void:

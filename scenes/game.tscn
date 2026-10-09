@@ -37,7 +37,13 @@ theme_override_constants/margin_bottom = 10
 
 [node name="HBox" type="HBoxContainer" parent="TopBar/Margin"]
 layout_mode = 2
+theme_override_constants/separation = 10
 alignment = 1
+
+[node name="MenuBtn" type="Button" parent="TopBar/Margin/HBox"]
+custom_minimum_size = Vector2(44, 38)
+layout_mode = 2
+text = "⌂"
 
 [node name="LevelLabel" type="Label" parent="TopBar/Margin/HBox"]
 layout_mode = 2
@@ -128,8 +134,18 @@ theme_override_font_sizes/font_size = 16
 text = "Solved in 5 moves (3 pushes)"
 horizontal_alignment = 1
 
-[node name="NextLevelBtn" type="Button" parent="WinModal/VBox"]
-custom_minimum_size = Vector2(160, 48)
+[node name="WinActions" type="HBoxContainer" parent="WinModal/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="WinMenuBtn" type="Button" parent="WinModal/VBox/WinActions"]
+custom_minimum_size = Vector2(100, 48)
+layout_mode = 2
+text = "Menu"
+
+[node name="NextLevelBtn" type="Button" parent="WinModal/VBox/WinActions"]
+custom_minimum_size = Vector2(140, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Next Level →"
