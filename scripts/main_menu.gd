@@ -13,6 +13,7 @@ const AVAILABLE_LEVELS_COUNT: int = 10 # 10 verified solvable levels for Week 1
 
 var save_mgr: Node = null
 var audio_mgr: Node = null
+var loc_mgr: Node = null
 
 # Node references
 @onready var main_view: VBoxContainer = $MainView
@@ -24,6 +25,7 @@ var audio_mgr: Node = null
 @onready var play_btn: Button = $MainView/Buttons/PlayBtn
 @onready var level_select_btn: Button = $MainView/Buttons/LevelSelectBtn
 @onready var sound_btn: Button = $MainView/Buttons/SoundToggleBtn
+@onready var language_btn: Button = $MainView/Buttons/LanguageBtn
 @onready var credits_btn: Button = $MainView/Buttons/CreditsBtn
 
 # Level Select elements
@@ -41,6 +43,7 @@ func _initialize_nodes() -> void:
 		play_btn = $MainView/Buttons/PlayBtn
 		level_select_btn = $MainView/Buttons/LevelSelectBtn
 		sound_btn = $MainView/Buttons/SoundToggleBtn
+		language_btn = $MainView/Buttons/LanguageBtn
 		credits_btn = $MainView/Buttons/CreditsBtn
 		level_grid = $LevelSelectView/Scroll/Margin/LevelGrid
 		back_btn = $LevelSelectView/TopBar/Margin/HBox/BackBtn
@@ -58,6 +61,9 @@ func _ready() -> void:
 	if is_inside_tree() and get_tree().root.has_node("AudioManager"):
 		audio_mgr = get_tree().root.get_node("AudioManager")
 
+	if is_inside_tree() and get_tree().root.has_node("LocalizationManager"):
+		loc_mgr = get_tree().root.get_node("LocalizationManager")
+
 	if not continue_btn.pressed.is_connected(_on_continue_pressed):
 		continue_btn.pressed.connect(_on_continue_pressed)
 	if not play_btn.pressed.is_connected(_on_play_pressed):
@@ -66,6 +72,8 @@ func _ready() -> void:
 		level_select_btn.pressed.connect(_show_level_select)
 	if not sound_btn.pressed.is_connected(_on_sound_toggle_pressed):
 		sound_btn.pressed.connect(_on_sound_toggle_pressed)
+	if not language_btn.pressed.is_connected(_on_language_pressed):
+		language_btn.pressed.connect(_on_language_pressed)
 	if not credits_btn.pressed.is_connected(_show_credits):
 		credits_btn.pressed.connect(_show_credits)
 	if not back_btn.pressed.is_connected(_show_main_view):
@@ -111,20 +119,47 @@ func _hide_credits() -> void:
 func _update_menu_state() -> void:
 	var unlocked_lvl: int = save_mgr.unlocked_level if save_mgr else 0
 	var last_lvl: int = save_mgr.last_played_level if save_mgr else 0
-
-	# Show Continue button if player has progressed past level 0 or completed level 0
 	var has_progress: bool = (unlocked_lvl > 0 or (save_mgr and save_mgr.is_level_completed(0)))
-	if has_progress:
-		continue_btn.visible = true
-		continue_btn.text = "CONTINUE (LEVEL %d)" % (last_lvl + 1)
-		play_btn.text = "NEW GAME"
-	else:
-		continue_btn.visible = false
-		play_btn.text = "PLAY"
-
-	# Sound button status
 	var is_sound_on: bool = save_mgr.sound_enabled if save_mgr else true
-	sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
+
+	if loc_mgr:
+		if has_progress:
+			continue_btn.visible = true
+			continue_btn.text = loc_mgr.tr_text("MENU_CONTINUE", [last_lvl + 1])
+			play_btn.text = loc_mgr.tr_text("MENU_NEW_GAME")
+		else:
+			continue_btn.visible = false
+			play_btn.text = loc_mgr.tr_text("MENU_PLAY")
+
+		var sound_status: String = loc_mgr.tr_text("MENU_SOUND_ON" if is_sound_on else "MENU_SOUND_OFF")
+		sound_btn.text = loc_mgr.tr_text("MENU_SOUND", [sound_status])
+		language_btn.text = loc_mgr.tr_text("MENU_LANGUAGE", [loc_mgr.get_language_display_name()])
+		level_select_btn.text = loc_mgr.tr_text("MENU_LEVEL_SELECT")
+		credits_btn.text = loc_mgr.tr_text("MENU_CREDITS")
+		back_btn.text = loc_mgr.tr_text("BTN_BACK")
+		$LevelSelectView/TopBar/Margin/HBox/Title.text = loc_mgr.tr_text("LEVEL_SELECT_TITLE")
+		$CreditsModal/VBox/Title.text = loc_mgr.tr_text("CREDITS_TITLE")
+		$CreditsModal/VBox/Description.text = loc_mgr.tr_text("CREDITS_BODY")
+		close_credits_btn.text = loc_mgr.tr_text("BTN_CLOSE")
+	else:
+		if has_progress:
+			continue_btn.visible = true
+			continue_btn.text = "CONTINUE (LEVEL %d)" % (last_lvl + 1)
+			play_btn.text = "NEW GAME"
+		else:
+			continue_btn.visible = false
+			play_btn.text = "PLAY"
+		sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
+		language_btn.text = "LANGUAGE: English"
+
+
+func _on_language_pressed() -> void:
+	if loc_mgr:
+		loc_mgr.cycle_language()
+	if audio_mgr:
+		audio_mgr.play_click()
+	_update_menu_state()
+	_refresh_level_grid_buttons()
 
 
 func _on_continue_pressed() -> void:

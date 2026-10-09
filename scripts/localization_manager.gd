@@ -1,0 +1,231 @@
+extends Node
+
+## Localization Manager for Pixel Porter (PRD Section 10).
+## Supports English (en), French (fr), and Arabic (ar).
+## Provides RTL detection, unified translation dictionary, and dynamic language cycling.
+
+signal language_changed(lang_code: String)
+
+const SUPPORTED_LANGUAGES: Array[Dictionary] = [
+	{ "code": "en", "name": "English", "is_rtl": false },
+	{ "code": "fr", "name": "Français", "is_rtl": false },
+	{ "code": "ar", "name": "العربية", "is_rtl": true }
+]
+
+var current_language: String = "en"
+var save_mgr: Node = null
+
+# Core translation dictionary (PRD Section 10: "All text lives in one translation table")
+const TRANSLATIONS: Dictionary = {
+	"MENU_PLAY": {
+		"en": "PLAY",
+		"fr": "JOUER",
+		"ar": "ابدأ"
+	},
+	"MENU_NEW_GAME": {
+		"en": "NEW GAME",
+		"fr": "NOUVELLE PARTIE",
+		"ar": "لعبة جديدة"
+	},
+	"MENU_CONTINUE": {
+		"en": "CONTINUE (LEVEL %d)",
+		"fr": "CONTINUER (NIVEAU %d)",
+		"ar": "متابعة (المستوى %d)"
+	},
+	"MENU_LEVEL_SELECT": {
+		"en": "LEVEL SELECT",
+		"fr": "CHOIX DU NIVEAU",
+		"ar": "اختيار المستوى"
+	},
+	"MENU_SOUND": {
+		"en": "SOUND: %s",
+		"fr": "SON : %s",
+		"ar": "الصوت: %s"
+	},
+	"MENU_SOUND_ON": {
+		"en": "ON",
+		"fr": "OUI",
+		"ar": "مفعّل"
+	},
+	"MENU_SOUND_OFF": {
+		"en": "OFF",
+		"fr": "NON",
+		"ar": "معطّل"
+	},
+	"MENU_LANGUAGE": {
+		"en": "LANGUAGE: %s",
+		"fr": "LANGUE : %s",
+		"ar": "اللغة: %s"
+	},
+	"MENU_CREDITS": {
+		"en": "CREDITS",
+		"fr": "CRÉDITS",
+		"ar": "حول اللعبة"
+	},
+	"GAME_LEVEL_LABEL": {
+		"en": "LEVEL %d / %d",
+		"fr": "NIVEAU %d / %d",
+		"ar": "المستوى %d / %d"
+	},
+	"GAME_MOVES": {
+		"en": "MOVES: %d",
+		"fr": "DÉPLACEMENTS : %d",
+		"ar": "الحركات: %d"
+	},
+	"GAME_PUSHES": {
+		"en": "PUSHES: %d",
+		"fr": "POUSSÉES : %d",
+		"ar": "الدفع: %d"
+	},
+	"GAME_BEST": {
+		"en": "BEST: %d",
+		"fr": "RECORD : %d",
+		"ar": "الأفضل: %d"
+	},
+	"BTN_RESTART": {
+		"en": "Restart ↺",
+		"fr": "Recommencer ↺",
+		"ar": "إعادة ↺"
+	},
+	"BTN_PREV": {
+		"en": "< Prev",
+		"fr": "< Préc",
+		"ar": "السابق >"
+	},
+	"BTN_NEXT": {
+		"en": "Next >",
+		"fr": "Suiv >",
+		"ar": "التالي <"
+	},
+	"BTN_BACK": {
+		"en": "← Back",
+		"fr": "← Retour",
+		"ar": "رجوع →"
+	},
+	"LEVEL_SELECT_TITLE": {
+		"en": "SELECT LEVEL",
+		"fr": "CHOIX DU NIVEAU",
+		"ar": "اختيار المستوى"
+	},
+	"WIN_TITLE": {
+		"en": "LEVEL %d COMPLETED!",
+		"fr": "NIVEAU %d TERMINÉ !",
+		"ar": "اكتمل المستوى %d!"
+	},
+	"WIN_STATS": {
+		"en": "Solved in %d moves (%d pushes)\nBest: %d moves (%d pushes)",
+		"fr": "Résolu en %d mouvements (%d poussées)\nRecord : %d mouvements (%d poussées)",
+		"ar": "تم الحل في %d حركة (%d دفعة)\nأفضل نتيجة: %d حركة (%d دفعة)"
+	},
+	"WIN_NEXT_BTN": {
+		"en": "Next Level →",
+		"fr": "Niveau Suivant →",
+		"ar": "المستوى التالي ←"
+	},
+	"WIN_MENU_BTN": {
+		"en": "Menu",
+		"fr": "Menu",
+		"ar": "القائمة"
+	},
+	"RESTART_CONFIRM": {
+		"en": "You've made %d moves. Restart this level?",
+		"fr": "Vous avez fait %d mouvements. Recommencer ce niveau ?",
+		"ar": "لقد قمت بـ %d حركة. هل ترغب في إعادة هذا المستوى؟"
+	},
+	"CREDITS_TITLE": {
+		"en": "PIXEL PORTER CREDITS",
+		"fr": "CRÉDITS PIXEL PORTER",
+		"ar": "معلومات PIXEL PORTER"
+	},
+	"CREDITS_BODY": {
+		"en": "A retro box-pushing puzzle game.\nBuilt with Godot Engine 4.\n\nDesign & Logic: Pixel Porter Team\nSolver & generator verified solvable.\nOpen commercial game assets.\n\nThank you for playing!",
+		"fr": "Jeu de réflexion rétro de poussée de caisses.\nDéveloppé avec Godot Engine 4.\n\nDesign & Logique : Équipe Pixel Porter\nNiveaux vérifiés par solveur automatique.\nActifs sous licences libres commerciales.\n\nMerci d'avoir joué !",
+		"ar": "لعبة ألغاز ريترو كلاسيكية لدفع الصناديق.\nتم التطوير بواسطة محرك Godot 4.\n\nالتصميم والبرمجة: فريق Pixel Porter\nجميع المستويات تم حلها والتحقق منها برمجياً.\nالموارد مرخصة برخص تجارية مفتوحة.\n\nشكراً لك على اللعب!"
+	},
+	"BTN_CLOSE": {
+		"en": "Close",
+		"fr": "Fermer",
+		"ar": "إغلاق"
+	}
+}
+
+
+func _ready() -> void:
+	if is_inside_tree() and get_tree().root.has_node("SaveManager"):
+		save_mgr = get_tree().root.get_node("SaveManager")
+		if "language" in save_mgr and not save_mgr.language.is_empty():
+			current_language = save_mgr.language
+
+	_register_godot_translations()
+	set_language(current_language)
+
+
+func _register_godot_translations() -> void:
+	for lang in ["en", "fr", "ar"]:
+		var tr_obj: Translation = Translation.new()
+		tr_obj.locale = lang
+		for key in TRANSLATIONS.keys():
+			var msg: String = TRANSLATIONS[key].get(lang, TRANSLATIONS[key].get("en", ""))
+			tr_obj.add_message(key, msg)
+		TranslationServer.add_translation(tr_obj)
+
+
+## Sets current language and updates TranslationServer & SaveManager.
+func set_language(lang_code: String) -> void:
+	if not has_language(lang_code):
+		lang_code = "en"
+
+	current_language = lang_code
+	TranslationServer.set_locale(current_language)
+
+	if save_mgr != null and "language" in save_mgr:
+		save_mgr.language = current_language
+		save_mgr.save_data()
+
+	language_changed.emit(current_language)
+
+
+## Returns whether the given language code is supported.
+func has_language(lang_code: String) -> bool:
+	for item in SUPPORTED_LANGUAGES:
+		if item["code"] == lang_code:
+			return true
+	return false
+
+
+## Returns true if current language is Right-to-Left (e.g. Arabic).
+func is_rtl() -> bool:
+	for item in SUPPORTED_LANGUAGES:
+		if item["code"] == current_language:
+			return item.get("is_rtl", false)
+	return false
+
+
+## Cycles to the next supported language and returns its code.
+func cycle_language() -> String:
+	var next_idx: int = 0
+	for i in range(SUPPORTED_LANGUAGES.size()):
+		if SUPPORTED_LANGUAGES[i]["code"] == current_language:
+			next_idx = (i + 1) % SUPPORTED_LANGUAGES.size()
+			break
+	var next_code: String = SUPPORTED_LANGUAGES[next_idx]["code"]
+	set_language(next_code)
+	return next_code
+
+
+## Returns the display name of the current or specified language.
+func get_language_display_name(lang_code: String = "") -> String:
+	var target: String = lang_code if not lang_code.is_empty() else current_language
+	for item in SUPPORTED_LANGUAGES:
+		if item["code"] == target:
+			return item["name"]
+	return "English"
+
+
+## Returns translated string for key with optional sprintf arguments.
+func tr_text(key: String, args: Array = []) -> String:
+	var entry: Dictionary = TRANSLATIONS.get(key, {})
+	var text: String = entry.get(current_language, entry.get("en", key))
+	if not args.is_empty():
+		return text % args
+	return text
