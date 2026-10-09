@@ -28,6 +28,11 @@ func get_safe_insets(control_node: Control = null) -> Dictionary:
 	if not DisplayServer.has_method("get_display_safe_area"):
 		return { "top": 0.0, "bottom": 0.0, "left": 0.0, "right": 0.0 }
 
+	# On desktop platforms (Linux, Windows, macOS), display cutouts/notches do not exist
+	var os_name: String = OS.get_name()
+	if os_name != "Android" and os_name != "iOS":
+		return { "top": 0.0, "bottom": 0.0, "left": 0.0, "right": 0.0 }
+
 	var safe_rect: Rect2i = DisplayServer.get_display_safe_area()
 	var window_size: Vector2i = DisplayServer.window_get_size()
 

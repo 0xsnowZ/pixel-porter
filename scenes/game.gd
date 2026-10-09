@@ -60,6 +60,8 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
 
 func _initialize_nodes() -> void:
+	if has_node("Background"):
+		$Background.show_behind_parent = true
 	if top_bar_margin == null and has_node("TopBar/Margin"):
 		top_bar_margin = $TopBar/Margin
 		bottom_bar_margin = $BottomBar/Margin
