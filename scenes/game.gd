@@ -5,6 +5,7 @@ extends Control
 ## and implements PRD Section 4 & 5 gameplay and UI requirements.
 
 const GridLogic = preload("res://scripts/grid_logic.gd")
+const SaveManagerScript = preload("res://scripts/save_manager.gd")
 
 # Levels available
 var level_paths: Array[String] = [
@@ -15,6 +16,7 @@ var level_paths: Array[String] = [
 var current_level_index: int = 0
 
 var grid: GridLogic
+var save_mgr: Node = null
 
 # Visual settings
 var tile_size: float = 64.0
@@ -45,6 +47,12 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
 
 func _ready() -> void:
+	if has_node("/root/SaveManager"):
+		save_mgr = get_node("/root/SaveManager")
+	else:
+		save_mgr = SaveManagerScript.new()
+		add_child(save_mgr)
+
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
 	grid.player_moved.connect(_on_player_moved)
@@ -57,12 +65,22 @@ func _ready() -> void:
 	next_level_button.pressed.connect(_on_next_level_pressed)
 	restart_dialog.confirmed.connect(_do_restart)
 
-	load_level(0)
+	var initial_level: int = 0
+	if save_mgr and save_mgr.last_played_level >= 0 and save_mgr.last_played_level < level_paths.size():
+		initial_level = save_mgr.last_played_level
+	load_level(initial_level)
 	get_viewport().size_changed.connect(queue_redraw)
 
 
 func load_level(index: int) -> void:
-	current_level_index = clampi(index, 0, level_paths.size() - 1)
+	var target_index: int = clampi(index, 0, level_paths.size() - 1)
+	if save_mgr and not save_mgr.is_level_unlocked(target_index):
+		return
+
+	current_level_index = target_index
+	if save_mgr:
+		save_mgr.last_played_level = current_level_index
+
 	var path: String = level_paths[current_level_index]
 	var ok: bool = grid.load_from_file(path)
 	if not ok:
@@ -85,9 +103,17 @@ func load_level(index: int) -> void:
 
 func _update_ui() -> void:
 	level_label.text = "LEVEL %d / %d" % [current_level_index + 1, level_paths.size()]
-	stats_label.text = "MOVES: %d  |  PUSHES: %d" % [grid.moves_count, grid.pushes_count]
+	var best_str: String = ""
+	if save_mgr and save_mgr.is_level_completed(current_level_index):
+		var rec: Dictionary = save_mgr.get_level_record(current_level_index)
+		best_str = " | BEST: %d" % rec.get("best_moves", 0)
+	stats_label.text = "MOVES: %d  |  PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
 	prev_button.disabled = (current_level_index == 0)
-	next_button.disabled = (current_level_index == level_paths.size() - 1)
+
+	var can_advance: bool = (current_level_index < level_paths.size() - 1)
+	if save_mgr:
+		can_advance = can_advance and save_mgr.is_level_unlocked(current_level_index + 1)
+	next_button.disabled = not can_advance
 
 
 func _on_player_moved(from_pos: Vector2i, to_pos: Vector2i) -> void:
@@ -100,11 +126,16 @@ func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 
 
 func _on_level_won() -> void:
+	if save_mgr:
+		save_mgr.record_level_completion(current_level_index, grid.moves_count, grid.pushes_count)
 	_update_ui()
 	# Delay win popup slightly so player sees the crate snap to goal
 	await get_tree().create_timer(0.2).timeout
 	win_title.text = "LEVEL %d COMPLETED!" % [current_level_index + 1]
-	win_stats.text = "Solved in %d moves (%d pushes)" % [grid.moves_count, grid.pushes_count]
+	var rec: Dictionary = save_mgr.get_level_record(current_level_index) if save_mgr else {}
+	var best_m: int = rec.get("best_moves", grid.moves_count)
+	var best_p: int = rec.get("best_pushes", grid.pushes_count)
+	win_stats.text = "Solved in %d moves (%d pushes)\nBest: %d moves (%d pushes)" % [grid.moves_count, grid.pushes_count, best_m, best_p]
 	win_modal.show()
 
 
@@ -234,7 +265,9 @@ func _on_prev_level_pressed() -> void:
 
 func _on_next_level_pressed() -> void:
 	if current_level_index < level_paths.size() - 1:
-		load_level(current_level_index + 1)
+		var next_idx: int = current_level_index + 1
+		if not save_mgr or save_mgr.is_level_unlocked(next_idx):
+			load_level(next_idx)
 
 
 func _process(_delta: float) -> void:
