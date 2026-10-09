@@ -20,6 +20,7 @@ func _init() -> void:
 	run_suite("Level 2 (Two Crates & Partial Completion)", test_level_2_two_crates_and_partial_completion)
 	run_suite("Level 3 (PRD Rules Verification & 3 Crates)", test_level_3_prd_rules_edge_cases_and_multi_crate)
 	run_suite("Sokoban Symbols Parsing & to_text Export", test_sokoban_symbols_parsing)
+	run_suite("Undo Mechanics & History Stack", test_undo_mechanics)
 
 	print("\n==================================================")
 	print("Test Suites: %d passed, %d failed" % [_passed_suites, _failed_suites])
@@ -330,3 +331,45 @@ func test_sokoban_symbols_parsing() -> void:
 	var exported: String = grid.to_text()
 	assert_true(exported.contains("+"), "Exported map contains '+' for player on goal")
 	assert_true(exported.contains("*"), "Exported map contains '*' for crate on goal")
+
+
+## Test 5: Verify Undo mechanics, history stack, and crate position rollbacks
+func test_undo_mechanics() -> void:
+	var grid = GridLogicScript.new()
+	grid.load_from_file("res://levels/level_01.sok")
+
+	assert_false(grid.can_undo(), "can_undo() is false initially")
+	assert_false(grid.undo(), "undo() returns false when history is empty")
+
+	var init_player: Vector2i = grid.get_player_pos()
+
+	# Move DOWN (empty floor, no crate)
+	grid.move("d")
+	assert_true(grid.can_undo(), "can_undo() is true after move")
+	assert_equal(grid.moves_count, 1, "moves_count is 1")
+	assert_equal(grid.pushes_count, 0, "pushes_count is 0")
+	assert_equal(grid.get_player_pos(), init_player + Vector2i.DOWN, "Player moved down")
+
+	# Undo move
+	var undone: bool = grid.undo()
+	assert_true(undone, "undo() returns true")
+	assert_equal(grid.get_player_pos(), init_player, "Player returned to initial position")
+	assert_equal(grid.moves_count, 0, "moves_count restored to 0")
+	assert_false(grid.can_undo(), "can_undo() is false after undoing back to start")
+
+	# Push crate from (2, 2) to (2, 1)
+	grid.move(Vector2i.UP)
+	assert_equal(grid.moves_count, 1, "moves_count is 1 after push")
+	assert_equal(grid.pushes_count, 1, "pushes_count is 1 after push")
+	assert_true(grid.has_crate(Vector2i(2, 1)), "Crate moved to (2, 1)")
+	assert_false(grid.has_crate(Vector2i(2, 2)), "Old crate tile (2, 2) is now empty")
+
+	# Undo push
+	undone = grid.undo()
+	assert_true(undone, "undo() succeeds on crate push")
+	assert_equal(grid.moves_count, 0, "moves_count restored to 0")
+	assert_equal(grid.pushes_count, 0, "pushes_count restored to 0")
+	assert_equal(grid.get_player_pos(), init_player, "Player restored to (2, 3)")
+	assert_true(grid.has_crate(Vector2i(2, 2)), "Crate restored to (2, 2)")
+	assert_false(grid.has_crate(Vector2i(2, 1)), "Destination tile (2, 1) is no longer a crate")
+	assert_false(grid.can_undo(), "can_undo() is false after rolling back all moves")

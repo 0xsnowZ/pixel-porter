@@ -12,6 +12,7 @@ extends RefCounted
 
 signal player_moved(from_pos: Vector2i, to_pos: Vector2i)
 signal crate_pushed(from_pos: Vector2i, to_pos: Vector2i)
+signal move_undone(player_pos: Vector2i, had_crate: bool, crate_from: Vector2i, crate_to: Vector2i)
 signal level_won
 signal level_reset
 
@@ -35,6 +36,7 @@ var crates: Dictionary = {}  # Dictionary[Vector2i, bool]
 var moves_count: int = 0
 var pushes_count: int = 0
 var last_move_pushed_crate: bool = false
+var history: Array[Dictionary] = []
 
 # Snapshot of the initial state for level restart
 var _initial_player_pos: Vector2i = Vector2i.ZERO
@@ -58,6 +60,7 @@ func clear() -> void:
 	moves_count = 0
 	pushes_count = 0
 	last_move_pushed_crate = false
+	history.clear()
 	_initial_player_pos = Vector2i.ZERO
 	_initial_crates.clear()
 	_raw_level_text = ""
@@ -196,6 +199,10 @@ func move(direction: Variant) -> bool:
 	if not is_in_bounds(target_pos) or is_wall(target_pos):
 		return false
 
+	var pushed: bool = false
+	var c_from: Vector2i = Vector2i.ZERO
+	var c_to: Vector2i = Vector2i.ZERO
+
 	# Check if target tile has a crate
 	if has_crate(target_pos):
 		var behind_pos: Vector2i = target_pos + dir
@@ -213,17 +220,60 @@ func move(direction: Variant) -> bool:
 		crates[behind_pos] = true
 		pushes_count += 1
 		last_move_pushed_crate = true
+		pushed = true
+		c_from = target_pos
+		c_to = behind_pos
 		crate_pushed.emit(target_pos, behind_pos)
 
 	# Move the player
 	var old_pos: Vector2i = player_pos
 	player_pos = target_pos
 	moves_count += 1
+
+	history.append({
+		"player_from": old_pos,
+		"player_to": target_pos,
+		"pushed_crate": pushed,
+		"crate_from": c_from,
+		"crate_to": c_to,
+		"dir": dir
+	})
+
 	player_moved.emit(old_pos, target_pos)
 
 	if is_won():
 		level_won.emit()
 
+	return true
+
+
+## Returns true if there is at least one move in history to undo.
+func can_undo() -> bool:
+	return not history.is_empty()
+
+
+## Undoes the last move, reverting player and crate positions, and updating counters.
+## Returns true if a move was undone, false if history is empty.
+func undo() -> bool:
+	if history.is_empty():
+		return false
+
+	var entry: Dictionary = history.pop_back()
+	var prev_player_pos: Vector2i = entry["player_from"]
+	var had_crate: bool = entry["pushed_crate"]
+	var c_from: Vector2i = entry.get("crate_from", Vector2i.ZERO)
+	var c_to: Vector2i = entry.get("crate_to", Vector2i.ZERO)
+
+	if had_crate:
+		crates.erase(c_to)
+		crates[c_from] = true
+		pushes_count = max(0, pushes_count - 1)
+
+	player_pos = prev_player_pos
+	moves_count = max(0, moves_count - 1)
+	last_move_pushed_crate = false
+
+	move_undone.emit(player_pos, had_crate, c_from, c_to)
 	return true
 
 
@@ -235,6 +285,7 @@ func restart() -> void:
 	moves_count = 0
 	pushes_count = 0
 	last_move_pushed_crate = false
+	history.clear()
 	level_reset.emit()
 
 

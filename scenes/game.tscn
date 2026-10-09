@@ -100,19 +100,24 @@ theme_override_constants/separation = 16
 alignment = 1
 
 [node name="PrevButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(88, 48)
+custom_minimum_size = Vector2(76, 48)
 layout_mode = 2
 text = "< Prev"
 
+[node name="UndoButton" type="Button" parent="BottomBar/Margin/HBox"]
+custom_minimum_size = Vector2(92, 48)
+layout_mode = 2
+text = "Undo ↶"
+
 [node name="RestartButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(140, 48)
+custom_minimum_size = Vector2(110, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 text = "Restart ↺"
 
 [node name="NextButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(88, 48)
+custom_minimum_size = Vector2(76, 48)
 layout_mode = 2
 theme_type_variation = &"SuccessButton"
 text = "Next >"

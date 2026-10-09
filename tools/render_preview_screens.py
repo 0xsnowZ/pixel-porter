@@ -165,9 +165,10 @@ def render_gameplay_preview():
     # Bottom Bar
     draw.rectangle([0, H - 76, W, H], fill=(20, 28, 41, 245))
     draw.line([(0, H - 76), (W, H - 76)], fill=(184, 138, 51), width=2)
-    draw_styled_button(draw, (20, H - 64, 110, H - 16), "< Prev", font=f_btn)
-    draw_styled_button(draw, (126, H - 64, W - 126, H - 16), "Restart ↺", is_primary=True, font=f_btn)
-    draw_styled_button(draw, (W - 110, H - 64, W - 20, H - 16), "Next >", is_success=True, font=f_btn)
+    draw_styled_button(draw, (16, H - 64, 96, H - 16), "< Prev", font=f_btn)
+    draw_styled_button(draw, (108, H - 64, 216, H - 16), "Undo ↶", font=f_btn)
+    draw_styled_button(draw, (228, H - 64, 428, H - 16), "Restart ↺", is_primary=True, font=f_btn)
+    draw_styled_button(draw, (440, H - 64, 524, H - 16), "Next >", is_success=True, font=f_btn)
 
     # Game Board (5x5 grid from Level 1)
     # Level 1 map:

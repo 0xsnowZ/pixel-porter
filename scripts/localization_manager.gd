@@ -102,6 +102,11 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "Recommencer ↺",
 		"ar": "إعادة ↺"
 	},
+	"BTN_UNDO": {
+		"en": "Undo ↶",
+		"fr": "Annuler ↶",
+		"ar": "تراجع ↶"
+	},
 	"BTN_PREV": {
 		"en": "< Prev",
 		"fr": "< Préc",

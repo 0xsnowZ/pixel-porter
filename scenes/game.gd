@@ -48,8 +48,9 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
 @onready var level_label: Label = $TopBar/Margin/HBox/LevelLabel
 @onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
-@onready var restart_button: Button = $BottomBar/Margin/HBox/RestartButton
 @onready var prev_button: Button = $BottomBar/Margin/HBox/PrevButton
+@onready var undo_button: Button = $BottomBar/Margin/HBox/UndoButton if has_node("BottomBar/Margin/HBox/UndoButton") else null
+@onready var restart_button: Button = $BottomBar/Margin/HBox/RestartButton
 @onready var next_button: Button = $BottomBar/Margin/HBox/NextButton
 @onready var win_modal: PanelContainer = $WinModal
 @onready var win_title: Label = $WinModal/VBox/WinTitle
@@ -83,8 +84,10 @@ func _initialize_nodes() -> void:
 		menu_button = $TopBar/Margin/HBox/MenuBtn
 		level_label = $TopBar/Margin/HBox/LevelLabel
 		stats_label = $TopBar/Margin/HBox/StatsLabel
-		restart_button = $BottomBar/Margin/HBox/RestartButton
 		prev_button = $BottomBar/Margin/HBox/PrevButton
+		if has_node("BottomBar/Margin/HBox/UndoButton"):
+			undo_button = $BottomBar/Margin/HBox/UndoButton
+		restart_button = $BottomBar/Margin/HBox/RestartButton
 		next_button = $BottomBar/Margin/HBox/NextButton
 		win_modal = $WinModal
 		win_title = $WinModal/VBox/WinTitle
@@ -124,6 +127,7 @@ func _ready() -> void:
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
 	grid.player_moved.connect(_on_player_moved)
+	grid.move_undone.connect(_on_move_undone)
 	grid.level_won.connect(_on_level_won)
 	grid.level_reset.connect(_on_level_reset)
 
@@ -131,6 +135,8 @@ func _ready() -> void:
 		menu_button.pressed.connect(_on_menu_pressed)
 	if not win_menu_button.pressed.is_connected(_on_menu_pressed):
 		win_menu_button.pressed.connect(_on_menu_pressed)
+	if undo_button != null and not undo_button.pressed.is_connected(_on_undo_pressed):
+		undo_button.pressed.connect(_on_undo_pressed)
 	if not restart_button.pressed.is_connected(_on_restart_pressed):
 		restart_button.pressed.connect(_on_restart_pressed)
 	if not prev_button.pressed.is_connected(_on_prev_level_pressed):
@@ -215,6 +221,8 @@ func _update_ui() -> void:
 			best_str
 		]
 		restart_button.text = loc_mgr.tr_text("BTN_RESTART")
+		if undo_button != null:
+			undo_button.text = loc_mgr.tr_text("BTN_UNDO")
 		prev_button.text = loc_mgr.tr_text("BTN_PREV")
 		next_button.text = loc_mgr.tr_text("BTN_NEXT")
 		win_menu_button.text = loc_mgr.tr_text("WIN_MENU_BTN")
@@ -222,7 +230,11 @@ func _update_ui() -> void:
 	else:
 		level_label.text = "LEVEL %d / %d" % [current_level_index + 1, level_paths.size()]
 		stats_label.text = "MOVES: %d  |  PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
+		if undo_button != null:
+			undo_button.text = "Undo ↶"
 
+	if undo_button != null:
+		undo_button.disabled = (grid == null or not grid.can_undo())
 	prev_button.disabled = (current_level_index == 0)
 	var can_advance: bool = (current_level_index < level_paths.size() - 1)
 	if save_mgr:
@@ -353,6 +365,8 @@ func _unhandled_input(event: InputEvent) -> void:
 				try_move(Vector2i.RIGHT)
 			KEY_R:
 				_on_restart_pressed()
+			KEY_Z, KEY_U, KEY_BACKSPACE:
+				_on_undo_pressed()
 
 	# Touch & Mouse swipe detection (PRD Section 5)
 	if event is InputEventMouseButton:
@@ -415,6 +429,30 @@ func _do_restart() -> void:
 		haptic_mgr.vibrate_click()
 	if grid:
 		grid.restart()
+
+
+func _on_undo_pressed() -> void:
+	if win_modal != null and win_modal.visible:
+		return
+	is_animating = false
+	queued_move_dir = Vector2i.ZERO
+	if grid != null and grid.can_undo():
+		if audio_mgr:
+			audio_mgr.play_click()
+		if haptic_mgr:
+			haptic_mgr.vibrate_click()
+		grid.undo()
+
+
+func _on_move_undone(p_pos: Vector2i, _had_crate: bool, _crate_from: Vector2i, _crate_to: Vector2i) -> void:
+	is_animating = false
+	queued_move_dir = Vector2i.ZERO
+	visual_player_pos = Vector2(p_pos)
+	visual_crates.clear()
+	for crate_pos in grid.crates.keys():
+		visual_crates[crate_pos] = Vector2(crate_pos)
+	_update_ui()
+	queue_redraw()
 
 
 func _on_prev_level_pressed() -> void:

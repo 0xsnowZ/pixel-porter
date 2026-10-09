@@ -27,6 +27,7 @@ func _init() -> void:
 	test_restart_confirmation_threshold()
 	test_win_celebration_and_particles()
 	test_layout_and_framing()
+	test_undo_button_interaction()
 
 	print("\n" + "=".repeat(54))
 	print("Game Scene Results: %d passed, %d failed" % [passes, fails])
@@ -80,6 +81,9 @@ func test_game_initialization_and_ui() -> void:
 	assert_eq(game.current_level_index, 0, "Initial level index is 0")
 	assert_eq(game.level_label.text, "LEVEL 1 / 50", "Level label in EN")
 	assert_true(game.restart_button.text == "Restart ↺", "Restart button localized in EN")
+	assert_true(game.undo_button != null, "Undo button initialized in game")
+	assert_true(game.undo_button.text == "Undo ↶", "Undo button localized in EN")
+	assert_true(game.undo_button.disabled, "Undo button is disabled initially")
 	assert_true(game.prev_button.disabled, "Prev button is disabled on first level")
 
 	# Test switching language updates UI
@@ -87,6 +91,7 @@ func test_game_initialization_and_ui() -> void:
 	game._update_ui()
 	assert_eq(game.level_label.text, "NIVEAU 1 / 50", "Level label in FR")
 	assert_eq(game.restart_button.text, "Recommencer ↺", "Restart button localized in FR")
+	assert_eq(game.undo_button.text, "Annuler ↶", "Undo button localized in FR")
 
 	game.free()
 	save_mgr.free()
@@ -181,5 +186,28 @@ func test_layout_and_framing() -> void:
 	assert_true(game.tile_size > 0.0, "Tile size calculated properly (got %f)" % game.tile_size)
 	assert_true(game.grid_origin.y > 0.0, "Grid origin placed in playable area (got %s)" % str(game.grid_origin))
 	assert_true(game.grid_origin.x >= 0.0, "Grid origin centered horizontally (got %s)" % str(game.grid_origin))
+
+	game.free()
+
+
+func test_undo_button_interaction() -> void:
+	print("--- Running Suite: Undo Button UI Interaction ---")
+	var game: Control = create_test_game()
+
+	assert_true(game.undo_button != null, "Undo button initialized in game")
+	assert_true(game.undo_button.disabled, "Undo button disabled at start")
+
+	var init_pos: Vector2i = game.grid.player_pos
+
+	# Make a move down
+	game.try_move(Vector2i.DOWN)
+	assert_eq(game.grid.moves_count, 1, "Moves count incremented to 1")
+	assert_true(not game.undo_button.disabled, "Undo button enabled after move")
+
+	# Trigger undo via button handler
+	game._on_undo_pressed()
+	assert_eq(game.grid.moves_count, 0, "Moves count restored to 0 after undo")
+	assert_eq(game.grid.player_pos, init_pos, "Player position restored after undo")
+	assert_true(game.undo_button.disabled, "Undo button disabled after rolling back all moves")
 
 	game.free()
