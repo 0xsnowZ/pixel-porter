@@ -82,6 +82,32 @@ theme_override_font_sizes/font_size = 16
 text = "MOVES: 0  |  PUSHES: 0"
 horizontal_alignment = 2
 
+[node name="HintToast" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -170.0
+offset_top = 74.0
+offset_right = 170.0
+offset_bottom = 114.0
+grow_horizontal = 2
+theme_type_variation = &"HUDMetricCard"
+
+[node name="Margin" type="MarginContainer" parent="HintToast"]
+layout_mode = 2
+theme_override_constants/margin_left = 12
+theme_override_constants/margin_right = 12
+
+[node name="Label" type="Label" parent="HintToast/Margin"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.65, 1)
+theme_override_font_sizes/font_size = 14
+text = "💡 Hint: Move UP ↑"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="BottomBar" type="PanelContainer" parent="."]
 layout_mode = 1
 anchors_preset = 12
@@ -102,28 +128,34 @@ theme_override_constants/margin_bottom = 10
 
 [node name="HBox" type="HBoxContainer" parent="BottomBar/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 8
 alignment = 1
 
 [node name="PrevButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(76, 48)
+custom_minimum_size = Vector2(68, 48)
 layout_mode = 2
 text = "< Prev"
 
 [node name="UndoButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(92, 48)
+custom_minimum_size = Vector2(80, 48)
 layout_mode = 2
 text = "Undo ↶"
 
+[node name="HintButton" type="Button" parent="BottomBar/Margin/HBox"]
+custom_minimum_size = Vector2(80, 48)
+layout_mode = 2
+theme_type_variation = &"InfoButton"
+text = "Hint 💡"
+
 [node name="RestartButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(110, 48)
+custom_minimum_size = Vector2(96, 48)
 layout_mode = 2
 size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
 text = "Restart ↺"
 
 [node name="NextButton" type="Button" parent="BottomBar/Margin/HBox"]
-custom_minimum_size = Vector2(76, 48)
+custom_minimum_size = Vector2(68, 48)
 layout_mode = 2
 theme_type_variation = &"SuccessButton"
 text = "Next >"

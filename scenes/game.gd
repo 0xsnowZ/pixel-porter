@@ -5,6 +5,7 @@ extends Control
 ## and implements PRD Section 4 & 5 gameplay and UI requirements.
 
 const SaveManagerScript = preload("res://scripts/save_manager.gd")
+const SokobanSolverScript = preload("res://scripts/sokoban_solver.gd")
 
 # Levels available (50 verified solvable levels)
 var level_paths: Array[String] = _get_default_level_paths()
@@ -46,6 +47,14 @@ var visual_crates: Dictionary = {} # Vector2i (current logical) -> Vector2 (inte
 var walk_step_count: int = 0
 var current_walk_frame: int = 0 # 0: idle stance, 1: walk frame 1, 2: walk frame 2
 
+# Hint state (P3: Hint via Solver)
+var active_hint_dir: Vector2i = Vector2i.ZERO
+var hint_player_target: Vector2i = Vector2i.ZERO
+var hint_crate_target: Vector2i = Vector2i.ZERO
+var hint_has_crate: bool = false
+var hint_time_remaining: float = 0.0
+var hint_pulse_timer: float = 0.0
+
 # Touch / Swipe handling (PRD Section 5)
 var touch_start_pos: Vector2 = Vector2.ZERO
 var is_touching: bool = false
@@ -59,6 +68,9 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
 @onready var prev_button: Button = $BottomBar/Margin/HBox/PrevButton
 @onready var undo_button: Button = $BottomBar/Margin/HBox/UndoButton if has_node("BottomBar/Margin/HBox/UndoButton") else null
+@onready var hint_button: Button = $BottomBar/Margin/HBox/HintButton if has_node("BottomBar/Margin/HBox/HintButton") else null
+@onready var hint_toast: PanelContainer = $HintToast if has_node("HintToast") else null
+@onready var hint_toast_label: Label = $HintToast/Margin/Label if has_node("HintToast/Margin/Label") else ($HintToast/Label if has_node("HintToast/Label") else null)
 @onready var restart_button: Button = $BottomBar/Margin/HBox/RestartButton
 @onready var next_button: Button = $BottomBar/Margin/HBox/NextButton
 @onready var win_modal: PanelContainer = $WinModal
@@ -112,6 +124,14 @@ func _initialize_nodes() -> void:
 		prev_button = $BottomBar/Margin/HBox/PrevButton
 		if has_node("BottomBar/Margin/HBox/UndoButton"):
 			undo_button = $BottomBar/Margin/HBox/UndoButton
+		if has_node("BottomBar/Margin/HBox/HintButton"):
+			hint_button = $BottomBar/Margin/HBox/HintButton
+		if has_node("HintToast"):
+			hint_toast = $HintToast
+			if has_node("HintToast/Margin/Label"):
+				hint_toast_label = $HintToast/Margin/Label
+			elif has_node("HintToast/Label"):
+				hint_toast_label = $HintToast/Label
 		restart_button = $BottomBar/Margin/HBox/RestartButton
 		next_button = $BottomBar/Margin/HBox/NextButton
 		restart_dialog = $RestartConfirmDialog
@@ -172,6 +192,8 @@ func _ready() -> void:
 		win_menu_button.pressed.connect(_on_menu_pressed)
 	if undo_button != null and not undo_button.pressed.is_connected(_on_undo_pressed):
 		undo_button.pressed.connect(_on_undo_pressed)
+	if hint_button != null and not hint_button.pressed.is_connected(_on_hint_pressed):
+		hint_button.pressed.connect(_on_hint_pressed)
 	if not restart_button.pressed.is_connected(_on_restart_pressed):
 		restart_button.pressed.connect(_on_restart_pressed)
 	if not prev_button.pressed.is_connected(_on_prev_level_pressed):
@@ -210,8 +232,12 @@ func _ready() -> void:
 	_attach_spring_physics(menu_button)
 	_attach_spring_physics(prev_button)
 	_attach_spring_physics(undo_button)
+	if hint_button != null:
+		_attach_spring_physics(hint_button)
 	_attach_spring_physics(restart_button)
 	_attach_spring_physics(next_button)
+	if hint_toast != null:
+		hint_toast.hide()
 	if win_menu_button:
 		_attach_spring_physics(win_menu_button)
 	if next_level_button:
@@ -253,6 +279,7 @@ func load_level(index: int) -> void:
 	queued_move_dir = Vector2i.ZERO
 	current_walk_frame = 0
 	walk_step_count = 0
+	clear_hint()
 	level_start_time = Time.get_ticks_msec()
 	if win_modal:
 		win_modal.hide()
@@ -295,6 +322,8 @@ func _update_ui() -> void:
 		restart_button.text = loc_mgr.tr_text("BTN_RESTART")
 		if undo_button != null:
 			undo_button.text = loc_mgr.tr_text("BTN_UNDO")
+		if hint_button != null:
+			hint_button.text = loc_mgr.tr_text("BTN_HINT")
 		prev_button.text = loc_mgr.tr_text("BTN_PREV")
 		next_button.text = loc_mgr.tr_text("BTN_NEXT")
 		if win_menu_button != null:
@@ -308,6 +337,8 @@ func _update_ui() -> void:
 		stats_label.text = "MOVES: %d  |  PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
 		if undo_button != null:
 			undo_button.text = "Undo ↶"
+		if hint_button != null:
+			hint_button.text = "Hint 💡"
 		if win_menu_button != null:
 			win_menu_button.text = "⌂ MENU"
 		if next_level_button != null:
@@ -317,6 +348,8 @@ func _update_ui() -> void:
 
 	if undo_button != null:
 		undo_button.disabled = (grid == null or not grid.can_undo())
+	if hint_button != null:
+		hint_button.disabled = (grid == null or grid.is_won())
 	prev_button.disabled = (current_level_index == 0)
 	var can_advance: bool = (current_level_index < level_paths.size() - 1)
 	if save_mgr:
@@ -479,6 +512,7 @@ func _animate_stars_sequence(stars: Array, earned: int, gold_color: Color) -> vo
 func _on_level_reset() -> void:
 	current_walk_frame = 0
 	walk_step_count = 0
+	clear_hint()
 	visual_player_pos = Vector2(grid.get_player_pos())
 	visual_crates.clear()
 	for crate_pos in grid.crates.keys():
@@ -538,6 +572,7 @@ func _animate_crate(from_pos: Vector2i, to_pos: Vector2i) -> void:
 
 func try_move(dir: Vector2i) -> void:
 	player_facing_dir = dir
+	clear_hint()
 	if win_modal != null and win_modal.visible:
 		return
 
@@ -642,6 +677,7 @@ func _on_undo_pressed() -> void:
 		return
 	is_animating = false
 	queued_move_dir = Vector2i.ZERO
+	clear_hint()
 	if grid != null and grid.can_undo():
 		if audio_mgr:
 			audio_mgr.play_click()
@@ -654,11 +690,93 @@ func _on_move_undone(p_pos: Vector2i, _had_crate: bool, _crate_from: Vector2i, _
 	is_animating = false
 	queued_move_dir = Vector2i.ZERO
 	current_walk_frame = 0
+	clear_hint()
 	visual_player_pos = Vector2(p_pos)
 	visual_crates.clear()
 	for crate_pos in grid.crates.keys():
 		visual_crates[crate_pos] = Vector2(crate_pos)
 	_update_ui()
+	queue_redraw()
+
+
+func _on_hint_pressed() -> void:
+	if is_animating:
+		return
+	if win_modal != null and win_modal.visible:
+		return
+	if grid == null or grid.is_won():
+		return
+
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+
+	var result: SokobanSolver.SolverResult = SokobanSolverScript.solve(grid, 25000)
+	if not result.is_solvable or result.solution_str.is_empty():
+		# Deadlock detected!
+		if audio_mgr:
+			audio_mgr.play_deadlock()
+		if haptic_mgr:
+			haptic_mgr.vibrate_impact()
+		add_trauma(0.25)
+		_show_hint_toast(loc_mgr.tr_text("HINT_DEADLOCK") if loc_mgr else "No solution from here! Tap Undo ↶", Color(1.0, 0.4, 0.4))
+		clear_hint()
+		return
+
+	# Solvable next step
+	if audio_mgr:
+		audio_mgr.play_hint()
+
+	var move_char: String = result.solution_str.substr(0, 1)
+	match move_char:
+		"u": active_hint_dir = Vector2i.UP
+		"d": active_hint_dir = Vector2i.DOWN
+		"l": active_hint_dir = Vector2i.LEFT
+		"r": active_hint_dir = Vector2i.RIGHT
+		_: active_hint_dir = Vector2i.ZERO
+
+	if active_hint_dir == Vector2i.ZERO:
+		return
+
+	hint_player_target = grid.player_pos + active_hint_dir
+	hint_has_crate = grid.has_crate(hint_player_target)
+	hint_crate_target = (hint_player_target + active_hint_dir) if hint_has_crate else Vector2i.ZERO
+	hint_time_remaining = 4.0 # Active for 4 seconds
+	hint_pulse_timer = 0.0
+
+	var dir_key: String = "UP"
+	if active_hint_dir == Vector2i.DOWN: dir_key = "DOWN"
+	elif active_hint_dir == Vector2i.LEFT: dir_key = "LEFT"
+	elif active_hint_dir == Vector2i.RIGHT: dir_key = "RIGHT"
+
+	var toast_msg: String = loc_mgr.tr_text("HINT_STEP_" + dir_key) if loc_mgr else ("💡 Hint: Move " + dir_key)
+	_show_hint_toast(toast_msg, Color(1.0, 0.95, 0.6))
+	queue_redraw()
+
+
+func _show_hint_toast(msg: String, color: Color = Color(1.0, 0.95, 0.6)) -> void:
+	if hint_toast == null or hint_toast_label == null:
+		return
+	hint_toast_label.text = msg
+	hint_toast_label.modulate = color
+	hint_toast.modulate.a = 0.0
+	hint_toast.show()
+	var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(hint_toast, "modulate:a", 1.0, 0.18)
+	tw.tween_interval(2.2)
+	tw.tween_property(hint_toast, "modulate:a", 0.0, 0.35)
+	tw.tween_callback(func():
+		if hint_toast:
+			hint_toast.hide()
+	)
+
+
+func clear_hint() -> void:
+	active_hint_dir = Vector2i.ZERO
+	hint_time_remaining = 0.0
+	if hint_toast != null:
+		hint_toast.hide()
 	queue_redraw()
 
 
@@ -756,6 +874,14 @@ func _spawn_celebration_particles() -> void:
 
 func _process(delta: float) -> void:
 	var needs_redraw: bool = is_animating
+
+	# Update hint ghost timer
+	if hint_time_remaining > 0.0:
+		needs_redraw = true
+		hint_time_remaining -= delta
+		hint_pulse_timer += delta
+		if hint_time_remaining <= 0.0:
+			clear_hint()
 
 	# Subtle continuous breathing pulse for goals
 	if grid and not grid.goals.is_empty():
@@ -961,6 +1087,9 @@ func _draw() -> void:
 	)
 	_draw_player(player_rect)
 
+	# 7.5. Draw 1-Step Hint Directional Ghost & Indicator
+	_draw_hint_ghost(effective_origin)
+
 	# 8. Draw Victory Celebration Particles
 	for p in win_particles:
 		var alpha: float = clampf(p["life"] / p["max_life"], 0.0, 1.0)
@@ -1025,6 +1154,78 @@ func _draw_player(rect: Rect2) -> void:
 		p_tex = tex_player_down_w1 if current_walk_frame == 1 else (tex_player_down_w2 if current_walk_frame == 2 else tex_player_down)
 
 	draw_texture_rect(p_tex, rect, false)
+
+
+func _draw_hint_ghost(effective_origin: Vector2) -> void:
+	if hint_time_remaining <= 0.0 or active_hint_dir == Vector2i.ZERO:
+		return
+
+	var pulse: float = 0.55 + 0.35 * sin(hint_pulse_timer * 7.0)
+	var fade: float = clampf(hint_time_remaining / 0.4, 0.0, 1.0)
+	var base_alpha: float = pulse * fade
+
+	# 1. Player Target Ghost Tile
+	var p_target_rect: Rect2 = Rect2(
+		effective_origin + Vector2(hint_player_target) * tile_size,
+		Vector2(tile_size, tile_size)
+	)
+	var p_center: Vector2 = p_target_rect.get_center()
+
+	# Glowing beacon tile highlight
+	draw_rect(p_target_rect.grow(-3), Color(0.15, 0.65, 1.0, 0.22 * base_alpha), true)
+	draw_rect(p_target_rect.grow(-3), Color(0.35, 0.85, 1.0, 0.75 * base_alpha), false, 2.5)
+
+	# Pick directional ghost player texture
+	var p_ghost_tex: Texture2D = tex_player_down
+	if active_hint_dir == Vector2i.UP:
+		p_ghost_tex = tex_player_up
+	elif active_hint_dir == Vector2i.LEFT:
+		p_ghost_tex = tex_player_left
+	elif active_hint_dir == Vector2i.RIGHT:
+		p_ghost_tex = tex_player_right
+
+	var p_draw_padding: float = tile_size * 0.04
+	var p_ghost_draw_rect: Rect2 = Rect2(
+		p_target_rect.position + Vector2(p_draw_padding, p_draw_padding),
+		Vector2(tile_size - p_draw_padding * 2.0, tile_size - p_draw_padding * 2.0)
+	)
+	draw_texture_rect(p_ghost_tex, p_ghost_draw_rect, false, Color(1.0, 1.0, 1.0, 0.72 * base_alpha))
+
+	# 2. Crate Target Ghost Tile (if move is a push)
+	if hint_has_crate:
+		var c_target_rect: Rect2 = Rect2(
+			effective_origin + Vector2(hint_crate_target) * tile_size,
+			Vector2(tile_size, tile_size)
+		)
+		# Glowing amber beacon for crate push destination
+		draw_rect(c_target_rect.grow(-3), Color(1.0, 0.75, 0.15, 0.22 * base_alpha), true)
+		draw_rect(c_target_rect.grow(-3), Color(1.0, 0.88, 0.30, 0.75 * base_alpha), false, 2.5)
+
+		var is_target_goal: bool = grid.is_goal(hint_crate_target)
+		var c_ghost_tex: Texture2D = tex_crate_goal if is_target_goal else tex_crate
+		var c_draw_padding: float = tile_size * 0.04
+		var c_ghost_draw_rect: Rect2 = Rect2(
+			c_target_rect.position + Vector2(c_draw_padding, c_draw_padding),
+			Vector2(tile_size - c_draw_padding * 2.0, tile_size - c_draw_padding * 2.0)
+		)
+		draw_texture_rect(c_ghost_tex, c_ghost_draw_rect, false, Color(1.0, 1.0, 1.0, 0.72 * base_alpha))
+
+	# 3. Dynamic Directional Trajectory Arrow
+	var current_player_center: Vector2 = effective_origin + visual_player_pos * tile_size + Vector2(tile_size * 0.5, tile_size * 0.5)
+	var arrow_start: Vector2 = current_player_center + Vector2(active_hint_dir) * (tile_size * 0.32)
+	var arrow_end: Vector2 = p_center - Vector2(active_hint_dir) * (tile_size * 0.22)
+	var arrow_col: Color = Color(1.0, 0.92, 0.35, 0.85 * base_alpha)
+	draw_line(arrow_start, arrow_end, arrow_col, 3.5)
+
+	# Arrow head
+	var arrow_norm: Vector2 = Vector2(active_hint_dir).normalized()
+	var arrow_perp: Vector2 = Vector2(-arrow_norm.y, arrow_norm.x)
+	var head_len: float = tile_size * 0.18
+	var head_width: float = tile_size * 0.14
+	var p1: Vector2 = arrow_end
+	var p2: Vector2 = arrow_end - arrow_norm * head_len + arrow_perp * head_width
+	var p3: Vector2 = arrow_end - arrow_norm * head_len - arrow_perp * head_width
+	draw_colored_polygon(PackedVector2Array([p1, p2, p3]), arrow_col)
 
 
 func add_trauma(amount: float) -> void:

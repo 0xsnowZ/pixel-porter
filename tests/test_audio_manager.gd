@@ -94,6 +94,12 @@ func test_sfx_synthesis() -> void:
 	assert_true(audio_mgr.sfx_click != null, "sfx_click stream generated")
 	assert_true(audio_mgr.sfx_click.data.size() > 0, "sfx_click has audio sample data")
 
+	assert_true(audio_mgr.sfx_hint != null, "sfx_hint stream generated")
+	assert_true(audio_mgr.sfx_hint.data.size() > 0, "sfx_hint has audio sample data")
+
+	assert_true(audio_mgr.sfx_deadlock != null, "sfx_deadlock stream generated")
+	assert_true(audio_mgr.sfx_deadlock.data.size() > 0, "sfx_deadlock has audio sample data")
+
 	audio_mgr.queue_free()
 
 
@@ -134,6 +140,8 @@ func test_safe_playback() -> void:
 	audio_mgr.play_win()
 	audio_mgr.play_restart()
 	audio_mgr.play_click()
+	audio_mgr.play_hint()
+	audio_mgr.play_deadlock()
 	assert_true(true, "All audio play methods executed safely")
 
 	audio_mgr.queue_free()

@@ -162,6 +162,41 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "← Retour",
 		"ar": "رجوع →"
 	},
+	"BTN_HINT": {
+		"en": "Hint 💡",
+		"fr": "Indice 💡",
+		"ar": "تلميح 💡"
+	},
+	"HINT_DEADLOCK": {
+		"en": "No solution from here! Tap Undo ↶",
+		"fr": "Bloqué ! Appuyez sur Annuler ↶",
+		"ar": "طريق مسدود! اضغط تراجع ↶"
+	},
+	"HINT_ALREADY_SOLVED": {
+		"en": "Level already completed!",
+		"fr": "Niveau déjà terminé !",
+		"ar": "المستوى مكتمل بالفعل!"
+	},
+	"HINT_STEP_UP": {
+		"en": "💡 Hint: Move UP ↑",
+		"fr": "💡 Indice : Vers le HAUT ↑",
+		"ar": "💡 تلميح: تحرك لأعلى ↑"
+	},
+	"HINT_STEP_DOWN": {
+		"en": "💡 Hint: Move DOWN ↓",
+		"fr": "💡 Indice : Vers le BAS ↓",
+		"ar": "💡 تلميح: تحرك لأسفل ↓"
+	},
+	"HINT_STEP_LEFT": {
+		"en": "💡 Hint: Move LEFT ←",
+		"fr": "💡 Indice : Vers la GAUCHE ←",
+		"ar": "💡 تلميح: تحرك لليسار ←"
+	},
+	"HINT_STEP_RIGHT": {
+		"en": "💡 Hint: Move RIGHT →",
+		"fr": "💡 Indice : Vers la DROITE →",
+		"ar": "💡 تلميح: تحرك لليمين →"
+	},
 	"SPLASH_INIT": {
 		"en": "INITIALIZING SYSTEM...",
 		"fr": "INITIALISATION DU SYSTÈME...",

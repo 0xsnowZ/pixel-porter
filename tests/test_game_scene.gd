@@ -29,6 +29,7 @@ func _init() -> void:
 	test_win_celebration_and_particles()
 	test_layout_and_framing()
 	test_undo_button_interaction()
+	test_hint_system_and_solver()
 	test_juice_and_micro_interactions()
 	test_win_modal_three_star_system()
 
@@ -87,6 +88,9 @@ func test_game_initialization_and_ui() -> void:
 	assert_true(game.undo_button != null, "Undo button initialized in game")
 	assert_true(game.undo_button.text == "Undo ↶", "Undo button localized in EN")
 	assert_true(game.undo_button.disabled, "Undo button is disabled initially")
+	assert_true(game.hint_button != null, "Hint button initialized in game")
+	assert_true(game.hint_button.text == "Hint 💡", "Hint button localized in EN")
+	assert_true(not game.hint_button.disabled, "Hint button is enabled initially")
 	assert_true(game.prev_button.disabled, "Prev button is disabled on first level")
 
 	# Test switching language updates UI
@@ -95,6 +99,11 @@ func test_game_initialization_and_ui() -> void:
 	assert_eq(game.level_label.text, "NIVEAU 1 / 50", "Level label in FR")
 	assert_eq(game.restart_button.text, "Recommencer ↺", "Restart button localized in FR")
 	assert_eq(game.undo_button.text, "Annuler ↶", "Undo button localized in FR")
+	assert_eq(game.hint_button.text, "Indice 💡", "Hint button localized in FR")
+
+	loc.set_language("ar")
+	game._update_ui()
+	assert_eq(game.hint_button.text, "تلميح 💡", "Hint button localized in AR")
 
 	game.free()
 	save_mgr.free()
@@ -320,4 +329,67 @@ func test_win_modal_three_star_system() -> void:
 
 	game.free()
 	save_mgr.free()
+	loc.free()
+
+
+func test_hint_system_and_solver() -> void:
+	print("--- Running Suite: Hint Button via Solver & Directional Ghost ---")
+	var loc: Node = LocalizationManagerScript.new()
+	var game: Control = create_test_game(loc)
+
+	assert_true(game.hint_button != null, "Hint button initialized in game")
+	assert_true(not game.hint_button.disabled, "Hint button enabled initially")
+	assert_eq(game.hint_button.text, "Hint 💡", "Hint button localized in EN")
+	assert_eq(game.active_hint_dir, Vector2i.ZERO, "No active hint direction initially")
+	assert_eq(game.hint_time_remaining, 0.0, "Hint timer starts at 0")
+
+	# 1. Trigger Hint on Level 1 (solvable)
+	game._on_hint_pressed()
+	assert_true(game.hint_time_remaining > 0.0, "Hint time activated on press")
+	assert_true(game.active_hint_dir != Vector2i.ZERO, "Solver computed directional hint (got %s)" % str(game.active_hint_dir))
+	assert_eq(game.hint_player_target, game.grid.player_pos + game.active_hint_dir, "Hint target corresponds to player move")
+	if game.hint_toast != null:
+		assert_true(game.hint_toast.visible, "Hint toast visible when hint triggered")
+		assert_true(game.hint_toast_label.text.contains("Hint"), "Toast contains hint direction message")
+
+	# 2. Moving clears active hint
+	var hint_dir: Vector2i = game.active_hint_dir
+	game.try_move(hint_dir)
+	assert_eq(game.active_hint_dir, Vector2i.ZERO, "Active hint cleared on move")
+	assert_eq(game.hint_time_remaining, 0.0, "Hint time cleared on move")
+	game.is_animating = false
+
+	# 3. Request hint again and verify undo clears hint
+	game._on_hint_pressed()
+	assert_true(game.hint_time_remaining > 0.0, "Hint active again")
+	game._on_undo_pressed()
+	assert_eq(game.active_hint_dir, Vector2i.ZERO, "Active hint cleared on undo")
+	assert_eq(game.hint_time_remaining, 0.0, "Hint timer cleared on undo")
+	game.is_animating = false
+
+	# 4. Request hint again and verify level reset clears hint
+	game._on_hint_pressed()
+	assert_true(game.hint_time_remaining > 0.0, "Hint active before reset")
+	game._on_level_reset()
+	assert_eq(game.active_hint_dir, Vector2i.ZERO, "Active hint cleared on level reset")
+	game.is_animating = false
+
+	# 5. Process countdown expiration
+	game._on_hint_pressed()
+	assert_true(game.hint_time_remaining > 0.0, "Hint active before timeout test")
+	game._process(5.0)
+	assert_eq(game.active_hint_dir, Vector2i.ZERO, "Hint expired and cleared after 5.0s")
+	assert_eq(game.hint_time_remaining, 0.0, "Hint time zeroed after duration")
+
+	# 6. Deadlock Detection
+	# Create a deadlock by putting a crate in an unsolveable corner (e.g. at (1,1))
+	game.grid.crates.clear()
+	game.grid.crates[Vector2i(1, 1)] = true # Wall corner in Level 1 (top-left)
+	game._on_hint_pressed()
+	assert_eq(game.active_hint_dir, Vector2i.ZERO, "No move hint provided for deadlocked board")
+	assert_true(game.board_trauma > 0.0, "Warning trauma triggered on deadlock")
+	if game.hint_toast_label != null:
+		assert_true(game.hint_toast_label.text.contains("Undo"), "Deadlock toast directs player to Undo")
+
+	game.free()
 	loc.free()

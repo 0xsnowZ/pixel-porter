@@ -23,6 +23,8 @@ var sfx_goal_lock: AudioStreamWAV
 var sfx_star1: AudioStreamWAV
 var sfx_star2: AudioStreamWAV
 var sfx_star3: AudioStreamWAV
+var sfx_hint: AudioStreamWAV
+var sfx_deadlock: AudioStreamWAV
 
 # BGM Track Constants
 const TRACK_LOFI: int = 0
@@ -268,6 +270,16 @@ func play_star(star_num: int = 1) -> void:
 		_: play_stream(sfx_star1, 0.0)
 
 
+## Solver hint sparkle sound
+func play_hint() -> void:
+	play_stream(sfx_hint, -2.0)
+
+
+## Deadlock warning buzzer
+func play_deadlock() -> void:
+	play_stream(sfx_deadlock, -1.0)
+
+
 # ==============================================================================
 # Procedural Retro 8-Bit Audio Synthesis
 # ==============================================================================
@@ -282,6 +294,8 @@ func _generate_all_sfx() -> void:
 	sfx_star1 = _synth_star_chime(587.33, false)
 	sfx_star2 = _synth_star_chime(739.99, false)
 	sfx_star3 = _synth_star_chime(880.00, true)
+	sfx_hint = _synth_hint()
+	sfx_deadlock = _synth_deadlock()
 
 
 func _create_wav(data_bytes: PackedByteArray) -> AudioStreamWAV:
@@ -479,3 +493,46 @@ func _synth_star_chime(pitch_hz: float, is_major_chord: bool) -> AudioStreamWAV:
 		bytes.encode_s16(i * 2, sample_val)
 
 	return _create_wav(bytes)
+
+
+## Generates a pleasant two-tone sparkle chime for hint guidance
+func _synth_hint() -> AudioStreamWAV:
+	var duration: float = 0.22
+	var total_samples: int = int(duration * MIX_RATE)
+	var bytes: PackedByteArray = PackedByteArray()
+	bytes.resize(total_samples * 2)
+	var phase: float = 0.0
+
+	for i in range(total_samples):
+		var t: float = float(i) / float(total_samples)
+		var freq: float = 659.25 if t < 0.35 else 987.77
+		phase += (freq * TAU) / float(MIX_RATE)
+		var s: float = sin(phase)
+		var tri: float = 2.0 * absf(2.0 * (fposmod(phase / TAU, 1.0) - 0.5)) - 1.0
+		var wave: float = 0.7 * s + 0.3 * tri
+		var env: float = (1.0 - t) * (1.0 - t * 0.5)
+		var sample_val: int = int(clampi(int(wave * env * 14000.0), -32767, 32767))
+		bytes.encode_s16(i * 2, sample_val)
+
+	return _create_wav(bytes)
+
+
+## Generates a low warning buzzer for deadlock detection
+func _synth_deadlock() -> AudioStreamWAV:
+	var duration: float = 0.18
+	var total_samples: int = int(duration * MIX_RATE)
+	var bytes: PackedByteArray = PackedByteArray()
+	bytes.resize(total_samples * 2)
+	var phase: float = 0.0
+
+	for i in range(total_samples):
+		var t: float = float(i) / float(total_samples)
+		var freq: float = lerpf(140.0, 95.0, t)
+		phase += (freq * TAU) / float(MIX_RATE)
+		var wave: float = 1.0 if sin(phase) > 0.2 else -1.0
+		var env: float = 1.0 - t
+		var sample_val: int = int(clampi(int(wave * env * 11000.0), -32767, 32767))
+		bytes.encode_s16(i * 2, sample_val)
+
+	return _create_wav(bytes)
+
