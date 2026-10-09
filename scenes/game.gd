@@ -24,6 +24,7 @@ var current_level_index: int = 0
 
 var grid: GridLogic
 var save_mgr: Node = null
+var audio_mgr: Node = null
 
 # Visual settings
 var tile_size: float = 64.0
@@ -61,6 +62,9 @@ func _ready() -> void:
 	else:
 		save_mgr = SaveManagerScript.new()
 		add_child(save_mgr)
+
+	if is_inside_tree() and get_tree().root.has_node("AudioManager"):
+		audio_mgr = get_tree().root.get_node("AudioManager")
 
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
@@ -130,13 +134,19 @@ func _update_ui() -> void:
 func _on_player_moved(from_pos: Vector2i, to_pos: Vector2i) -> void:
 	_update_ui()
 	_animate_player(from_pos, to_pos)
+	if not grid.last_move_pushed_crate and audio_mgr:
+		audio_mgr.play_move()
 
 
 func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 	_animate_crate(from_pos, to_pos)
+	if audio_mgr:
+		audio_mgr.play_push()
 
 
 func _on_level_won() -> void:
+	if audio_mgr:
+		audio_mgr.play_win()
 	if save_mgr:
 		save_mgr.record_level_completion(current_level_index, grid.moves_count, grid.pushes_count)
 	_update_ui()
@@ -266,15 +276,21 @@ func _on_restart_pressed() -> void:
 
 
 func _do_restart() -> void:
+	if audio_mgr:
+		audio_mgr.play_restart()
 	grid.restart()
 
 
 func _on_prev_level_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	if current_level_index > 0:
 		load_level(current_level_index - 1)
 
 
 func _on_next_level_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	if current_level_index < level_paths.size() - 1:
 		var next_idx: int = current_level_index + 1
 		if not save_mgr or save_mgr.is_level_unlocked(next_idx):
@@ -282,6 +298,8 @@ func _on_next_level_pressed() -> void:
 
 
 func _on_menu_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 

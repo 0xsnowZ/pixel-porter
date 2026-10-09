@@ -12,6 +12,7 @@ const TOTAL_LEVELS_COUNT: int = 50
 const AVAILABLE_LEVELS_COUNT: int = 10 # 10 verified solvable levels for Week 1
 
 var save_mgr: Node = null
+var audio_mgr: Node = null
 
 # Node references
 @onready var main_view: VBoxContainer = $MainView
@@ -54,6 +55,9 @@ func _ready() -> void:
 		save_mgr = SaveManagerScript.new()
 		add_child(save_mgr)
 
+	if is_inside_tree() and get_tree().root.has_node("AudioManager"):
+		audio_mgr = get_tree().root.get_node("AudioManager")
+
 	if not continue_btn.pressed.is_connected(_on_continue_pressed):
 		continue_btn.pressed.connect(_on_continue_pressed)
 	if not play_btn.pressed.is_connected(_on_play_pressed):
@@ -75,6 +79,8 @@ func _ready() -> void:
 
 
 func _show_main_view() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	main_view.show()
 	level_select_view.hide()
 	credits_modal.hide()
@@ -82,6 +88,8 @@ func _show_main_view() -> void:
 
 
 func _show_level_select() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	main_view.hide()
 	level_select_view.show()
 	credits_modal.hide()
@@ -89,10 +97,14 @@ func _show_level_select() -> void:
 
 
 func _show_credits() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	credits_modal.show()
 
 
 func _hide_credits() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	credits_modal.hide()
 
 
@@ -116,11 +128,15 @@ func _update_menu_state() -> void:
 
 
 func _on_continue_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	var target_lvl: int = save_mgr.last_played_level if save_mgr else 0
 	_start_game_at_level(target_lvl)
 
 
 func _on_play_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
 	_start_game_at_level(0)
 
 
@@ -128,6 +144,8 @@ func _on_sound_toggle_pressed() -> void:
 	if save_mgr:
 		save_mgr.sound_enabled = not save_mgr.sound_enabled
 		save_mgr.save_data()
+	if audio_mgr:
+		audio_mgr.play_click()
 	_update_menu_state()
 
 
