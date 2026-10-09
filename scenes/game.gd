@@ -216,9 +216,17 @@ func _on_level_won() -> void:
 	if loc_mgr:
 		win_title.text = loc_mgr.tr_text("WIN_TITLE", [current_level_index + 1])
 		win_stats.text = loc_mgr.tr_text("WIN_STATS", [grid.moves_count, grid.pushes_count, best_m, best_p])
+		if current_level_index >= level_paths.size() - 1:
+			next_level_button.text = loc_mgr.tr_text("BTN_CAMPAIGN_COMPLETE")
+		else:
+			next_level_button.text = loc_mgr.tr_text("WIN_NEXT_BTN")
 	else:
 		win_title.text = "LEVEL %d COMPLETED!" % [current_level_index + 1]
 		win_stats.text = "Solved in %d moves (%d pushes)\nBest: %d moves (%d pushes)" % [grid.moves_count, grid.pushes_count, best_m, best_p]
+		if current_level_index >= level_paths.size() - 1:
+			next_level_button.text = "Finish Campaign ★"
+		else:
+			next_level_button.text = "Next Level →"
 	win_modal.show()
 
 
@@ -361,14 +369,19 @@ func _on_prev_level_pressed() -> void:
 func _on_next_level_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
-	if current_level_index < level_paths.size() - 1:
-		var next_idx: int = current_level_index + 1
-		if not save_mgr or save_mgr.is_level_unlocked(next_idx):
-			if ad_mgr and ad_mgr.should_show_interstitial(current_level_index):
-				ad_mgr.show_interstitial(current_level_index)
-				if ad_mgr.is_showing_ad:
-					await ad_mgr.interstitial_closed
-			load_level(next_idx)
+
+	# If completing the final level (Level 50), navigate to the Campaign End Screen (PRD Section 6)
+	if current_level_index >= level_paths.size() - 1:
+		get_tree().change_scene_to_file("res://scenes/end_screen.tscn")
+		return
+
+	var next_idx: int = current_level_index + 1
+	if not save_mgr or save_mgr.is_level_unlocked(next_idx):
+		if ad_mgr and ad_mgr.should_show_interstitial(current_level_index):
+			ad_mgr.show_interstitial(current_level_index)
+			if ad_mgr.is_showing_ad:
+				await ad_mgr.interstitial_closed
+		load_level(next_idx)
 
 
 func _on_menu_pressed() -> void:

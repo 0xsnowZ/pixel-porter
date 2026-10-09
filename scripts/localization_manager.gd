@@ -146,6 +146,41 @@ const TRANSLATIONS: Dictionary = {
 		"en": "Close",
 		"fr": "Fermer",
 		"ar": "إغلاق"
+	},
+	"BTN_CAMPAIGN_COMPLETE": {
+		"en": "Finish Campaign ★",
+		"fr": "Terminer la campagne ★",
+		"ar": "إنهاء الحملة ★"
+	},
+	"END_TITLE": {
+		"en": "CAMPAIGN COMPLETED!",
+		"fr": "CAMPAGNE TERMINÉE !",
+		"ar": "اكتملت الحملة بنجاح!"
+	},
+	"END_THANKS": {
+		"en": "Thank you for playing Pixel Porter!\nYou have mastered all 50 warehouse puzzles.",
+		"fr": "Merci d'avoir joué à Pixel Porter !\nVous avez maîtrisé les 50 défis d'entrepôt.",
+		"ar": "شكراً لك على لعب Pixel Porter!\nلقد تمكنت من حل جميع ألغاز المستودع الـ 50."
+	},
+	"END_MORE_LEVELS": {
+		"en": "★ More levels coming soon! ★",
+		"fr": "★ Plus de niveaux bientôt disponibles ! ★",
+		"ar": "★ المزيد من المستويات قريباً! ★"
+	},
+	"END_STATS_SUMMARY": {
+		"en": "Levels Solved: %d / 50\nTotal Best Moves: %d\nTotal Best Pushes: %d",
+		"fr": "Niveaux résolus : %d / 50\nTotal meilleurs mouvements : %d\nTotal meilleures poussées : %d",
+		"ar": "المستويات المحلولة: %d / 50\nإجمالي أفضل الحركات: %d\nإجمالي أفضل الدفعات: %d"
+	},
+	"BTN_MAIN_MENU": {
+		"en": "Main Menu",
+		"fr": "Menu Principal",
+		"ar": "القائمة الرئيسية"
+	},
+	"BTN_REPLAY_LEVELS": {
+		"en": "Level Select",
+		"fr": "Choix du Niveau",
+		"ar": "اختيار المستوى"
 	}
 }
 
