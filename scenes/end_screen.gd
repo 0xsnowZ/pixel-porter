@@ -79,6 +79,16 @@ func _ready() -> void:
 	if haptic_mgr:
 		haptic_mgr.vibrate_win()
 
+	_attach_spring_physics(level_select_btn)
+	_attach_spring_physics(menu_btn)
+
+	if has_node("Margin/VBox/TrophyIcon"):
+		var trophy = $Margin/VBox/TrophyIcon
+		trophy.pivot_offset = trophy.size / 2.0
+		var tw: Tween = create_tween().set_loops()
+		tw.tween_property(trophy, "scale", Vector2(1.08, 1.08), 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(trophy, "scale", Vector2.ONE, 1.2).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+
 
 func _apply_safe_area() -> void:
 	if safe_area_mgr != null and margin_container != null:
@@ -216,3 +226,24 @@ func _on_menu_pressed() -> void:
 	if haptic_mgr:
 		haptic_mgr.vibrate_click()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
+
+
+func _attach_spring_physics(btn: Button) -> void:
+	if btn == null:
+		return
+	btn.pivot_offset = btn.size / 2.0
+	btn.button_down.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2(0.94, 0.94), 0.07)
+	)
+	btn.button_up.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.15)
+	)
+	btn.mouse_exited.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.10)
+	)

@@ -31,6 +31,14 @@ var grid_origin: Vector2 = Vector2.ZERO
 var player_facing_dir: Vector2i = Vector2i.DOWN
 var win_particles: Array[Dictionary] = []
 
+# Juice & Micro-interaction state
+var board_trauma: float = 0.0
+var board_shake_offset: Vector2 = Vector2.ZERO
+var crate_squash: Dictionary = {} # Vector2i -> Vector2 scale
+var dust_particles: Array[Dictionary] = []
+var goal_effects: Array[Dictionary] = []
+var _last_hud_moves: int = 0
+
 # Animation state
 var is_animating: bool = false
 var queued_move_dir: Vector2i = Vector2i.ZERO # PRD Section 5: "A swipe made during a move animation is queued (one move only)"
@@ -159,6 +167,15 @@ func _ready() -> void:
 	if get_viewport():
 		get_viewport().size_changed.connect(queue_redraw)
 
+	# Tactile arcade button physics
+	_attach_spring_physics(menu_button)
+	_attach_spring_physics(prev_button)
+	_attach_spring_physics(undo_button)
+	_attach_spring_physics(restart_button)
+	_attach_spring_physics(next_button)
+	_attach_spring_physics(win_menu_button)
+	_attach_spring_physics(next_level_button)
+
 
 func _apply_safe_area() -> void:
 	if safe_area_mgr != null:
@@ -202,6 +219,13 @@ func load_level(index: int) -> void:
 	for crate_pos in grid.crates.keys():
 		visual_crates[crate_pos] = Vector2(crate_pos)
 
+	_last_hud_moves = 0
+	board_trauma = 0.0
+	board_shake_offset = Vector2.ZERO
+	dust_particles.clear()
+	goal_effects.clear()
+	crate_squash.clear()
+
 	_update_ui()
 	queue_redraw()
 
@@ -241,6 +265,17 @@ func _update_ui() -> void:
 		can_advance = can_advance and save_mgr.is_level_unlocked(current_level_index + 1)
 	next_button.disabled = not can_advance
 
+	# Numeric pop animation on moves counter
+	if grid != null and grid.moves_count > _last_hud_moves:
+		_last_hud_moves = grid.moves_count
+		if stats_label != null and stats_label.is_inside_tree():
+			stats_label.pivot_offset = stats_label.size / 2.0
+			var pop_tw: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+			stats_label.scale = Vector2(1.14, 1.14)
+			pop_tw.tween_property(stats_label, "scale", Vector2.ONE, 0.16)
+	elif grid != null and grid.moves_count < _last_hud_moves:
+		_last_hud_moves = grid.moves_count
+
 
 func _on_player_moved(from_pos: Vector2i, to_pos: Vector2i) -> void:
 	_update_ui()
@@ -251,8 +286,20 @@ func _on_player_moved(from_pos: Vector2i, to_pos: Vector2i) -> void:
 
 func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 	_animate_crate(from_pos, to_pos)
-	if audio_mgr:
-		audio_mgr.play_push()
+	_spawn_push_dust(from_pos, to_pos)
+	add_trauma(0.24)
+	if grid != null and grid.goals.has(to_pos):
+		_spawn_goal_effect(to_pos)
+		add_trauma(0.38)
+		if audio_mgr:
+			if audio_mgr.has_method("play_goal_lock"):
+				audio_mgr.play_goal_lock()
+			else:
+				audio_mgr.play_push()
+	else:
+		if audio_mgr:
+			audio_mgr.play_push()
+
 	if haptic_mgr:
 		if grid != null and grid.goals.has(to_pos):
 			haptic_mgr.vibrate_target()
@@ -261,6 +308,7 @@ func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 
 
 func _on_level_won() -> void:
+	add_trauma(0.50)
 	if audio_mgr:
 		audio_mgr.play_win()
 	if haptic_mgr:
@@ -331,6 +379,16 @@ func _animate_crate(from_pos: Vector2i, to_pos: Vector2i) -> void:
 		queue_redraw()
 	, Vector2(from_pos), Vector2(to_pos), 0.12)
 
+	# Squash & stretch deformation along push axis
+	var push_dir: Vector2i = to_pos - from_pos
+	var squash_start: Vector2 = Vector2(0.86, 1.14) if push_dir.x != 0 else Vector2(1.14, 0.86)
+	crate_squash[to_pos] = squash_start
+	var sq_tw: Tween = create_tween().set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	sq_tw.tween_method(func(s: Vector2):
+		crate_squash[to_pos] = s
+		queue_redraw()
+	, squash_start, Vector2.ONE, 0.22)
+
 
 func try_move(dir: Vector2i) -> void:
 	player_facing_dir = dir
@@ -344,8 +402,10 @@ func try_move(dir: Vector2i) -> void:
 
 	if grid != null:
 		var moved: bool = grid.move(dir)
-		if not moved and haptic_mgr:
-			haptic_mgr.vibrate_bump()
+		if not moved:
+			add_trauma(0.12)
+			if haptic_mgr:
+				haptic_mgr.vibrate_bump()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -542,6 +602,49 @@ func _process(delta: float) -> void:
 	if grid and not grid.goals.is_empty():
 		needs_redraw = true
 
+	# Update board trauma & shake
+	if board_trauma > 0.0:
+		board_trauma = max(0.0, board_trauma - delta * 4.2)
+		var shake_mag: float = board_trauma * board_trauma * 7.5
+		var a: float = randf() * TAU
+		board_shake_offset = Vector2(cos(a), sin(a)) * shake_mag
+		needs_redraw = true
+	else:
+		board_shake_offset = Vector2.ZERO
+
+	# Update dust particles
+	if not dust_particles.is_empty():
+		needs_redraw = true
+		var di: int = dust_particles.size() - 1
+		while di >= 0:
+			var dp: Dictionary = dust_particles[di]
+			dp["life"] -= delta
+			if dp["life"] <= 0.0:
+				dust_particles.remove_at(di)
+			else:
+				dp["pos"] += dp["vel"] * delta
+				dp["vel"] *= (1.0 - 5.0 * delta)
+				dp["size"] += 2.0 * delta
+			di -= 1
+
+	# Update goal shockwaves & sparks
+	if not goal_effects.is_empty():
+		needs_redraw = true
+		var gi: int = goal_effects.size() - 1
+		while gi >= 0:
+			var ge: Dictionary = goal_effects[gi]
+			ge["life"] -= delta
+			if ge["life"] <= 0.0:
+				goal_effects.remove_at(gi)
+			else:
+				if ge["type"] == "ring":
+					var progress: float = 1.0 - (ge["life"] / ge["max_life"])
+					ge["radius"] = lerpf(4.0, ge["max_radius"], progress)
+				elif ge["type"] == "spark":
+					ge["pos"] += ge["vel"] * delta
+					ge["vel"] *= (1.0 - 3.0 * delta)
+			gi -= 1
+
 	# Update celebration particles
 	if not win_particles.is_empty():
 		needs_redraw = true
@@ -596,12 +699,13 @@ func _draw() -> void:
 		return
 
 	calculate_layout()
+	var effective_origin: Vector2 = grid_origin + board_shake_offset
 	var board_pixel_size: Vector2 = Vector2(grid.width * tile_size, grid.height * tile_size)
 
 	# 1. Industrial Warehouse Loading Bay Board Framing (PRD Section 4)
 	var frame_margin: float = 12.0
 	var frame_rect: Rect2 = Rect2(
-		grid_origin - Vector2(frame_margin, frame_margin),
+		effective_origin - Vector2(frame_margin, frame_margin),
 		board_pixel_size + Vector2(frame_margin * 2.0, frame_margin * 2.0)
 	)
 
@@ -614,7 +718,7 @@ func _draw() -> void:
 	# Polished brass bevel rim
 	draw_rect(frame_rect, Color(0.78, 0.60, 0.22), false, 2.5)
 	# Inner dark groove
-	draw_rect(Rect2(grid_origin - Vector2(2, 2), board_pixel_size + Vector2(4, 4)), Color(0.06, 0.08, 0.12), false, 2.0)
+	draw_rect(Rect2(effective_origin - Vector2(2, 2), board_pixel_size + Vector2(4, 4)), Color(0.06, 0.08, 0.12), false, 2.0)
 
 	# 4 Corner industrial brass bolts
 	var corner_offsets: Array[Vector2] = [
@@ -633,7 +737,7 @@ func _draw() -> void:
 	for y in range(grid.height):
 		for x in range(grid.width):
 			var pos: Vector2i = Vector2i(x, y)
-			var rect: Rect2 = Rect2(grid_origin + Vector2(x, y) * tile_size, Vector2(tile_size, tile_size))
+			var rect: Rect2 = Rect2(effective_origin + Vector2(x, y) * tile_size, Vector2(tile_size, tile_size))
 
 			if grid.is_wall(pos):
 				_draw_wall(rect)
@@ -650,7 +754,7 @@ func _draw() -> void:
 	var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
 	var pulse: float = sin(time_sec * 3.5) * 0.12
 	for goal_pos in grid.goals.keys():
-		var rect: Rect2 = Rect2(grid_origin + Vector2(goal_pos) * tile_size, Vector2(tile_size, tile_size))
+		var rect: Rect2 = Rect2(effective_origin + Vector2(goal_pos) * tile_size, Vector2(tile_size, tile_size))
 		var center: Vector2 = rect.get_center()
 
 		draw_texture_rect(tex_goal, rect, false)
@@ -660,26 +764,45 @@ func _draw() -> void:
 		draw_circle(center, aura_radius + 4.0, Color(0.98, 0.82, 0.20, 0.22 + pulse * 0.10))
 		draw_circle(center, 3.5, Color(1.0, 1.0, 0.85, 0.90))
 
-	# 4. Draw Crates with Drop Shadow & 3D Shading
+	# 4. Draw Push Friction Dust Puffs
+	for dp in dust_particles:
+		var alpha: float = clampf(dp["life"] / dp["max_life"], 0.0, 1.0)
+		var col: Color = dp["color"]
+		col.a = alpha * 0.70
+		draw_circle(dp["pos"], dp["size"], col)
+
+	# 5. Draw Goal Shockwaves & Sparks
+	for ge in goal_effects:
+		var alpha: float = clampf(ge["life"] / ge["max_life"], 0.0, 1.0)
+		if ge["type"] == "ring":
+			var ring_col: Color = ge["color"]
+			ring_col.a = alpha * 0.85
+			draw_arc(ge["pos"], ge["radius"], 0, TAU, 32, ring_col, 3.0, true)
+		elif ge["type"] == "spark":
+			var spark_col: Color = ge["color"]
+			spark_col.a = alpha
+			draw_circle(ge["pos"], ge["size"] * alpha, spark_col)
+
+	# 6. Draw Crates with Drop Shadow, 3D Shading & Squash
 	for logical_pos in grid.crates.keys():
 		var draw_tile_pos: Vector2 = visual_crates.get(logical_pos, Vector2(logical_pos))
 		var is_on_goal: bool = grid.is_goal(logical_pos)
 		var crate_padding: float = tile_size * 0.04
 		var rect: Rect2 = Rect2(
-			grid_origin + draw_tile_pos * tile_size + Vector2(crate_padding, crate_padding),
+			effective_origin + draw_tile_pos * tile_size + Vector2(crate_padding, crate_padding),
 			Vector2(tile_size - crate_padding * 2.0, tile_size - crate_padding * 2.0)
 		)
-		_draw_crate(rect, is_on_goal)
+		_draw_crate(rect, is_on_goal, logical_pos)
 
-	# 5. Draw Directional Porter Worker
+	# 7. Draw Directional Porter Worker
 	var player_padding: float = tile_size * 0.04
 	var player_rect: Rect2 = Rect2(
-		grid_origin + visual_player_pos * tile_size + Vector2(player_padding, player_padding),
+		effective_origin + visual_player_pos * tile_size + Vector2(player_padding, player_padding),
 		Vector2(tile_size - player_padding * 2.0, tile_size - player_padding * 2.0)
 	)
 	_draw_player(player_rect)
 
-	# 6. Draw Victory Particles
+	# 8. Draw Victory Celebration Particles
 	for p in win_particles:
 		var alpha: float = clampf(p["life"] / p["max_life"], 0.0, 1.0)
 		var p_col: Color = p["color"]
@@ -698,19 +821,23 @@ func _draw_wall(rect: Rect2) -> void:
 	draw_texture_rect(tex_wall, rect, false)
 
 
-func _draw_crate(rect: Rect2, on_goal: bool) -> void:
+func _draw_crate(rect: Rect2, on_goal: bool, logical_pos: Vector2i = Vector2i.ZERO) -> void:
 	# Crate soft drop shadow
 	var shadow_rect: Rect2 = Rect2(rect.position + Vector2(3, 5), rect.size)
 	draw_rect(shadow_rect, Color(0.0, 0.0, 0.0, 0.38))
 
+	var scale_fac: Vector2 = crate_squash.get(logical_pos, Vector2.ONE)
+	var c_center: Vector2 = rect.get_center()
+	var scaled_sz: Vector2 = rect.size * scale_fac
+	var draw_r: Rect2 = Rect2(c_center - scaled_sz * 0.5, scaled_sz)
+
 	var c_tex: Texture2D = tex_crate_goal if on_goal else tex_crate
-	draw_texture_rect(c_tex, rect, false)
+	draw_texture_rect(c_tex, draw_r, false)
 
 	if on_goal:
-		var center: Vector2 = rect.get_center()
 		var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
 		var star_pulse: float = sin(time_sec * 4.0) * 0.15
-		draw_circle(center, 8.0 * (1.0 + star_pulse), Color(1.0, 0.95, 0.5, 0.45))
+		draw_circle(c_center, 8.0 * (1.0 + star_pulse), Color(1.0, 0.95, 0.5, 0.45))
 
 
 func _draw_player(rect: Rect2) -> void:
@@ -737,3 +864,90 @@ func _draw_player(rect: Rect2) -> void:
 		p_tex = tex_player_right
 
 	draw_texture_rect(p_tex, rect, false)
+
+
+func add_trauma(amount: float) -> void:
+	board_trauma = clampf(board_trauma + amount, 0.0, 1.0)
+
+
+func _spawn_push_dust(from_pos: Vector2i, to_pos: Vector2i) -> void:
+	var dir: Vector2i = to_pos - from_pos
+	var base_origin: Vector2 = grid_origin + Vector2(from_pos) * tile_size
+	var spawn_edge_center: Vector2 = base_origin + Vector2(tile_size * 0.5, tile_size * 0.5) - Vector2(dir) * (tile_size * 0.42)
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.randomize()
+
+	var dust_palette: Array[Color] = [
+		Color(0.85, 0.80, 0.72, 0.85),
+		Color(0.72, 0.67, 0.60, 0.80),
+		Color(0.55, 0.50, 0.45, 0.70)
+	]
+
+	for i in range(6):
+		var offset: Vector2 = Vector2.ZERO
+		if dir.x != 0:
+			offset = Vector2(0, rng.randf_range(-tile_size * 0.35, tile_size * 0.35))
+		else:
+			offset = Vector2(rng.randf_range(-tile_size * 0.35, tile_size * 0.35), 0)
+
+		var back_vel: Vector2 = -Vector2(dir) * rng.randf_range(40.0, 85.0) + Vector2(rng.randf_range(-20.0, 20.0), rng.randf_range(-20.0, 20.0))
+		dust_particles.append({
+			"pos": spawn_edge_center + offset,
+			"vel": back_vel,
+			"size": rng.randf_range(3.0, 5.5),
+			"color": dust_palette[rng.randi() % dust_palette.size()],
+			"life": rng.randf_range(0.22, 0.32),
+			"max_life": 0.32
+		})
+
+
+func _spawn_goal_effect(goal_pos: Vector2i) -> void:
+	var center: Vector2 = grid_origin + Vector2(goal_pos) * tile_size + Vector2(tile_size * 0.5, tile_size * 0.5)
+
+	# Expanding shockwave ring
+	goal_effects.append({
+		"type": "ring",
+		"pos": center,
+		"radius": 4.0,
+		"max_radius": tile_size * 0.85,
+		"color": Color(1.0, 0.88, 0.25, 0.95),
+		"life": 0.35,
+		"max_life": 0.35
+	})
+
+	# 8 radiating golden sparks
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.randomize()
+	for i in range(8):
+		var angle: float = (float(i) / 8.0) * TAU + rng.randf_range(-0.15, 0.15)
+		var spd: float = rng.randf_range(110.0, 190.0)
+		goal_effects.append({
+			"type": "spark",
+			"pos": center,
+			"vel": Vector2(cos(angle), sin(angle)) * spd,
+			"size": rng.randf_range(3.5, 6.5),
+			"color": Color(1.0, 0.92, 0.40, 1.0) if i % 2 == 0 else Color(1.0, 0.65, 0.20, 1.0),
+			"life": rng.randf_range(0.28, 0.42),
+			"max_life": 0.42
+		})
+
+
+func _attach_spring_physics(btn: Button) -> void:
+	if btn == null:
+		return
+	btn.pivot_offset = btn.size / 2.0
+	btn.button_down.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2(0.93, 0.93), 0.07)
+	)
+	btn.button_up.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.15)
+	)
+	btn.mouse_exited.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.10)
+	)

@@ -28,6 +28,7 @@ func _init() -> void:
 	test_win_celebration_and_particles()
 	test_layout_and_framing()
 	test_undo_button_interaction()
+	test_juice_and_micro_interactions()
 
 	print("\n" + "=".repeat(54))
 	print("Game Scene Results: %d passed, %d failed" % [passes, fails])
@@ -209,5 +210,38 @@ func test_undo_button_interaction() -> void:
 	assert_eq(game.grid.moves_count, 0, "Moves count restored to 0 after undo")
 	assert_eq(game.grid.player_pos, init_pos, "Player position restored after undo")
 	assert_true(game.undo_button.disabled, "Undo button disabled after rolling back all moves")
+
+	game.free()
+
+
+func test_juice_and_micro_interactions() -> void:
+	print("--- Running Suite: Juice & Micro-Interactions ---")
+	var game: Control = create_test_game()
+
+	assert_eq(game.board_trauma, 0.0, "Board trauma starts at 0.0")
+	assert_eq(game.dust_particles.size(), 0, "No dust particles initially")
+	assert_eq(game.goal_effects.size(), 0, "No goal effects initially")
+
+	# Push crate UP in Level 1
+	game.try_move(Vector2i.UP)
+	assert_true(game.dust_particles.size() > 0, "Dust particles spawned on crate push")
+	assert_true(game.board_trauma > 0.0, "Board trauma added on crate push")
+	assert_true(game.crate_squash.has(Vector2i(2, 1)), "Crate squash & stretch deformation tracked")
+
+	# Process decay
+	game._process(0.5)
+	assert_eq(game.dust_particles.size(), 0, "Dust particles expired and cleared after duration")
+
+	# Test goal effect spawning
+	game._spawn_goal_effect(Vector2i(1, 3))
+	assert_true(game.goal_effects.size() > 0, "Goal effect spawned shockwave and sparks")
+
+	game._process(0.5)
+	assert_eq(game.goal_effects.size(), 0, "Goal effects expired and cleared after duration")
+
+	# Test trauma decay to 0
+	game._process(1.0)
+	assert_eq(game.board_trauma, 0.0, "Trauma decayed back to 0.0")
+	assert_eq(game.board_shake_offset, Vector2.ZERO, "Board shake offset returned to Vector2.ZERO")
 
 	game.free()

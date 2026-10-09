@@ -19,6 +19,7 @@ var sfx_push: AudioStreamWAV
 var sfx_win: AudioStreamWAV
 var sfx_restart: AudioStreamWAV
 var sfx_click: AudioStreamWAV
+var sfx_goal_lock: AudioStreamWAV
 
 # AudioStreamPlayer voice pool for overlapping SFX
 var _players: Array[AudioStreamPlayer] = []
@@ -93,6 +94,11 @@ func play_click() -> void:
 	play_stream(sfx_click, -4.0)
 
 
+## Goal pad lock chime
+func play_goal_lock() -> void:
+	play_stream(sfx_goal_lock, -1.0)
+
+
 # ==============================================================================
 # Procedural Retro 8-Bit Audio Synthesis
 # ==============================================================================
@@ -103,6 +109,7 @@ func _generate_all_sfx() -> void:
 	sfx_win = _synth_win()
 	sfx_restart = _synth_restart()
 	sfx_click = _synth_click()
+	sfx_goal_lock = _synth_goal_lock()
 
 
 func _create_wav(data_bytes: PackedByteArray) -> AudioStreamWAV:
@@ -242,6 +249,32 @@ func _synth_click() -> AudioStreamWAV:
 		var wave: float = 1.0 if sin(phase) > 0.0 else -1.0
 		var envelope: float = (1.0 - t) * (1.0 - t)
 		var sample_val: int = int(clampi(int(wave * envelope * 14000.0), -32767, 32767))
+		bytes.encode_s16(i * 2, sample_val)
+
+	return _create_wav(bytes)
+
+
+## Generates a cheerful two-tone chime when a crate snaps onto a goal (C5 to E5 arpeggio, 140ms)
+func _synth_goal_lock() -> AudioStreamWAV:
+	var duration: float = 0.14
+	var total_samples: int = int(duration * MIX_RATE)
+	var bytes: PackedByteArray = PackedByteArray()
+	bytes.resize(total_samples * 2)
+
+	var phase1: float = 0.0
+	var phase2: float = 0.0
+
+	for i in range(total_samples):
+		var t: float = float(i) / float(total_samples)
+		# Ascending pitch from 523Hz (C5) to 659Hz (E5) with harmonic overtone
+		var freq1: float = 523.25 if t < 0.4 else 659.25
+		var freq2: float = freq1 * 2.0
+		phase1 += (freq1 * TAU) / float(MIX_RATE)
+		phase2 += (freq2 * TAU) / float(MIX_RATE)
+
+		var wave: float = sin(phase1) * 0.75 + sin(phase2) * 0.25
+		var env: float = pow(1.0 - t, 1.8)
+		var sample_val: int = int(clampi(int(wave * env * 22000.0), -32767, 32767))
 		bytes.encode_s16(i * 2, sample_val)
 
 	return _create_wav(bytes)

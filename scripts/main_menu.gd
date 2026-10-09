@@ -116,6 +116,10 @@ func _ready() -> void:
 		tw.tween_property(logo, "scale", Vector2(1.03, 1.03), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
+	# Tactile arcade button physics
+	for b in [continue_btn, play_btn, level_select_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn]:
+		_attach_spring_physics(b)
+
 
 func _apply_safe_area() -> void:
 	if safe_area_mgr != null and has_node("LevelSelectView/TopBar/Margin"):
@@ -276,6 +280,7 @@ func _build_level_grid() -> void:
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		btn.set_meta("level_index", i)
 		btn.pressed.connect(_on_level_button_pressed.bind(i))
+		_attach_spring_physics(btn)
 		level_grid.add_child(btn)
 
 	_refresh_level_grid_buttons()
@@ -319,3 +324,24 @@ func _on_level_button_pressed(level_index: int) -> void:
 		if save_mgr and not save_mgr.is_level_unlocked(level_index):
 			return
 		_start_game_at_level(level_index)
+
+
+func _attach_spring_physics(btn: Button) -> void:
+	if btn == null:
+		return
+	btn.pivot_offset = btn.size / 2.0
+	btn.button_down.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2(0.94, 0.94), 0.07)
+	)
+	btn.button_up.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.15)
+	)
+	btn.mouse_exited.connect(func():
+		btn.pivot_offset = btn.size / 2.0
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(btn, "scale", Vector2.ONE, 0.10)
+	)
