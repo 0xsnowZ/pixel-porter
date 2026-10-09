@@ -237,6 +237,17 @@ def render_gameplay_preview():
     game_img.save(out_path)
     print("Saved preview_gameplay.png")
 
+
+def render_splash_screen_preview():
+    splash_path = os.path.join(ASSETS_DIR, "splash.png")
+    if os.path.exists(splash_path):
+        img = Image.open(splash_path).convert("RGBA").resize((W, H))
+        out_path = os.path.join(ARTIFACT_DIR, "preview_splash_screen.png")
+        img.save(out_path)
+        print("Saved preview_splash_screen.png")
+
+
 if __name__ == "__main__":
     render_main_menu_preview()
     render_gameplay_preview()
+    render_splash_screen_preview()

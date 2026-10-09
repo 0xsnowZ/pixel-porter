@@ -122,6 +122,21 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "← Retour",
 		"ar": "رجوع →"
 	},
+	"SPLASH_INIT": {
+		"en": "INITIALIZING SYSTEM...",
+		"fr": "INITIALISATION DU SYSTÈME...",
+		"ar": "جاري تهيئة النظام..."
+	},
+	"SPLASH_LEVELS": {
+		"en": "LOADING 50 PUZZLE LEVELS...",
+		"fr": "CHARGEMENT DE 50 NIVEAUX...",
+		"ar": "تحميل 50 مرحلة..."
+	},
+	"SPLASH_READY": {
+		"en": "READY! TAP TO START",
+		"fr": "PRÊT ! TOUCHER POUR DÉMARRER",
+		"ar": "جاهز! المس للبدء"
+	},
 	"LEVEL_SELECT_TITLE": {
 		"en": "SELECT LEVEL",
 		"fr": "CHOIX DU NIVEAU",
