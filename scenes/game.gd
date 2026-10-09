@@ -21,6 +21,7 @@ var grid: GridLogic
 var save_mgr: Node = null
 var audio_mgr: Node = null
 var loc_mgr: Node = null
+var ad_mgr: Node = null
 
 # Visual settings
 var tile_size: float = 64.0
@@ -85,6 +86,9 @@ func _ready() -> void:
 	if loc_mgr == null and is_inside_tree() and get_tree().root.has_node("LocalizationManager"):
 		loc_mgr = get_tree().root.get_node("LocalizationManager")
 
+	if ad_mgr == null and is_inside_tree() and get_tree().root.has_node("AdManager"):
+		ad_mgr = get_tree().root.get_node("AdManager")
+
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
 	grid.player_moved.connect(_on_player_moved)
@@ -134,7 +138,10 @@ func load_level(index: int) -> void:
 
 	is_animating = false
 	queued_move_dir = Vector2i.ZERO
-	win_modal.hide()
+	if win_modal:
+		win_modal.hide()
+	if ad_mgr:
+		ad_mgr.preload_interstitial()
 
 	# Sync visual positions
 	visual_player_pos = Vector2(grid.get_player_pos())
@@ -194,6 +201,8 @@ func _on_level_won() -> void:
 		audio_mgr.play_win()
 	if save_mgr:
 		save_mgr.record_level_completion(current_level_index, grid.moves_count, grid.pushes_count)
+	if ad_mgr:
+		ad_mgr.record_level_completed(current_level_index)
 
 	_spawn_celebration_particles()
 	_update_ui()
@@ -355,6 +364,10 @@ func _on_next_level_pressed() -> void:
 	if current_level_index < level_paths.size() - 1:
 		var next_idx: int = current_level_index + 1
 		if not save_mgr or save_mgr.is_level_unlocked(next_idx):
+			if ad_mgr and ad_mgr.should_show_interstitial(current_level_index):
+				ad_mgr.show_interstitial(current_level_index)
+				if ad_mgr.is_showing_ad:
+					await ad_mgr.interstitial_closed
 			load_level(next_idx)
 
 
