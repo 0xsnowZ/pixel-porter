@@ -43,6 +43,8 @@ var is_animating: bool = false
 var queued_move_dir: Vector2i = Vector2i.ZERO # PRD Section 5: "A swipe made during a move animation is queued (one move only)"
 var visual_player_pos: Vector2 = Vector2.ZERO
 var visual_crates: Dictionary = {} # Vector2i (current logical) -> Vector2 (interpolated visual)
+var walk_step_count: int = 0
+var current_walk_frame: int = 0 # 0: idle stance, 1: walk frame 1, 2: walk frame 2
 
 # Touch / Swipe handling (PRD Section 5)
 var touch_start_pos: Vector2 = Vector2.ZERO
@@ -82,9 +84,17 @@ var tex_goal: Texture2D = preload("res://assets/goal_pad.png")
 var tex_crate: Texture2D = preload("res://assets/crate_normal.png")
 var tex_crate_goal: Texture2D = preload("res://assets/crate_goal.png")
 var tex_player_down: Texture2D = preload("res://assets/player_down.png")
+var tex_player_down_w1: Texture2D = preload("res://assets/player_down_walk1.png")
+var tex_player_down_w2: Texture2D = preload("res://assets/player_down_walk2.png")
 var tex_player_up: Texture2D = preload("res://assets/player_up.png")
+var tex_player_up_w1: Texture2D = preload("res://assets/player_up_walk1.png")
+var tex_player_up_w2: Texture2D = preload("res://assets/player_up_walk2.png")
 var tex_player_left: Texture2D = preload("res://assets/player_left.png")
+var tex_player_left_w1: Texture2D = preload("res://assets/player_left_walk1.png")
+var tex_player_left_w2: Texture2D = preload("res://assets/player_left_walk2.png")
 var tex_player_right: Texture2D = preload("res://assets/player_right.png")
+var tex_player_right_w1: Texture2D = preload("res://assets/player_right_walk1.png")
+var tex_player_right_w2: Texture2D = preload("res://assets/player_right_walk2.png")
 
 
 func _initialize_nodes() -> void:
@@ -241,6 +251,8 @@ func load_level(index: int) -> void:
 
 	is_animating = false
 	queued_move_dir = Vector2i.ZERO
+	current_walk_frame = 0
+	walk_step_count = 0
 	level_start_time = Time.get_ticks_msec()
 	if win_modal:
 		win_modal.hide()
@@ -465,6 +477,8 @@ func _animate_stars_sequence(stars: Array, earned: int, gold_color: Color) -> vo
 
 
 func _on_level_reset() -> void:
+	current_walk_frame = 0
+	walk_step_count = 0
 	visual_player_pos = Vector2(grid.get_player_pos())
 	visual_crates.clear()
 	for crate_pos in grid.crates.keys():
@@ -475,11 +489,23 @@ func _on_level_reset() -> void:
 
 func _animate_player(from_pos: Vector2i, to_pos: Vector2i) -> void:
 	is_animating = true
+	walk_step_count += 1
+	var step_base: int = 1 if (walk_step_count % 2 == 1) else 2
+	current_walk_frame = step_base
 	var tween: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	visual_player_pos = Vector2(from_pos)
-	tween.tween_property(self, "visual_player_pos", Vector2(to_pos), 0.12)
+	tween.tween_method(func(pos: Vector2):
+		visual_player_pos = pos
+		var dist: float = pos.distance_to(Vector2(from_pos))
+		if dist > 0.5:
+			current_walk_frame = 2 if step_base == 1 else 1
+		else:
+			current_walk_frame = step_base
+		queue_redraw()
+	, Vector2(from_pos), Vector2(to_pos), 0.12)
 	tween.tween_callback(func():
 		is_animating = false
+		current_walk_frame = 0
 		visual_player_pos = Vector2(to_pos)
 		queue_redraw()
 		# Process queued move if one was buffered during animation (PRD Section 5)
@@ -627,6 +653,7 @@ func _on_undo_pressed() -> void:
 func _on_move_undone(p_pos: Vector2i, _had_crate: bool, _crate_from: Vector2i, _crate_to: Vector2i) -> void:
 	is_animating = false
 	queued_move_dir = Vector2i.ZERO
+	current_walk_frame = 0
 	visual_player_pos = Vector2(p_pos)
 	visual_crates.clear()
 	for crate_pos in grid.crates.keys():
@@ -986,14 +1013,16 @@ func _draw_player(rect: Rect2) -> void:
 		pts.append(shadow_center + Vector2(cos(a) * rx, sin(a) * ry))
 	draw_colored_polygon(pts, Color(0.0, 0.0, 0.0, 0.42))
 
-	# Pick directional sprite
+	# Pick directional sprite (idle vs walk cycle frame 1/2)
 	var p_tex: Texture2D = tex_player_down
 	if player_facing_dir == Vector2i.UP:
-		p_tex = tex_player_up
+		p_tex = tex_player_up_w1 if current_walk_frame == 1 else (tex_player_up_w2 if current_walk_frame == 2 else tex_player_up)
 	elif player_facing_dir == Vector2i.LEFT:
-		p_tex = tex_player_left
+		p_tex = tex_player_left_w1 if current_walk_frame == 1 else (tex_player_left_w2 if current_walk_frame == 2 else tex_player_left)
 	elif player_facing_dir == Vector2i.RIGHT:
-		p_tex = tex_player_right
+		p_tex = tex_player_right_w1 if current_walk_frame == 1 else (tex_player_right_w2 if current_walk_frame == 2 else tex_player_right)
+	else:
+		p_tex = tex_player_down_w1 if current_walk_frame == 1 else (tex_player_down_w2 if current_walk_frame == 2 else tex_player_down)
 
 	draw_texture_rect(p_tex, rect, false)
 

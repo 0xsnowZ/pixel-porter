@@ -24,6 +24,7 @@ func _init() -> void:
 
 	test_game_initialization_and_ui()
 	test_player_facing_directions()
+	test_walking_sprite_cycle()
 	test_restart_confirmation_threshold()
 	test_win_celebration_and_particles()
 	test_layout_and_framing()
@@ -122,6 +123,43 @@ func test_player_facing_directions() -> void:
 	# Move DOWN
 	game.try_move(Vector2i.DOWN)
 	assert_eq(game.player_facing_dir, Vector2i.DOWN, "Player facing updated to DOWN")
+
+	game.free()
+	
+	
+func test_walking_sprite_cycle() -> void:
+	print("--- Running Suite: Walking Sprite Cycle & Locomotion Polish ---")
+	var game: Control = create_test_game()
+
+	# Verify all walking cycle textures are loaded
+	assert_true(game.tex_player_down_w1 != null, "tex_player_down_w1 loaded")
+	assert_true(game.tex_player_down_w2 != null, "tex_player_down_w2 loaded")
+	assert_true(game.tex_player_up_w1 != null, "tex_player_up_w1 loaded")
+	assert_true(game.tex_player_up_w2 != null, "tex_player_up_w2 loaded")
+	assert_true(game.tex_player_left_w1 != null, "tex_player_left_w1 loaded")
+	assert_true(game.tex_player_left_w2 != null, "tex_player_left_w2 loaded")
+	assert_true(game.tex_player_right_w1 != null, "tex_player_right_w1 loaded")
+	assert_true(game.tex_player_right_w2 != null, "tex_player_right_w2 loaded")
+
+	# Initial state: idle frame (0)
+	assert_eq(game.current_walk_frame, 0, "Initial walk frame is 0 (idle stance)")
+	assert_eq(game.walk_step_count, 0, "Initial walk step count is 0")
+
+	# Trigger an animation step
+	game._animate_player(Vector2i(2, 3), Vector2i(2, 4))
+	assert_true(game.is_animating, "Player is animating during locomotion step")
+	assert_eq(game.walk_step_count, 1, "Walk step count incremented to 1")
+	assert_true(game.current_walk_frame in [1, 2], "Walking frame is active (1 or 2) during stride")
+
+	# Test reset returns to idle stance (frame 0)
+	game._on_level_reset()
+	assert_eq(game.current_walk_frame, 0, "Reset restores idle frame 0")
+	assert_eq(game.walk_step_count, 0, "Reset zeroes walk step count")
+
+	# Test undo returns to idle stance (frame 0)
+	game.current_walk_frame = 2
+	game._on_move_undone(Vector2i(2, 3), false, Vector2i.ZERO, Vector2i.ZERO)
+	assert_eq(game.current_walk_frame, 0, "Undo restores idle frame 0")
 
 	game.free()
 
