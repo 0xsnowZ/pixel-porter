@@ -72,6 +72,46 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "LANGUE : %s",
 		"ar": "اللغة: %s"
 	},
+	"MENU_SETTINGS": {
+		"en": "SETTINGS ⚙",
+		"fr": "PARAMÈTRES ⚙",
+		"ar": "الإعدادات ⚙"
+	},
+	"SETTINGS_TITLE": {
+		"en": "⚙ AUDIO & SETTINGS ⚙",
+		"fr": "⚙ AUDIO & PARAMÈTRES ⚙",
+		"ar": "⚙ الصوت والإعدادات ⚙"
+	},
+	"SETTINGS_MUSIC_VOL": {
+		"en": "MUSIC: %d%%",
+		"fr": "MUSIQUE : %d%%",
+		"ar": "الموسيقى: %d%%"
+	},
+	"SETTINGS_SFX_VOL": {
+		"en": "SOUND FX: %d%%",
+		"fr": "EFFETS : %d%%",
+		"ar": "المؤثرات: %d%%"
+	},
+	"SETTINGS_TRACK": {
+		"en": "♪ TRACK: %s",
+		"fr": "♪ PISTE : %s",
+		"ar": "♪ المقطع: %s"
+	},
+	"TRACK_LOFI": {
+		"en": "Warehouse Chill",
+		"fr": "Entrepôt Chill",
+		"ar": "هدوء المستودع"
+	},
+	"TRACK_INDUSTRIAL": {
+		"en": "Industrial Pulse",
+		"fr": "Pulsation industrielle",
+		"ar": "نبض صناعي"
+	},
+	"SETTINGS_CLOSE": {
+		"en": "Save & Close",
+		"fr": "Sauvegarder & Fermer",
+		"ar": "حفظ وإغلاق"
+	},
 	"MENU_CREDITS": {
 		"en": "CREDITS",
 		"fr": "CRÉDITS",

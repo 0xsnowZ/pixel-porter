@@ -24,6 +24,29 @@ var sfx_star1: AudioStreamWAV
 var sfx_star2: AudioStreamWAV
 var sfx_star3: AudioStreamWAV
 
+# BGM Track Constants
+const TRACK_LOFI: int = 0
+const TRACK_INDUSTRIAL: int = 1
+const BGM_TRACKS: Array[Dictionary] = [
+	{
+		"id": 0,
+		"key": "TRACK_LOFI",
+		"name": "Warehouse Chill",
+		"path": "res://assets/audio/bgm_lofi_shift.ogg"
+	},
+	{
+		"id": 1,
+		"key": "TRACK_INDUSTRIAL",
+		"name": "Industrial Pulse",
+		"path": "res://assets/audio/bgm_industrial_pulse.ogg"
+	}
+]
+
+# Music player & cached BGM streams
+var music_player: AudioStreamPlayer = null
+var current_bgm_track: int = -1
+var _bgm_streams: Dictionary = {}
+
 # AudioStreamPlayer voice pool for overlapping SFX
 var _players: Array[AudioStreamPlayer] = []
 const POOL_SIZE: int = 6
@@ -35,7 +58,13 @@ func _ready() -> void:
 		save_mgr = get_tree().root.get_node("SaveManager")
 
 	_create_player_pool()
+	_create_music_player()
 	_generate_all_sfx()
+	_load_bgm_streams()
+
+	if is_music_enabled():
+		var initial_track: int = save_mgr.selected_bgm_track if save_mgr != null and "selected_bgm_track" in save_mgr else TRACK_LOFI
+		play_music(initial_track)
 
 
 func _create_player_pool() -> void:
@@ -46,21 +75,149 @@ func _create_player_pool() -> void:
 		_players.append(p)
 
 
+func _create_music_player() -> void:
+	if music_player == null:
+		music_player = AudioStreamPlayer.new()
+		music_player.bus = "Master"
+		add_child(music_player)
+
+
+func _load_bgm_streams() -> void:
+	for track in BGM_TRACKS:
+		var path: String = track["path"]
+		if ResourceLoader.exists(path):
+			var stream = load(path)
+			if stream != null:
+				if stream is AudioStreamOggVorbis:
+					stream.loop = true
+				_bgm_streams[track["id"]] = stream
+		elif FileAccess.file_exists(path):
+			var stream = AudioStreamOggVorbis.load_from_file(path)
+			if stream != null:
+				stream.loop = true
+				_bgm_streams[track["id"]] = stream
+
+
 func is_sound_enabled() -> bool:
 	if save_mgr != null and "sound_enabled" in save_mgr:
 		return save_mgr.sound_enabled
 	return true
 
 
+func is_music_enabled() -> bool:
+	if save_mgr != null and "music_enabled" in save_mgr:
+		return save_mgr.music_enabled
+	return true
+
+
+func get_music_volume_db() -> float:
+	var linear: float = 0.7
+	if save_mgr != null and "music_volume" in save_mgr:
+		linear = save_mgr.music_volume
+	if linear <= 0.01:
+		return -80.0
+	return linear_to_db(clampf(linear, 0.001, 1.0))
+
+
+func get_sfx_volume_db() -> float:
+	var linear: float = 0.8
+	if save_mgr != null and "sfx_volume" in save_mgr:
+		linear = save_mgr.sfx_volume
+	if linear <= 0.01:
+		return -80.0
+	return linear_to_db(clampf(linear, 0.001, 1.0))
+
+
+func play_music(track_index: int = -1) -> void:
+	if track_index < 0:
+		track_index = save_mgr.selected_bgm_track if save_mgr != null and "selected_bgm_track" in save_mgr else TRACK_LOFI
+
+	if not is_music_enabled():
+		stop_music()
+		return
+
+	current_bgm_track = track_index
+	if save_mgr != null and "selected_bgm_track" in save_mgr:
+		save_mgr.selected_bgm_track = track_index
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+
+	var stream = _bgm_streams.get(track_index, null)
+	if stream == null:
+		_load_bgm_streams()
+		stream = _bgm_streams.get(track_index, null)
+
+	if stream != null and music_player != null:
+		music_player.stream = stream
+		music_player.volume_db = get_music_volume_db()
+		if music_player.is_inside_tree():
+			music_player.play()
+
+
+func stop_music() -> void:
+	if music_player != null and music_player.playing:
+		music_player.stop()
+
+
+func switch_music_track(track_index: int) -> void:
+	var next_track: int = track_index % BGM_TRACKS.size()
+	play_music(next_track)
+
+
+func set_music_volume(linear_vol: float) -> void:
+	if save_mgr != null and "music_volume" in save_mgr:
+		save_mgr.music_volume = clampf(linear_vol, 0.0, 1.0)
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+	if music_player != null:
+		music_player.volume_db = get_music_volume_db()
+
+
+func set_sfx_volume(linear_vol: float) -> void:
+	if save_mgr != null and "sfx_volume" in save_mgr:
+		save_mgr.sfx_volume = clampf(linear_vol, 0.0, 1.0)
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+
+
+func set_music_enabled(enabled: bool) -> void:
+	if save_mgr != null and "music_enabled" in save_mgr:
+		save_mgr.music_enabled = enabled
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+	if enabled:
+		play_music(current_bgm_track if current_bgm_track >= 0 else TRACK_LOFI)
+	else:
+		stop_music()
+
+
+func set_sound_enabled(enabled: bool) -> void:
+	if save_mgr != null and "sound_enabled" in save_mgr:
+		save_mgr.sound_enabled = enabled
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+
+
+func get_track_name(track_index: int) -> String:
+	if track_index >= 0 and track_index < BGM_TRACKS.size():
+		return BGM_TRACKS[track_index]["name"]
+	return "Warehouse Chill"
+
+
 func play_stream(stream: AudioStreamWAV, volume_db: float = 0.0) -> void:
 	if not is_inside_tree() or not is_sound_enabled() or stream == null:
 		return
+
+	var sfx_vol_db: float = get_sfx_volume_db()
+	if sfx_vol_db <= -75.0:
+		return # Muted
+	var final_db: float = volume_db + sfx_vol_db
 
 	# Find an available player or steal the one playing longest
 	for p in _players:
 		if p.is_inside_tree() and not p.playing:
 			p.stream = stream
-			p.volume_db = volume_db
+			p.volume_db = final_db
 			p.play()
 			return
 
@@ -68,7 +225,7 @@ func play_stream(stream: AudioStreamWAV, volume_db: float = 0.0) -> void:
 	if not _players.is_empty() and _players[0].is_inside_tree():
 		var fallback_player: AudioStreamPlayer = _players[0]
 		fallback_player.stream = stream
-		fallback_player.volume_db = volume_db
+		fallback_player.volume_db = final_db
 		fallback_player.play()
 
 

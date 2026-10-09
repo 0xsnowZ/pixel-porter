@@ -104,6 +104,13 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 17
 text = "LEVEL SELECT"
 
+[node name="SettingsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "SETTINGS ⚙"
+
 [node name="SoundToggleBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
 custom_minimum_size = Vector2(270, 48)
 layout_mode = 2
@@ -250,3 +257,101 @@ custom_minimum_size = Vector2(140, 44)
 layout_mode = 2
 size_flags_horizontal = 4
 text = "Close"
+
+[node name="SettingsModal" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -230.0
+offset_top = -250.0
+offset_right = 230.0
+offset_bottom = 250.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"WinModalPanel"
+
+[node name="Margin" type="MarginContainer" parent="SettingsModal"]
+layout_mode = 2
+theme_override_constants/margin_left = 22
+theme_override_constants/margin_top = 18
+theme_override_constants/margin_right = 22
+theme_override_constants/margin_bottom = 18
+
+[node name="VBox" type="VBoxContainer" parent="SettingsModal/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 12
+alignment = 1
+
+[node name="Title" type="Label" parent="SettingsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 20
+text = "⚙ AUDIO & SETTINGS ⚙"
+horizontal_alignment = 1
+
+[node name="MusicBox" type="VBoxContainer" parent="SettingsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="MusicVolLabel" type="Label" parent="SettingsModal/Margin/VBox/MusicBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 14
+text = "MUSIC: 70%"
+
+[node name="MusicSlider" type="HSlider" parent="SettingsModal/Margin/VBox/MusicBox"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 0.7
+
+[node name="MusicToggleBtn" type="Button" parent="SettingsModal/Margin/VBox/MusicBox"]
+custom_minimum_size = Vector2(0, 36)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "MUSIC: ON"
+
+[node name="TrackBox" type="VBoxContainer" parent="SettingsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="TrackLabel" type="Label" parent="SettingsModal/Margin/VBox/TrackBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 14
+text = "CURRENT TRACK:"
+
+[node name="TrackCycleBtn" type="Button" parent="SettingsModal/Margin/VBox/TrackBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "♪ Warehouse Chill ▾"
+
+[node name="SfxBox" type="VBoxContainer" parent="SettingsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SfxVolLabel" type="Label" parent="SettingsModal/Margin/VBox/SfxBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 14
+text = "SOUND FX: 80%"
+
+[node name="SfxSlider" type="HSlider" parent="SettingsModal/Margin/VBox/SfxBox"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+max_value = 1.0
+step = 0.05
+value = 0.8
+
+[node name="CloseSettingsBtn" type="Button" parent="SettingsModal/Margin/VBox"]
+custom_minimum_size = Vector2(160, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 15
+text = "Save & Close"

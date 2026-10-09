@@ -21,6 +21,7 @@ func _init() -> void:
 	run_suite("Audio Voice Pool & Channels", test_voice_pool)
 	run_suite("Sound Toggle Integration", test_sound_toggle_respect)
 	run_suite("Safe Playback Execution", test_safe_playback)
+	run_suite("Lo-Fi & Industrial BGM System", test_bgm_system)
 
 	print("\n==================================================")
 	print("Test Suites: %d passed, %d failed" % [_passed_suites, _failed_suites])
@@ -136,3 +137,51 @@ func test_safe_playback() -> void:
 	assert_true(true, "All audio play methods executed safely")
 
 	audio_mgr.queue_free()
+
+
+func test_bgm_system() -> void:
+	var audio_mgr: Node = create_test_audio_mgr()
+	var mock_save: Node = SaveManagerScript.new()
+	audio_mgr.save_mgr = mock_save
+
+	# 1. Music player instance
+	assert_true(audio_mgr.music_player != null, "Music player AudioStreamPlayer initialized")
+	assert_equal(audio_mgr.music_player.bus, "Master", "Music player is routed to Master bus")
+
+	# 2. BGM Streams loaded
+	assert_true(audio_mgr._bgm_streams.has(0), "Track 0 (Lo-Fi Warehouse Shift) stream is loaded")
+	assert_true(audio_mgr._bgm_streams.has(1), "Track 1 (Industrial Pulse) stream is loaded")
+
+	# 3. Track naming
+	assert_equal(audio_mgr.get_track_name(0), "Warehouse Chill", "Track 0 reports Warehouse Chill")
+	assert_equal(audio_mgr.get_track_name(1), "Industrial Pulse", "Track 1 reports Industrial Pulse")
+
+	# 4. Playback and track switching
+	mock_save.music_enabled = true
+	audio_mgr.play_music(0)
+	assert_equal(audio_mgr.current_bgm_track, 0, "Current track is set to 0")
+	assert_equal(mock_save.selected_bgm_track, 0, "SaveManager selected_bgm_track updated to 0")
+
+	audio_mgr.switch_music_track(1)
+	assert_equal(audio_mgr.current_bgm_track, 1, "Switched to track 1")
+	assert_equal(mock_save.selected_bgm_track, 1, "SaveManager updated to track 1")
+
+	# 5. Volume controls
+	audio_mgr.set_music_volume(0.5)
+	assert_equal(mock_save.music_volume, 0.5, "SaveManager music_volume updated to 0.5")
+
+	audio_mgr.set_sfx_volume(0.6)
+	assert_equal(mock_save.sfx_volume, 0.6, "SaveManager sfx_volume updated to 0.6")
+
+	# 6. Mute toggle
+	audio_mgr.set_music_enabled(false)
+	assert_false(audio_mgr.is_music_enabled(), "Reports music disabled")
+	assert_false(mock_save.music_enabled, "SaveManager music_enabled is false")
+
+	audio_mgr.set_music_enabled(true)
+	assert_true(audio_mgr.is_music_enabled(), "Reports music re-enabled")
+	assert_true(mock_save.music_enabled, "SaveManager music_enabled is true")
+
+	audio_mgr.stop_music()
+	audio_mgr.queue_free()
+	mock_save.queue_free()

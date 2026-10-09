@@ -21,15 +21,27 @@ var safe_area_mgr: Node = null
 @onready var main_view: VBoxContainer = $MainView
 @onready var level_select_view: VBoxContainer = $LevelSelectView
 @onready var credits_modal: PanelContainer = $CreditsModal
+@onready var settings_modal: PanelContainer = find_child("SettingsModal", true, false) as PanelContainer
 
 # Main View buttons
 @onready var continue_btn: Button = _find_button("ContinueBtn", "MainView/Buttons/ContinueBtn")
 @onready var play_btn: Button = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
 @onready var level_select_btn: Button = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
+@onready var settings_btn: Button = _find_button("SettingsBtn", "MainView/Buttons/SettingsBtn")
 @onready var sound_btn: Button = _find_button("SoundToggleBtn", "MainView/Buttons/SoundToggleBtn")
 @onready var haptics_btn: Button = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
 @onready var language_btn: Button = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
 @onready var credits_btn: Button = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
+
+# Settings elements
+@onready var music_vol_label: Label = find_child("MusicVolLabel", true, false) as Label
+@onready var music_slider: HSlider = find_child("MusicSlider", true, false) as HSlider
+@onready var music_toggle_btn: Button = _find_button("MusicToggleBtn", "SettingsModal/Margin/VBox/MusicBox/MusicToggleBtn")
+@onready var track_label: Label = find_child("TrackLabel", true, false) as Label
+@onready var track_cycle_btn: Button = _find_button("TrackCycleBtn", "SettingsModal/Margin/VBox/TrackBox/TrackCycleBtn")
+@onready var sfx_vol_label: Label = find_child("SfxVolLabel", true, false) as Label
+@onready var sfx_slider: HSlider = find_child("SfxSlider", true, false) as HSlider
+@onready var close_settings_btn: Button = _find_button("CloseSettingsBtn", "SettingsModal/Margin/VBox/CloseSettingsBtn")
 
 # Level Select elements
 @onready var level_grid: GridContainer = find_child("LevelGrid", true, false) as GridContainer
@@ -51,13 +63,23 @@ func _initialize_nodes() -> void:
 		main_view = $MainView
 		level_select_view = $LevelSelectView
 		credits_modal = $CreditsModal
+		settings_modal = find_child("SettingsModal", true, false) as PanelContainer
 		continue_btn = _find_button("ContinueBtn", "MainView/Buttons/ContinueBtn")
 		play_btn = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
 		level_select_btn = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
+		settings_btn = _find_button("SettingsBtn", "MainView/Buttons/SettingsBtn")
 		sound_btn = _find_button("SoundToggleBtn", "MainView/Buttons/SoundToggleBtn")
 		haptics_btn = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
 		language_btn = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
 		credits_btn = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
+		music_vol_label = find_child("MusicVolLabel", true, false) as Label
+		music_slider = find_child("MusicSlider", true, false) as HSlider
+		music_toggle_btn = _find_button("MusicToggleBtn", "SettingsModal/Margin/VBox/MusicBox/MusicToggleBtn")
+		track_label = find_child("TrackLabel", true, false) as Label
+		track_cycle_btn = _find_button("TrackCycleBtn", "SettingsModal/Margin/VBox/TrackBox/TrackCycleBtn")
+		sfx_vol_label = find_child("SfxVolLabel", true, false) as Label
+		sfx_slider = find_child("SfxSlider", true, false) as HSlider
+		close_settings_btn = _find_button("CloseSettingsBtn", "SettingsModal/Margin/VBox/CloseSettingsBtn")
 		level_grid = find_child("LevelGrid", true, false) as GridContainer
 		back_btn = _find_button("BackBtn", "LevelSelectView/TopBar/Margin/HBox/BackBtn")
 		close_credits_btn = _find_button("CloseCreditsBtn", "CreditsModal/VBox/CloseCreditsBtn")
@@ -99,6 +121,18 @@ func _ready() -> void:
 		language_btn.pressed.connect(_on_language_pressed)
 	if not credits_btn.pressed.is_connected(_show_credits):
 		credits_btn.pressed.connect(_show_credits)
+	if settings_btn and not settings_btn.pressed.is_connected(_show_settings):
+		settings_btn.pressed.connect(_show_settings)
+	if close_settings_btn and not close_settings_btn.pressed.is_connected(_hide_settings):
+		close_settings_btn.pressed.connect(_hide_settings)
+	if music_slider and not music_slider.value_changed.is_connected(_on_music_slider_changed):
+		music_slider.value_changed.connect(_on_music_slider_changed)
+	if music_toggle_btn and not music_toggle_btn.pressed.is_connected(_on_music_toggle_pressed):
+		music_toggle_btn.pressed.connect(_on_music_toggle_pressed)
+	if track_cycle_btn and not track_cycle_btn.pressed.is_connected(_on_track_cycle_pressed):
+		track_cycle_btn.pressed.connect(_on_track_cycle_pressed)
+	if sfx_slider and not sfx_slider.value_changed.is_connected(_on_sfx_slider_changed):
+		sfx_slider.value_changed.connect(_on_sfx_slider_changed)
 	if not back_btn.pressed.is_connected(_show_main_view):
 		back_btn.pressed.connect(_show_main_view)
 	if not close_credits_btn.pressed.is_connected(_hide_credits):
@@ -117,7 +151,7 @@ func _ready() -> void:
 		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	# Tactile arcade button physics
-	for b in [continue_btn, play_btn, level_select_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn]:
+	for b in [continue_btn, play_btn, level_select_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, music_toggle_btn, track_cycle_btn]:
 		_attach_spring_physics(b)
 
 
@@ -138,6 +172,8 @@ func _show_main_view() -> void:
 	main_view.show()
 	level_select_view.hide()
 	credits_modal.hide()
+	if settings_modal:
+		settings_modal.hide()
 	_update_menu_state()
 
 
@@ -147,12 +183,16 @@ func _show_level_select() -> void:
 	main_view.hide()
 	level_select_view.show()
 	credits_modal.hide()
+	if settings_modal:
+		settings_modal.hide()
 	_refresh_level_grid_buttons()
 
 
 func _show_credits() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if settings_modal:
+		settings_modal.hide()
 	credits_modal.show()
 
 
@@ -160,6 +200,109 @@ func _hide_credits() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
 	credits_modal.hide()
+
+
+func _show_settings() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	credits_modal.hide()
+	if settings_modal:
+		_update_settings_ui()
+		settings_modal.show()
+
+
+func _hide_settings() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	if settings_modal:
+		settings_modal.hide()
+	if save_mgr and save_mgr.has_method("save_data"):
+		save_mgr.save_data()
+	_update_menu_state()
+
+
+func _update_settings_ui() -> void:
+	if save_mgr == null:
+		return
+
+	var m_vol: float = save_mgr.music_volume if "music_volume" in save_mgr else 0.7
+	var s_vol: float = save_mgr.sfx_volume if "sfx_volume" in save_mgr else 0.8
+	var m_on: bool = save_mgr.music_enabled if "music_enabled" in save_mgr else true
+	var track_idx: int = save_mgr.selected_bgm_track if "selected_bgm_track" in save_mgr else 0
+
+	if music_slider:
+		music_slider.set_value_no_signal(m_vol)
+	if music_vol_label:
+		if loc_mgr:
+			music_vol_label.text = loc_mgr.tr_text("SETTINGS_MUSIC_VOL", [int(m_vol * 100)])
+		else:
+			music_vol_label.text = "MUSIC: %d%%" % int(m_vol * 100)
+
+	if music_toggle_btn:
+		var status_text: String = "ON" if m_on else "OFF"
+		music_toggle_btn.text = "MUSIC: " + status_text
+
+	if sfx_slider:
+		sfx_slider.set_value_no_signal(s_vol)
+	if sfx_vol_label:
+		if loc_mgr:
+			sfx_vol_label.text = loc_mgr.tr_text("SETTINGS_SFX_VOL", [int(s_vol * 100)])
+		else:
+			sfx_vol_label.text = "SOUND FX: %d%%" % int(s_vol * 100)
+
+	if track_cycle_btn:
+		var track_name: String = "Warehouse Chill" if track_idx == 0 else "Industrial Pulse"
+		if loc_mgr:
+			var key: String = "TRACK_LOFI" if track_idx == 0 else "TRACK_INDUSTRIAL"
+			track_name = loc_mgr.tr_text(key)
+		track_cycle_btn.text = "♪ " + track_name + " ▾"
+
+	if close_settings_btn and loc_mgr:
+		close_settings_btn.text = loc_mgr.tr_text("SETTINGS_CLOSE")
+
+
+func _on_music_slider_changed(value: float) -> void:
+	if audio_mgr and audio_mgr.has_method("set_music_volume"):
+		audio_mgr.set_music_volume(value)
+	elif save_mgr:
+		save_mgr.music_volume = value
+	if music_vol_label:
+		if loc_mgr:
+			music_vol_label.text = loc_mgr.tr_text("SETTINGS_MUSIC_VOL", [int(value * 100)])
+		else:
+			music_vol_label.text = "MUSIC: %d%%" % int(value * 100)
+
+
+func _on_sfx_slider_changed(value: float) -> void:
+	if audio_mgr and audio_mgr.has_method("set_sfx_volume"):
+		audio_mgr.set_sfx_volume(value)
+	elif save_mgr:
+		save_mgr.sfx_volume = value
+	if sfx_vol_label:
+		if loc_mgr:
+			sfx_vol_label.text = loc_mgr.tr_text("SETTINGS_SFX_VOL", [int(value * 100)])
+		else:
+			sfx_vol_label.text = "SOUND FX: %d%%" % int(value * 100)
+
+
+func _on_music_toggle_pressed() -> void:
+	var current: bool = save_mgr.music_enabled if save_mgr and "music_enabled" in save_mgr else true
+	var new_val: bool = not current
+	if audio_mgr and audio_mgr.has_method("set_music_enabled"):
+		audio_mgr.set_music_enabled(new_val)
+	elif save_mgr:
+		save_mgr.music_enabled = new_val
+	_update_settings_ui()
+
+
+func _on_track_cycle_pressed() -> void:
+	var current: int = save_mgr.selected_bgm_track if save_mgr and "selected_bgm_track" in save_mgr else 0
+	var next_track: int = (current + 1) % 2
+	if audio_mgr and audio_mgr.has_method("switch_music_track"):
+		audio_mgr.switch_music_track(next_track)
+	elif save_mgr:
+		save_mgr.selected_bgm_track = next_track
+	_update_settings_ui()
 
 
 func _update_menu_state() -> void:
@@ -185,6 +328,8 @@ func _update_menu_state() -> void:
 			var haptic_status: String = loc_mgr.tr_text("MENU_HAPTICS_ON" if is_haptics_on else "MENU_HAPTICS_OFF")
 			haptics_btn.text = loc_mgr.tr_text("MENU_HAPTICS", [haptic_status])
 
+		if settings_btn:
+			settings_btn.text = loc_mgr.tr_text("MENU_SETTINGS")
 		language_btn.text = loc_mgr.tr_text("MENU_LANGUAGE", [loc_mgr.get_language_display_name()])
 		level_select_btn.text = loc_mgr.tr_text("MENU_LEVEL_SELECT")
 		credits_btn.text = loc_mgr.tr_text("MENU_CREDITS")
@@ -201,6 +346,8 @@ func _update_menu_state() -> void:
 		else:
 			continue_btn.visible = false
 			play_btn.text = "PLAY"
+		if settings_btn:
+			settings_btn.text = "SETTINGS ⚙"
 		sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
 		if haptics_btn:
 			haptics_btn.text = "HAPTICS: %s" % ("ON" if is_haptics_on else "OFF")

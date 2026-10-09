@@ -24,6 +24,7 @@ func _init() -> void:
 	run_suite("Progression Reactive State (Continue/Play)", test_continue_and_play_state)
 	run_suite("50-Level Select Grid & Status Badges", test_level_select_grid)
 	run_suite("Sound Toggle & Credits Modal", test_sound_and_credits)
+	run_suite("Settings Modal & Audio Sliders", test_settings_modal_and_sliders)
 
 	_cleanup_test_file()
 
@@ -191,5 +192,55 @@ func test_sound_and_credits() -> void:
 
 	menu._hide_credits()
 	assert_false(menu.credits_modal.visible, "Credits modal is hidden after _hide_credits")
+
+	menu.queue_free()
+
+
+func test_settings_modal_and_sliders() -> void:
+	var menu: Control = create_test_menu()
+
+	# 1. Elements exist
+	assert_true(menu.settings_btn != null, "Settings button exists on MainMenu")
+	assert_true(menu.settings_modal != null, "Settings modal exists")
+	assert_false(menu.settings_modal.visible, "Settings modal is hidden initially")
+	assert_true(menu.music_slider != null, "Music slider exists")
+	assert_true(menu.sfx_slider != null, "SFX slider exists")
+	assert_true(menu.track_cycle_btn != null, "Track cycle button exists")
+
+	# 2. Open / Close modal
+	menu._show_settings()
+	assert_true(menu.settings_modal.visible, "Settings modal opens via _show_settings")
+
+	# 3. Sliders update save_mgr
+	menu._on_music_slider_changed(0.45)
+	assert_equal(menu.save_mgr.music_volume, 0.45, "Music volume updated via slider to 0.45")
+	assert_true("45%" in menu.music_vol_label.text, "Music label reflects 45%")
+
+	menu._on_sfx_slider_changed(0.85)
+	assert_equal(menu.save_mgr.sfx_volume, 0.85, "SFX volume updated via slider to 0.85")
+	assert_true("85%" in menu.sfx_vol_label.text, "SFX label reflects 85%")
+
+	# 4. Track cycle button
+	menu.save_mgr.selected_bgm_track = 0
+	menu._update_settings_ui()
+	assert_true("Warehouse Chill" in menu.track_cycle_btn.text, "Track button shows Warehouse Chill")
+
+	menu._on_track_cycle_pressed()
+	assert_equal(menu.save_mgr.selected_bgm_track, 1, "Track cycled to 1 (Industrial Pulse)")
+	assert_true("Industrial Pulse" in menu.track_cycle_btn.text, "Track button shows Industrial Pulse")
+
+	# 5. Music toggle
+	menu.save_mgr.music_enabled = true
+	menu._on_music_toggle_pressed()
+	assert_false(menu.save_mgr.music_enabled, "Music toggled to false")
+	assert_equal(menu.music_toggle_btn.text, "MUSIC: OFF", "Music toggle button text is OFF")
+
+	menu._on_music_toggle_pressed()
+	assert_true(menu.save_mgr.music_enabled, "Music toggled back to true")
+	assert_equal(menu.music_toggle_btn.text, "MUSIC: ON", "Music toggle button text is ON")
+
+	# Close modal
+	menu._hide_settings()
+	assert_false(menu.settings_modal.visible, "Settings modal hidden via _hide_settings")
 
 	menu.queue_free()

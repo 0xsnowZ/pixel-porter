@@ -18,6 +18,9 @@ var completed_levels: Dictionary = {} # String(level_index) -> { "best_moves": i
 # Settings (PRD Sections 6, 8, 9, 10)
 var sound_enabled: bool = true
 var music_enabled: bool = true
+var music_volume: float = 0.7 # 0.0 to 1.0 linear volume
+var sfx_volume: float = 0.8 # 0.0 to 1.0 linear volume
+var selected_bgm_track: int = 0 # 0 = Lo-Fi Warehouse Shift, 1 = Industrial Pulse
 var haptics_enabled: bool = true
 var language: String = "en"
 
@@ -134,6 +137,9 @@ func to_dict() -> Dictionary:
 		"settings": {
 			"sound_enabled": sound_enabled,
 			"music_enabled": music_enabled,
+			"music_volume": music_volume,
+			"sfx_volume": sfx_volume,
+			"selected_bgm_track": selected_bgm_track,
 			"haptics_enabled": haptics_enabled,
 			"language": language
 		}
@@ -149,6 +155,9 @@ func from_dict(data: Dictionary) -> void:
 	var settings: Dictionary = data.get("settings", {})
 	sound_enabled = settings.get("sound_enabled", true)
 	music_enabled = settings.get("music_enabled", true)
+	music_volume = float(settings.get("music_volume", 0.7))
+	sfx_volume = float(settings.get("sfx_volume", 0.8))
+	selected_bgm_track = int(settings.get("selected_bgm_track", 0))
 	haptics_enabled = settings.get("haptics_enabled", true)
 	language = settings.get("language", "en")
 
@@ -209,6 +218,9 @@ func reset_all_progress(custom_path: String = "") -> void:
 	completed_levels.clear()
 	sound_enabled = true
 	music_enabled = true
+	music_volume = 0.7
+	sfx_volume = 0.8
+	selected_bgm_track = 0
 	haptics_enabled = true
 	language = "en"
 	save_data(custom_path)

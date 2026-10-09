@@ -159,6 +159,9 @@ func test_persistence() -> void:
 	mgr1.sound_enabled = false
 	mgr1.haptics_enabled = false
 	mgr1.language = "fr"
+	mgr1.music_volume = 0.42
+	mgr1.sfx_volume = 0.65
+	mgr1.selected_bgm_track = 1
 	mgr1.record_level_completion(0, 8, 4, TEST_SAVE_PATH)
 	mgr1.record_level_completion(1, 14, 7, TEST_SAVE_PATH)
 	mgr1.last_played_level = 1
@@ -175,6 +178,9 @@ func test_persistence() -> void:
 	assert_false(mgr2.sound_enabled, "Sound setting (false) persisted correctly")
 	assert_false(mgr2.haptics_enabled, "Haptics setting (false) persisted correctly")
 	assert_equal(mgr2.language, "fr", "Language ('fr') persisted correctly")
+	assert_equal(mgr2.music_volume, 0.42, "Music volume (0.42) persisted correctly")
+	assert_equal(mgr2.sfx_volume, 0.65, "SFX volume (0.65) persisted correctly")
+	assert_equal(mgr2.selected_bgm_track, 1, "Selected BGM track (1) persisted correctly")
 	assert_true(mgr2.is_level_completed(0), "Level 0 completion persisted")
 	assert_true(mgr2.is_level_completed(1), "Level 1 completion persisted")
 
@@ -192,6 +198,9 @@ func test_persistence() -> void:
 	assert_true(mgr2.sound_enabled, "Sound reset to true")
 	assert_true(mgr2.haptics_enabled, "Haptics reset to true")
 	assert_equal(mgr2.language, "en", "Language reset to 'en'")
+	assert_equal(mgr2.music_volume, 0.7, "Music volume reset to 0.7")
+	assert_equal(mgr2.sfx_volume, 0.8, "SFX volume reset to 0.8")
+	assert_equal(mgr2.selected_bgm_track, 0, "Selected BGM track reset to 0")
 	assert_false(mgr2.is_level_completed(0), "Completed levels cleared on reset")
 
 	mgr1.free()
