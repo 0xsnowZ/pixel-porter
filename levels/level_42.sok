@@ -1,0 +1,11 @@
+; Level 42: Pallet Stack (9x9, 4 crates)
+; Verified solvable: 16 moves, 9 pushes
+#########
+#    *  #
+#  #  . #
+#.      #
+# #$  $ #
+#    #@ #
+# .   $ #
+#       #
+#########

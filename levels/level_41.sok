@@ -1,0 +1,11 @@
+; Level 41: Grand Depot (9x9, 4 crates)
+; Verified solvable: 17 moves, 7 pushes
+#########
+#    #  #
+#       #
+# .*    #
+#   .   #
+# $   # #
+#   $#@ #
+# $  .  #
+#########

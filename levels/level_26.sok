@@ -1,0 +1,10 @@
+; Level 26: Symmetric Split (8x8, 3 crates)
+; Verified solvable: 12 moves, 7 pushes
+########
+#      #
+#     .#
+#   $$ #
+#    @ #
+#   *# #
+# .  # #
+########

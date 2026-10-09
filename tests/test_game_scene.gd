@@ -78,14 +78,14 @@ func test_game_initialization_and_ui() -> void:
 
 	assert_true(game.grid != null, "Grid logic initialized")
 	assert_eq(game.current_level_index, 0, "Initial level index is 0")
-	assert_eq(game.level_label.text, "LEVEL 1 / 10", "Level label in EN")
+	assert_eq(game.level_label.text, "LEVEL 1 / 50", "Level label in EN")
 	assert_true(game.restart_button.text == "Restart ↺", "Restart button localized in EN")
 	assert_true(game.prev_button.disabled, "Prev button is disabled on first level")
 
 	# Test switching language updates UI
 	loc.set_language("fr")
 	game._update_ui()
-	assert_eq(game.level_label.text, "NIVEAU 1 / 10", "Level label in FR")
+	assert_eq(game.level_label.text, "NIVEAU 1 / 50", "Level label in FR")
 	assert_eq(game.restart_button.text, "Recommencer ↺", "Restart button localized in FR")
 
 	game.free()

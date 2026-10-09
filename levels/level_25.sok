@@ -1,0 +1,10 @@
+; Level 25: Turnstile (8x8, 3 crates)
+; Verified solvable: 13 moves, 6 pushes
+########
+#   #  #
+#  # . #
+# .  $ #
+#     @#
+# $ $  #
+# .    #
+########

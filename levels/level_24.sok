@@ -1,0 +1,10 @@
+; Level 24: Box Canyon (8x8, 3 crates)
+; Verified solvable: 14 moves, 5 pushes
+########
+# .    #
+# *    #
+#@$    #
+#      #
+#  # $##
+#    . #
+########

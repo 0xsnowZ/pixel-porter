@@ -1,0 +1,9 @@
+; Level 12: Switchback (7x7, 2 crates)
+; Verified solvable: 9 moves, 4 pushes
+#######
+#  #  #
+#     #
+#  .$ #
+#@$   #
+# # . #
+#######

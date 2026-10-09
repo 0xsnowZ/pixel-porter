@@ -1,0 +1,9 @@
+; Level 11: Side Step (7x7, 2 crates)
+; Verified solvable: 8 moves, 4 pushes
+#######
+#  #  #
+# #   #
+#   $@#
+#*    #
+# .   #
+#######

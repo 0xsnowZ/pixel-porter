@@ -1,0 +1,10 @@
+; Level 16: Chamber Shuffle (8x8, 2 crates)
+; Verified solvable: 10 moves, 3 pushes
+########
+#    # #
+#   $  #
+#@.    #
+#      #
+#  #* ##
+#      #
+########

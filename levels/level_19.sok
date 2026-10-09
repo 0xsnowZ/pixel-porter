@@ -1,0 +1,10 @@
+; Level 19: Square Dance (8x8, 2 crates)
+; Verified solvable: 11 moves, 5 pushes
+########
+#      #
+# . $  #
+#      #
+###    #
+##     #
+# .  $@#
+########

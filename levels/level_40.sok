@@ -1,0 +1,11 @@
+; Level 40: Gridlock (9x9, 4 crates)
+; Verified solvable: 15 moves, 8 pushes
+#########
+#   #   #
+#   # $ #
+#    #  #
+#*    $@#
+#     . #
+#  .  * #
+#       #
+#########

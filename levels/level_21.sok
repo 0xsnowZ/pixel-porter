@@ -1,0 +1,10 @@
+; Level 21: Cargo Hold (8x8, 2 crates)
+; Verified solvable: 12 moves, 5 pushes
+########
+# * #  #
+#      #
+# $  # #
+#      #
+# #  . #
+#@     #
+########

@@ -7,20 +7,15 @@ extends Control
 const GridLogic = preload("res://scripts/grid_logic.gd")
 const SaveManagerScript = preload("res://scripts/save_manager.gd")
 
-# Levels available
-var level_paths: Array[String] = [
-	"res://levels/level_01.sok",
-	"res://levels/level_02.sok",
-	"res://levels/level_03.sok",
-	"res://levels/level_04.sok",
-	"res://levels/level_05.sok",
-	"res://levels/level_06.sok",
-	"res://levels/level_07.sok",
-	"res://levels/level_08.sok",
-	"res://levels/level_09.sok",
-	"res://levels/level_10.sok"
-]
+# Levels available (50 verified solvable levels)
+var level_paths: Array[String] = _get_default_level_paths()
 var current_level_index: int = 0
+
+static func _get_default_level_paths() -> Array[String]:
+	var paths: Array[String] = []
+	for i in range(1, 51):
+		paths.append("res://levels/level_%02d.sok" % i)
+	return paths
 
 var grid: GridLogic
 var save_mgr: Node = null

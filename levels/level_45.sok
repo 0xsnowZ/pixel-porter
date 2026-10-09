@@ -1,0 +1,11 @@
+; Level 45: Iron Vault (9x9, 3 crates)
+; Verified solvable: 18 moves, 9 pushes
+#########
+# .     #
+#       #
+#   #   #
+#  $  #*#
+#  @  # #
+# $#    #
+#     . #
+#########

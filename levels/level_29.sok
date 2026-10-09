@@ -1,0 +1,10 @@
+; Level 29: Fork in the Road (8x8, 2 crates)
+; Verified solvable: 15 moves, 7 pushes
+########
+# #  # #
+#  .   #
+# $  . #
+##     #
+# $    #
+# @    #
+########

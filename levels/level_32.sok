@@ -1,0 +1,11 @@
+; Level 32: Freight Bay (9x9, 3 crates)
+; Verified solvable: 12 moves, 5 pushes
+#########
+#  # ** #
+#       #
+# #  .  #
+## @    #
+# $     #
+#       #
+#    #  #
+#########

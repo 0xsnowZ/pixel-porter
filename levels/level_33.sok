@@ -1,0 +1,11 @@
+; Level 33: Blockade Runner (9x9, 4 crates)
+; Verified solvable: 13 moves, 5 pushes
+#########
+#    *  #
+#   $ # #
+#     # #
+#     #*#
+# .     #
+#   *  @#
+#       #
+#########

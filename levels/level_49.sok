@@ -1,0 +1,12 @@
+; Level 49: Grand Labyrinth (10x10, 4 crates)
+; Verified solvable: 17 moves, 8 pushes
+##########
+#  #  #@ #
+#   $  $ #
+#        #
+#   *  .##
+##       #
+##.      #
+# *      #
+#        #
+##########

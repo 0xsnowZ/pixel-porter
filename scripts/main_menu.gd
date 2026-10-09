@@ -9,7 +9,7 @@ extends Control
 
 const SaveManagerScript = preload("res://scripts/save_manager.gd")
 const TOTAL_LEVELS_COUNT: int = 50
-const AVAILABLE_LEVELS_COUNT: int = 10 # 10 verified solvable levels for Week 1
+const AVAILABLE_LEVELS_COUNT: int = 50 # All 50 verified solvable levels active
 
 var save_mgr: Node = null
 var audio_mgr: Node = null

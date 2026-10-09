@@ -1,0 +1,10 @@
+; Level 18: Bypass Lane (8x8, 2 crates)
+; Verified solvable: 11 moves, 4 pushes
+########
+#      #
+#  @ $ #
+##   # #
+#    # #
+#   .  #
+#   *  #
+########

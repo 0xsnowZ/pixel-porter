@@ -1,0 +1,11 @@
+; Level 31: Warehouse Maze (9x9, 3 crates)
+; Verified solvable: 12 moves, 4 pushes
+#########
+# ##    #
+#       #
+#     * #
+##$#    #
+#  .@   #
+#       #
+#    *  #
+#########

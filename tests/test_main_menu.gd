@@ -149,7 +149,8 @@ func test_level_select_grid() -> void:
 	assert_true("🔒" in btn2.text, "Level 3 button shows lock indicator")
 
 	var btn10: Button = grid_buttons[10] as Button
-	assert_true(btn10.disabled, "Later unauthored levels are disabled")
+	assert_true(btn10.disabled, "Level 11 button is locked until unlocked")
+	assert_true("🔒" in btn10.text, "Level 11 button shows lock indicator")
 
 	menu.queue_free()
 

@@ -1,0 +1,10 @@
+; Level 30: The Quad (8x8, 3 crates)
+; Verified solvable: 16 moves, 9 pushes
+########
+#  @#  #
+#$ .   #
+#.     #
+# $    #
+#  $  ##
+#    . #
+########
