@@ -23,18 +23,27 @@ var safe_area_mgr: Node = null
 @onready var credits_modal: PanelContainer = $CreditsModal
 
 # Main View buttons
-@onready var continue_btn: Button = $MainView/Buttons/ContinueBtn
-@onready var play_btn: Button = $MainView/Buttons/PlayBtn
-@onready var level_select_btn: Button = $MainView/Buttons/LevelSelectBtn
-@onready var sound_btn: Button = $MainView/Buttons/SoundToggleBtn
-@onready var haptics_btn: Button = $MainView/Buttons/HapticsToggleBtn
-@onready var language_btn: Button = $MainView/Buttons/LanguageBtn
-@onready var credits_btn: Button = $MainView/Buttons/CreditsBtn
+@onready var continue_btn: Button = _find_button("ContinueBtn", "MainView/Buttons/ContinueBtn")
+@onready var play_btn: Button = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
+@onready var level_select_btn: Button = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
+@onready var sound_btn: Button = _find_button("SoundToggleBtn", "MainView/Buttons/SoundToggleBtn")
+@onready var haptics_btn: Button = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
+@onready var language_btn: Button = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
+@onready var credits_btn: Button = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
 
 # Level Select elements
-@onready var level_grid: GridContainer = $LevelSelectView/Scroll/Margin/LevelGrid
-@onready var back_btn: Button = $LevelSelectView/TopBar/Margin/HBox/BackBtn
-@onready var close_credits_btn: Button = $CreditsModal/VBox/CloseCreditsBtn
+@onready var level_grid: GridContainer = find_child("LevelGrid", true, false) as GridContainer
+@onready var back_btn: Button = _find_button("BackBtn", "LevelSelectView/TopBar/Margin/HBox/BackBtn")
+@onready var close_credits_btn: Button = _find_button("CloseCreditsBtn", "CreditsModal/VBox/CloseCreditsBtn")
+
+
+func _find_button(btn_name: String, fallback_path: String) -> Button:
+	var b: Button = find_child(btn_name, true, false) as Button
+	if b != null:
+		return b
+	if has_node(fallback_path):
+		return get_node(fallback_path) as Button
+	return null
 
 
 func _initialize_nodes() -> void:
@@ -42,16 +51,16 @@ func _initialize_nodes() -> void:
 		main_view = $MainView
 		level_select_view = $LevelSelectView
 		credits_modal = $CreditsModal
-		continue_btn = $MainView/Buttons/ContinueBtn
-		play_btn = $MainView/Buttons/PlayBtn
-		level_select_btn = $MainView/Buttons/LevelSelectBtn
-		sound_btn = $MainView/Buttons/SoundToggleBtn
-		haptics_btn = $MainView/Buttons/HapticsToggleBtn
-		language_btn = $MainView/Buttons/LanguageBtn
-		credits_btn = $MainView/Buttons/CreditsBtn
-		level_grid = $LevelSelectView/Scroll/Margin/LevelGrid
-		back_btn = $LevelSelectView/TopBar/Margin/HBox/BackBtn
-		close_credits_btn = $CreditsModal/VBox/CloseCreditsBtn
+		continue_btn = _find_button("ContinueBtn", "MainView/Buttons/ContinueBtn")
+		play_btn = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
+		level_select_btn = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
+		sound_btn = _find_button("SoundToggleBtn", "MainView/Buttons/SoundToggleBtn")
+		haptics_btn = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
+		language_btn = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
+		credits_btn = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
+		level_grid = find_child("LevelGrid", true, false) as GridContainer
+		back_btn = _find_button("BackBtn", "LevelSelectView/TopBar/Margin/HBox/BackBtn")
+		close_credits_btn = _find_button("CloseCreditsBtn", "CreditsModal/VBox/CloseCreditsBtn")
 
 
 func _ready() -> void:
@@ -98,6 +107,14 @@ func _ready() -> void:
 	_show_main_view()
 	_update_menu_state()
 	_build_level_grid()
+
+	# Ambient breathing animation on logo
+	if has_node("MainView/Header/LogoRect"):
+		var logo: TextureRect = $MainView/Header/LogoRect as TextureRect
+		logo.pivot_offset = Vector2(90, 90)
+		var tw: Tween = create_tween().set_loops()
+		tw.tween_property(logo, "scale", Vector2(1.03, 1.03), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _apply_safe_area() -> void:
@@ -280,10 +297,12 @@ func _refresh_level_grid_buttons() -> void:
 			var moves: int = record.get("best_moves", 0)
 			child.text = "%d\n★ %dm" % [lvl_idx + 1, moves]
 			child.disabled = false
-			child.modulate = Color(0.85, 1.0, 0.85) # Gentle green tint for completed
+			child.theme_type_variation = &"SuccessButton"
+			child.modulate = Color(1.0, 1.0, 1.0)
 		elif is_unlocked:
 			child.text = "%d\n▶" % [lvl_idx + 1]
 			child.disabled = false
+			child.theme_type_variation = &"PrimaryButton"
 			child.modulate = Color(1.0, 1.0, 1.0)
 		else:
 			if is_available:
@@ -291,7 +310,8 @@ func _refresh_level_grid_buttons() -> void:
 			else:
 				child.text = "%d\n—" % [lvl_idx + 1]
 			child.disabled = true
-			child.modulate = Color(0.55, 0.55, 0.55, 0.8)
+			child.theme_type_variation = &"Button"
+			child.modulate = Color(0.65, 0.65, 0.70, 0.85)
 
 
 func _on_level_button_pressed(level_index: int) -> void:

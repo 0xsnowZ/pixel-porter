@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://pfg88sj4moc8"]
+[gd_scene load_steps=4 format=3 uid="uid://pfg88sj4moc8"]
 
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
 [ext_resource type="Texture2D" path="res://assets/logo.png" id="2_logo"]
+[ext_resource type="Texture2D" path="res://assets/warehouse_bg.jpg" id="3_bg"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -12,7 +13,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_menu")
 
-[node name="Background" type="ColorRect" parent="."]
+[node name="Background" type="TextureRect" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +21,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.11, 0.13, 0.16, 1)
+texture = ExtResource("3_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="VignetteOverlay" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.06, 0.08, 0.12, 0.68)
 
 [node name="MainView" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -29,97 +42,99 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 16
+theme_override_constants/separation = 12
 alignment = 1
 
 [node name="Header" type="VBoxContainer" parent="MainView"]
 layout_mode = 2
-theme_override_constants/separation = 6
+theme_override_constants/separation = 4
 alignment = 1
 
 [node name="LogoRect" type="TextureRect" parent="MainView/Header"]
-custom_minimum_size = Vector2(160, 160)
+custom_minimum_size = Vector2(180, 180)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = ExtResource("2_logo")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="GameTitle" type="Label" parent="MainView/Header"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.8, 0.22, 1)
-theme_override_font_sizes/font_size = 32
-text = "PIXEL PORTER"
-horizontal_alignment = 1
-
 [node name="GameSubtitle" type="Label" parent="MainView/Header"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.7, 0.74, 0.8, 1)
+theme_override_colors/font_color = Color(0.96, 0.82, 0.35, 1)
 theme_override_font_sizes/font_size = 13
-text = "A CLASSIC SOKOBAN PUZZLE"
+text = "★ A CLASSIC SOKOBAN PUZZLE ★"
 horizontal_alignment = 1
 
-[node name="Spacer" type="Control" parent="MainView"]
-custom_minimum_size = Vector2(0, 16)
-layout_mode = 2
-
-[node name="Buttons" type="VBoxContainer" parent="MainView"]
-layout_mode = 2
-theme_override_constants/separation = 14
-alignment = 1
-
-[node name="ContinueBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 52)
+[node name="ConsoleCard" type="PanelContainer" parent="MainView"]
 layout_mode = 2
 size_flags_horizontal = 4
+
+[node name="Margin" type="MarginContainer" parent="MainView/ConsoleCard"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="Buttons" type="VBoxContainer" parent="MainView/ConsoleCard/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 11
+alignment = 1
+
+[node name="ContinueBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 52)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"PrimaryButton"
 theme_override_font_sizes/font_size = 18
 text = "CONTINUE (LEVEL 1)"
 
-[node name="PlayBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 52)
+[node name="PlayBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 52)
 layout_mode = 2
 size_flags_horizontal = 4
+theme_type_variation = &"PrimaryButton"
 theme_override_font_sizes/font_size = 18
 text = "PLAY"
 
-[node name="LevelSelectBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 52)
+[node name="LevelSelectBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 50)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 17
 text = "LEVEL SELECT"
 
-[node name="SoundToggleBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 50)
+[node name="SoundToggleBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "SOUND: ON"
 
-[node name="HapticsToggleBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 50)
+[node name="HapticsToggleBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "HAPTICS: ON"
 
-[node name="LanguageBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 50)
+[node name="LanguageBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "LANGUAGE: English"
 
-[node name="CreditsBtn" type="Button" parent="MainView/Buttons"]
-custom_minimum_size = Vector2(260, 48)
+[node name="CreditsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 44)
 layout_mode = 2
 size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 16
+theme_override_font_sizes/font_size = 15
 text = "CREDITS"
 
 [node name="Footer" type="Label" parent="MainView"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.45, 0.48, 0.55, 1)
+theme_override_colors/font_color = Color(0.55, 0.60, 0.70, 1)
 theme_override_font_sizes/font_size = 12
 text = "Pixel Porter v1.0 • Android"
 horizontal_alignment = 1
@@ -135,6 +150,7 @@ grow_vertical = 2
 
 [node name="TopBar" type="PanelContainer" parent="LevelSelectView"]
 layout_mode = 2
+theme_type_variation = &"TopBarPanel"
 
 [node name="Margin" type="MarginContainer" parent="LevelSelectView/TopBar"]
 layout_mode = 2
@@ -147,19 +163,20 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 
 [node name="BackBtn" type="Button" parent="LevelSelectView/TopBar/Margin/HBox"]
-custom_minimum_size = Vector2(80, 44)
+custom_minimum_size = Vector2(88, 44)
 layout_mode = 2
 text = "← Back"
 
 [node name="Title" type="Label" parent="LevelSelectView/TopBar/Margin/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.98, 0.82, 0.25, 1)
 theme_override_font_sizes/font_size = 20
 text = "SELECT LEVEL"
 horizontal_alignment = 1
 
 [node name="Spacer" type="Control" parent="LevelSelectView/TopBar/Margin/HBox"]
-custom_minimum_size = Vector2(80, 0)
+custom_minimum_size = Vector2(88, 0)
 layout_mode = 2
 
 [node name="Scroll" type="ScrollContainer" parent="LevelSelectView"]
@@ -204,14 +221,14 @@ alignment = 1
 
 [node name="Title" type="Label" parent="CreditsModal/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.95, 0.8, 0.22, 1)
+theme_override_colors/font_color = Color(0.98, 0.82, 0.25, 1)
 theme_override_font_sizes/font_size = 22
-text = "PIXEL PORTER CREDITS"
+text = "★ PIXEL PORTER CREDITS ★"
 horizontal_alignment = 1
 
 [node name="Description" type="Label" parent="CreditsModal/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.8, 0.84, 0.9, 1)
+theme_override_colors/font_color = Color(0.85, 0.89, 0.95, 1)
 theme_override_font_sizes/font_size = 14
 text = "A retro box-pushing puzzle game.
 Built with Godot Engine 4.

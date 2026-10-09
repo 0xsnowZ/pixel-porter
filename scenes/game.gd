@@ -58,10 +58,24 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var next_level_button: Button = $WinModal/VBox/WinActions/NextLevelBtn
 @onready var restart_dialog: ConfirmationDialog = $RestartConfirmDialog
 
+# Board sprite textures
+var tex_wall: Texture2D = preload("res://assets/wall_brick.png")
+var tex_floor_1: Texture2D = preload("res://assets/floor_tile_1.png")
+var tex_floor_2: Texture2D = preload("res://assets/floor_tile_2.png")
+var tex_goal: Texture2D = preload("res://assets/goal_pad.png")
+var tex_crate: Texture2D = preload("res://assets/crate_normal.png")
+var tex_crate_goal: Texture2D = preload("res://assets/crate_goal.png")
+var tex_player_down: Texture2D = preload("res://assets/player_down.png")
+var tex_player_up: Texture2D = preload("res://assets/player_up.png")
+var tex_player_left: Texture2D = preload("res://assets/player_left.png")
+var tex_player_right: Texture2D = preload("res://assets/player_right.png")
+
 
 func _initialize_nodes() -> void:
 	if has_node("Background"):
 		$Background.show_behind_parent = true
+	if has_node("DimOverlay"):
+		$DimOverlay.show_behind_parent = true
 	if top_bar_margin == null and has_node("TopBar/Margin"):
 		top_bar_margin = $TopBar/Margin
 		bottom_bar_margin = $BottomBar/Margin
@@ -546,23 +560,25 @@ func _draw() -> void:
 	calculate_layout()
 	var board_pixel_size: Vector2 = Vector2(grid.width * tile_size, grid.height * tile_size)
 
-	# 1. Decorative Wood/Slate Board Framing with Corner Rivets (PRD Section 4)
-	var frame_margin: float = 10.0
+	# 1. Industrial Warehouse Loading Bay Board Framing (PRD Section 4)
+	var frame_margin: float = 12.0
 	var frame_rect: Rect2 = Rect2(
 		grid_origin - Vector2(frame_margin, frame_margin),
 		board_pixel_size + Vector2(frame_margin * 2.0, frame_margin * 2.0)
 	)
 
-	# Board drop shadow
-	draw_rect(Rect2(frame_rect.position + Vector2(5, 5), frame_rect.size), Color(0.0, 0.0, 0.0, 0.45))
-	# Outer border trim
-	draw_rect(frame_rect, Color(0.18, 0.13, 0.10))
-	# Brass bevel rim
-	draw_rect(frame_rect, Color(0.70, 0.52, 0.20), false, 2.0)
-	# Inner slate groove
-	draw_rect(Rect2(grid_origin - Vector2(2, 2), board_pixel_size + Vector2(4, 4)), Color(0.32, 0.22, 0.14), false, 1.5)
+	# Multi-stage drop shadow
+	draw_rect(Rect2(frame_rect.position + Vector2(8, 10), frame_rect.size), Color(0.0, 0.0, 0.0, 0.65))
+	draw_rect(Rect2(frame_rect.position + Vector2(4, 5), frame_rect.size), Color(0.0, 0.0, 0.0, 0.40))
 
-	# 4 Corner brass bolts
+	# Heavy dark steel frame base
+	draw_rect(frame_rect, Color(0.12, 0.15, 0.20))
+	# Polished brass bevel rim
+	draw_rect(frame_rect, Color(0.78, 0.60, 0.22), false, 2.5)
+	# Inner dark groove
+	draw_rect(Rect2(grid_origin - Vector2(2, 2), board_pixel_size + Vector2(4, 4)), Color(0.06, 0.08, 0.12), false, 2.0)
+
+	# 4 Corner industrial brass bolts
 	var corner_offsets: Array[Vector2] = [
 		Vector2(frame_margin * 0.5, frame_margin * 0.5),
 		Vector2(frame_rect.size.x - frame_margin * 0.5, frame_margin * 0.5),
@@ -571,11 +587,11 @@ func _draw() -> void:
 	]
 	for c_offset in corner_offsets:
 		var bolt_center: Vector2 = frame_rect.position + c_offset
-		draw_circle(bolt_center, 3.5, Color(0.20, 0.14, 0.08))
-		draw_circle(bolt_center, 2.8, Color(0.85, 0.68, 0.25))
-		draw_circle(bolt_center - Vector2(0.8, 0.8), 1.0, Color(1.0, 0.92, 0.55))
+		draw_circle(bolt_center, 4.5, Color(0.12, 0.09, 0.05))
+		draw_circle(bolt_center, 3.5, Color(0.92, 0.74, 0.28))
+		draw_circle(bolt_center - Vector2(1.0, 1.0), 1.2, Color(1.0, 0.95, 0.70))
 
-	# 2. Draw Floor & Walls (PRD Section 4: "brick walls, green floor")
+	# 2. Draw Floor & Walls with 3D Depth
 	for y in range(grid.height):
 		for x in range(grid.width):
 			var pos: Vector2i = Vector2i(x, y)
@@ -585,36 +601,44 @@ func _draw() -> void:
 				_draw_wall(rect)
 			else:
 				var is_alt: bool = ((x + y) % 2 == 0)
-				var floor_col: Color = Color(0.24, 0.44, 0.28) if is_alt else Color(0.21, 0.40, 0.25)
-				draw_rect(rect, floor_col)
-				draw_rect(rect, Color(0.17, 0.33, 0.20, 0.6), false, 1.0)
+				var floor_tex: Texture2D = tex_floor_1 if is_alt else tex_floor_2
+				draw_texture_rect(floor_tex, rect, false)
 
-	# 3. Draw Goals with Pulsing Dynamic Golden Rings
+				# 3D Depth Shadow: if cell above is a wall, cast drop shadow down
+				if y > 0 and grid.is_wall(Vector2i(x, y - 1)):
+					draw_rect(Rect2(rect.position, Vector2(rect.size.x, tile_size * 0.22)), Color(0.0, 0.0, 0.0, 0.42))
+
+	# 3. Draw Goals with Industrial Pressure Plate & Pulsing Aura
 	var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
-	var pulse: float = sin(time_sec * 3.5) * 0.10
+	var pulse: float = sin(time_sec * 3.5) * 0.12
 	for goal_pos in grid.goals.keys():
-		var center: Vector2 = grid_origin + Vector2(goal_pos) * tile_size + Vector2(tile_size / 2.0, tile_size / 2.0)
-		var base_radius: float = tile_size * 0.22
-		var dyn_radius: float = base_radius * (1.0 + pulse)
+		var rect: Rect2 = Rect2(grid_origin + Vector2(goal_pos) * tile_size, Vector2(tile_size, tile_size))
+		var center: Vector2 = rect.get_center()
 
-		# Pulsing aura
-		draw_circle(center, dyn_radius + 4.0, Color(0.95, 0.80, 0.20, 0.25 + pulse * 0.1))
-		# Outer gold ring
-		draw_circle(center, dyn_radius, Color(0.95, 0.78, 0.18, 0.90))
-		# Inner green floor hole
-		draw_circle(center, dyn_radius * 0.65, Color(0.20, 0.40, 0.24))
-		# Center golden star dot
-		draw_circle(center, dyn_radius * 0.35, Color(1.0, 0.95, 0.50, 1.0))
+		draw_texture_rect(tex_goal, rect, false)
 
-	# 4. Draw Crates with Drop Shadow & 3D Bevels
+		# Pulsing dynamic golden aura
+		var aura_radius: float = (tile_size * 0.26) * (1.0 + pulse)
+		draw_circle(center, aura_radius + 4.0, Color(0.98, 0.82, 0.20, 0.22 + pulse * 0.10))
+		draw_circle(center, 3.5, Color(1.0, 1.0, 0.85, 0.90))
+
+	# 4. Draw Crates with Drop Shadow & 3D Shading
 	for logical_pos in grid.crates.keys():
 		var draw_tile_pos: Vector2 = visual_crates.get(logical_pos, Vector2(logical_pos))
-		var rect: Rect2 = Rect2(grid_origin + draw_tile_pos * tile_size + Vector2(3, 3), Vector2(tile_size - 6, tile_size - 6))
 		var is_on_goal: bool = grid.is_goal(logical_pos)
+		var crate_padding: float = tile_size * 0.04
+		var rect: Rect2 = Rect2(
+			grid_origin + draw_tile_pos * tile_size + Vector2(crate_padding, crate_padding),
+			Vector2(tile_size - crate_padding * 2.0, tile_size - crate_padding * 2.0)
+		)
 		_draw_crate(rect, is_on_goal)
 
-	# 5. Draw Directional Porter
-	var player_rect: Rect2 = Rect2(grid_origin + visual_player_pos * tile_size + Vector2(4, 4), Vector2(tile_size - 8, tile_size - 8))
+	# 5. Draw Directional Porter Worker
+	var player_padding: float = tile_size * 0.04
+	var player_rect: Rect2 = Rect2(
+		grid_origin + visual_player_pos * tile_size + Vector2(player_padding, player_padding),
+		Vector2(tile_size - player_padding * 2.0, tile_size - player_padding * 2.0)
+	)
 	_draw_player(player_rect)
 
 	# 6. Draw Victory Particles
@@ -633,110 +657,45 @@ func _draw() -> void:
 
 
 func _draw_wall(rect: Rect2) -> void:
-	# Base brick terracotta
-	draw_rect(rect, Color(0.48, 0.20, 0.18))
-
-	# 3D highlight top & left
-	draw_line(rect.position, Vector2(rect.end.x, rect.position.y), Color(0.66, 0.30, 0.25), 2.0)
-	draw_line(rect.position, Vector2(rect.position.x, rect.end.y), Color(0.66, 0.30, 0.25), 2.0)
-
-	# 3D shadow bottom & right
-	draw_line(Vector2(rect.position.x, rect.end.y), rect.end, Color(0.24, 0.08, 0.07), 2.0)
-	draw_line(Vector2(rect.end.x, rect.position.y), rect.end, Color(0.24, 0.08, 0.07), 2.0)
-
-	# Mortar joints
-	var mortar_col: Color = Color(0.28, 0.10, 0.08)
-	draw_rect(rect, mortar_col, false, 1.5)
-
-	var half_h: float = rect.size.y / 2.0
-	draw_line(rect.position + Vector2(0, half_h), rect.position + Vector2(rect.size.x, half_h), mortar_col, 1.5)
-	draw_line(rect.position + Vector2(rect.size.x * 0.5, 0), rect.position + Vector2(rect.size.x * 0.5, half_h), mortar_col, 1.5)
-	draw_line(rect.position + Vector2(rect.size.x * 0.25, half_h), rect.position + Vector2(rect.size.x * 0.25, rect.size.y), mortar_col, 1.5)
-	draw_line(rect.position + Vector2(rect.size.x * 0.75, half_h), rect.position + Vector2(rect.size.x * 0.75, rect.size.y), mortar_col, 1.5)
+	draw_texture_rect(tex_wall, rect, false)
 
 
 func _draw_crate(rect: Rect2, on_goal: bool) -> void:
 	# Crate soft drop shadow
-	var shadow_rect: Rect2 = Rect2(rect.position + Vector2(3, 4), rect.size)
-	draw_rect(shadow_rect, Color(0.0, 0.0, 0.0, 0.32))
+	var shadow_rect: Rect2 = Rect2(rect.position + Vector2(3, 5), rect.size)
+	draw_rect(shadow_rect, Color(0.0, 0.0, 0.0, 0.38))
 
-	var bg_col: Color = Color(0.24, 0.70, 0.38) if on_goal else Color(0.80, 0.52, 0.22)
-	var border_col: Color = Color(0.14, 0.48, 0.24) if on_goal else Color(0.52, 0.31, 0.10)
-	var cross_col: Color = Color(0.18, 0.56, 0.28) if on_goal else Color(0.62, 0.39, 0.15)
-	var highlight_col: Color = Color(0.40, 0.85, 0.52) if on_goal else Color(0.94, 0.72, 0.42)
-	var shadow_edge_col: Color = Color(0.10, 0.36, 0.18) if on_goal else Color(0.38, 0.20, 0.06)
-
-	draw_rect(rect, bg_col)
-
-	# 3D Bevel highlight top & left
-	draw_line(rect.position, Vector2(rect.end.x, rect.position.y), highlight_col, 2.5)
-	draw_line(rect.position, Vector2(rect.position.x, rect.end.y), highlight_col, 2.5)
-
-	# 3D Bevel shadow bottom & right
-	draw_line(Vector2(rect.position.x, rect.end.y), rect.end, shadow_edge_col, 2.5)
-	draw_line(Vector2(rect.end.x, rect.position.y), rect.end, shadow_edge_col, 2.5)
-
-	draw_rect(rect, border_col, false, 2.0)
-
-	# Diagonal cross braces
-	var inset: float = 5.0
-	draw_line(rect.position + Vector2(inset, inset), rect.end - Vector2(inset, inset), cross_col, 2.8)
-	draw_line(Vector2(rect.end.x - inset, rect.position.y + inset), Vector2(rect.position.x + inset, rect.end.y - inset), cross_col, 2.8)
-
-	# Corner rivets
-	var rivet_color: Color = Color(0.95, 0.85, 0.4) if on_goal else Color(0.35, 0.22, 0.10)
-	var r_radius: float = 1.8
-	draw_circle(rect.position + Vector2(inset, inset), r_radius, rivet_color)
-	draw_circle(Vector2(rect.end.x - inset, rect.position.y + inset), r_radius, rivet_color)
-	draw_circle(Vector2(rect.position.x + inset, rect.end.y - inset), r_radius, rivet_color)
-	draw_circle(rect.end - Vector2(inset, inset), r_radius, rivet_color)
+	var c_tex: Texture2D = tex_crate_goal if on_goal else tex_crate
+	draw_texture_rect(c_tex, rect, false)
 
 	if on_goal:
-		# Shiny star center badge
 		var center: Vector2 = rect.get_center()
-		draw_circle(center, 6.0, Color(1.0, 0.95, 0.4))
-		draw_circle(center, 3.0, Color(1.0, 1.0, 0.85))
+		var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
+		var star_pulse: float = sin(time_sec * 4.0) * 0.15
+		draw_circle(center, 8.0 * (1.0 + star_pulse), Color(1.0, 0.95, 0.5, 0.45))
 
 
 func _draw_player(rect: Rect2) -> void:
 	var center: Vector2 = rect.get_center()
 	var radius: float = rect.size.x / 2.0
 
-	# Porter drop shadow
-	draw_circle(center + Vector2(0, radius * 0.35), radius * 0.75, Color(0.0, 0.0, 0.0, 0.35))
+	# Ground drop shadow
+	var pts: PackedVector2Array = []
+	var shadow_center: Vector2 = center + Vector2(0, radius * 0.52)
+	var rx: float = radius * 0.70
+	var ry: float = radius * 0.28
+	for i in range(16):
+		var a: float = i * (TAU / 16.0)
+		pts.append(shadow_center + Vector2(cos(a) * rx, sin(a) * ry))
+	draw_colored_polygon(pts, Color(0.0, 0.0, 0.0, 0.42))
 
-	# Overalls / body
-	draw_circle(center + Vector2(0, radius * 0.15), radius * 0.75, Color(0.20, 0.44, 0.82))
-	draw_line(center + Vector2(-radius * 0.35, -radius * 0.1), center + Vector2(-radius * 0.35, radius * 0.4), Color(0.14, 0.32, 0.65), 2.0)
-	draw_line(center + Vector2(radius * 0.35, -radius * 0.1), center + Vector2(radius * 0.35, radius * 0.4), Color(0.14, 0.32, 0.65), 2.0)
+	# Pick directional sprite
+	var p_tex: Texture2D = tex_player_down
+	if player_facing_dir == Vector2i.UP:
+		p_tex = tex_player_up
+	elif player_facing_dir == Vector2i.LEFT:
+		p_tex = tex_player_left
+	elif player_facing_dir == Vector2i.RIGHT:
+		p_tex = tex_player_right
 
-	# Face / head
-	var face_offset: Vector2 = Vector2(player_facing_dir) * (radius * 0.12)
-	var head_center: Vector2 = center - Vector2(0, radius * 0.18) + face_offset
-	draw_circle(head_center, radius * 0.52, Color(0.98, 0.82, 0.65))
-
-	# Red Porter Cap
-	var cap_center: Vector2 = head_center - Vector2(0, radius * 0.22)
-	draw_circle(cap_center, radius * 0.42, Color(0.85, 0.22, 0.18))
-
-	# Cap visor pointing towards player_facing_dir
-	var visor_dir: Vector2 = Vector2(player_facing_dir)
-	if visor_dir == Vector2.ZERO or visor_dir == Vector2.DOWN:
-		draw_rect(Rect2(cap_center + Vector2(-radius * 0.35, radius * 0.12), Vector2(radius * 0.7, radius * 0.18)), Color(0.65, 0.15, 0.12))
-	elif visor_dir == Vector2.UP:
-		draw_rect(Rect2(cap_center + Vector2(-radius * 0.3, -radius * 0.32), Vector2(radius * 0.6, radius * 0.16)), Color(0.65, 0.15, 0.12))
-	elif visor_dir == Vector2.LEFT:
-		draw_rect(Rect2(cap_center + Vector2(-radius * 0.52, -radius * 0.05), Vector2(radius * 0.35, radius * 0.2)), Color(0.65, 0.15, 0.12))
-	elif visor_dir == Vector2.RIGHT:
-		draw_rect(Rect2(cap_center + Vector2(radius * 0.18, -radius * 0.05), Vector2(radius * 0.35, radius * 0.2)), Color(0.65, 0.15, 0.12))
-
-	# Eyes (pointing towards player_facing_dir)
-	if player_facing_dir != Vector2i.UP:
-		var eye_offset: Vector2 = Vector2(player_facing_dir) * 2.5
-		var eye_y: float = head_center.y - 1.0 + eye_offset.y
-		var eye_x1: float = head_center.x - radius * 0.18 + eye_offset.x
-		var eye_x2: float = head_center.x + radius * 0.18 + eye_offset.x
-		draw_circle(Vector2(eye_x1, eye_y), 2.0, Color(0.1, 0.1, 0.1))
-		draw_circle(Vector2(eye_x2, eye_y), 2.0, Color(0.1, 0.1, 0.1))
-		draw_circle(Vector2(eye_x1 - 0.5, eye_y - 0.5), 0.8, Color(1.0, 1.0, 1.0))
-		draw_circle(Vector2(eye_x2 - 0.5, eye_y - 0.5), 0.8, Color(1.0, 1.0, 1.0))
+	draw_texture_rect(p_tex, rect, false)
