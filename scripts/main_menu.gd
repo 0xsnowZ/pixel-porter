@@ -15,6 +15,7 @@ var save_mgr: Node = null
 var audio_mgr: Node = null
 var loc_mgr: Node = null
 var haptic_mgr: Node = null
+var safe_area_mgr: Node = null
 
 # Node references
 @onready var main_view: VBoxContainer = $MainView
@@ -70,6 +71,11 @@ func _ready() -> void:
 	if is_inside_tree() and get_tree().root.has_node("HapticManager"):
 		haptic_mgr = get_tree().root.get_node("HapticManager")
 
+	if is_inside_tree() and get_tree().root.has_node("SafeAreaManager"):
+		safe_area_mgr = get_tree().root.get_node("SafeAreaManager")
+		safe_area_mgr.safe_area_changed.connect(_on_safe_area_changed)
+		_apply_safe_area()
+
 	if not continue_btn.pressed.is_connected(_on_continue_pressed):
 		continue_btn.pressed.connect(_on_continue_pressed)
 	if not play_btn.pressed.is_connected(_on_play_pressed):
@@ -92,6 +98,17 @@ func _ready() -> void:
 	_show_main_view()
 	_update_menu_state()
 	_build_level_grid()
+
+
+func _apply_safe_area() -> void:
+	if safe_area_mgr != null and has_node("LevelSelectView/TopBar/Margin"):
+		var level_top_bar: MarginContainer = get_node("LevelSelectView/TopBar/Margin") as MarginContainer
+		if level_top_bar != null:
+			safe_area_mgr.apply_safe_area_margins(level_top_bar, 16, 12, 16, 12, true, false)
+
+
+func _on_safe_area_changed(_insets: Dictionary) -> void:
+	_apply_safe_area()
 
 
 func _show_main_view() -> void:

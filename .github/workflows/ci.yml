@@ -75,6 +75,9 @@ jobs:
       - name: Test Haptic Feedback System
         run: godot --headless --path . -s tests/test_haptic_manager.gd
 
+      - name: Test Safe Area Margins & Android Export Presets
+        run: godot --headless --path . -s tests/test_safe_area_manager.gd
+
       - name: Verify All 50 Levels Mathematical Solvability
         run: godot --headless --path . -s scripts/verify_levels.gd
 

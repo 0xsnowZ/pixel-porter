@@ -15,10 +15,12 @@ var save_mgr: Node = null
 var audio_mgr: Node = null
 var loc_mgr: Node = null
 var haptic_mgr: Node = null
+var safe_area_mgr: Node = null
 
 var celebration_particles: Array[Dictionary] = []
 var particle_spawn_timer: float = 0.0
 
+@onready var margin_container: MarginContainer = $Margin
 @onready var title_label: Label = $Margin/VBox/Title
 @onready var thanks_label: Label = $Margin/VBox/StatsPanel/PanelMargin/PanelVBox/ThanksLabel
 @onready var stats_label: Label = $Margin/VBox/StatsPanel/PanelMargin/PanelVBox/SummaryStatsLabel
@@ -28,6 +30,8 @@ var particle_spawn_timer: float = 0.0
 
 
 func _initialize_nodes() -> void:
+	if margin_container == null and has_node("Margin"):
+		margin_container = $Margin
 	if title_label == null and has_node("Margin/VBox/Title"):
 		title_label = $Margin/VBox/Title
 		thanks_label = $Margin/VBox/StatsPanel/PanelMargin/PanelVBox/ThanksLabel
@@ -56,6 +60,12 @@ func _ready() -> void:
 	if haptic_mgr == null and is_inside_tree() and get_tree().root.has_node("HapticManager"):
 		haptic_mgr = get_tree().root.get_node("HapticManager")
 
+	if safe_area_mgr == null and is_inside_tree() and get_tree().root.has_node("SafeAreaManager"):
+		safe_area_mgr = get_tree().root.get_node("SafeAreaManager")
+	if safe_area_mgr:
+		safe_area_mgr.safe_area_changed.connect(_on_safe_area_changed)
+		_apply_safe_area()
+
 	if not level_select_btn.pressed.is_connected(_on_level_select_pressed):
 		level_select_btn.pressed.connect(_on_level_select_pressed)
 	if not menu_btn.pressed.is_connected(_on_menu_pressed):
@@ -68,6 +78,15 @@ func _ready() -> void:
 		audio_mgr.play_win()
 	if haptic_mgr:
 		haptic_mgr.vibrate_win()
+
+
+func _apply_safe_area() -> void:
+	if safe_area_mgr != null and margin_container != null:
+		safe_area_mgr.apply_safe_area_margins(margin_container, 24, 24, 24, 24, true, true)
+
+
+func _on_safe_area_changed(_insets: Dictionary) -> void:
+	_apply_safe_area()
 
 
 func _update_ui() -> void:

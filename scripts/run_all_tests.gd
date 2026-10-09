@@ -16,6 +16,7 @@ const TEST_SCRIPTS: Array[String] = [
 	"tests/test_ad_manager.gd",
 	"tests/test_end_screen.gd",
 	"tests/test_haptic_manager.gd",
+	"tests/test_safe_area_manager.gd",
 	"scripts/verify_levels.gd"
 ]
 

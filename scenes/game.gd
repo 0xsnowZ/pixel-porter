@@ -23,6 +23,7 @@ var audio_mgr: Node = null
 var loc_mgr: Node = null
 var ad_mgr: Node = null
 var haptic_mgr: Node = null
+var safe_area_mgr: Node = null
 
 # Visual settings
 var tile_size: float = 64.0
@@ -42,6 +43,8 @@ var is_touching: bool = false
 const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
 # UI references
+@onready var top_bar_margin: MarginContainer = $TopBar/Margin
+@onready var bottom_bar_margin: MarginContainer = $BottomBar/Margin
 @onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
 @onready var level_label: Label = $TopBar/Margin/HBox/LevelLabel
 @onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
@@ -57,6 +60,9 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
 
 func _initialize_nodes() -> void:
+	if top_bar_margin == null and has_node("TopBar/Margin"):
+		top_bar_margin = $TopBar/Margin
+		bottom_bar_margin = $BottomBar/Margin
 	if menu_button == null and has_node("TopBar/Margin/HBox/MenuBtn"):
 		menu_button = $TopBar/Margin/HBox/MenuBtn
 		level_label = $TopBar/Margin/HBox/LevelLabel
@@ -93,6 +99,12 @@ func _ready() -> void:
 	if haptic_mgr == null and is_inside_tree() and get_tree().root.has_node("HapticManager"):
 		haptic_mgr = get_tree().root.get_node("HapticManager")
 
+	if safe_area_mgr == null and is_inside_tree() and get_tree().root.has_node("SafeAreaManager"):
+		safe_area_mgr = get_tree().root.get_node("SafeAreaManager")
+	if safe_area_mgr:
+		safe_area_mgr.safe_area_changed.connect(_on_safe_area_changed)
+		_apply_safe_area()
+
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
 	grid.player_moved.connect(_on_player_moved)
@@ -113,6 +125,7 @@ func _ready() -> void:
 		next_level_button.pressed.connect(_on_next_level_pressed)
 	if not restart_dialog.confirmed.is_connected(_do_restart):
 		restart_dialog.confirmed.connect(_do_restart)
+
 	if loc_mgr:
 		restart_dialog.ok_button_text = loc_mgr.tr_text("BTN_RESTART")
 		restart_dialog.cancel_button_text = loc_mgr.tr_text("BTN_CLOSE")
@@ -123,6 +136,20 @@ func _ready() -> void:
 	load_level(initial_level)
 	if get_viewport():
 		get_viewport().size_changed.connect(queue_redraw)
+
+
+func _apply_safe_area() -> void:
+	if safe_area_mgr != null:
+		if top_bar_margin != null:
+			safe_area_mgr.apply_safe_area_margins(top_bar_margin, 16, 10, 16, 10, true, false)
+		if bottom_bar_margin != null:
+			safe_area_mgr.apply_safe_area_margins(bottom_bar_margin, 16, 10, 16, 10, false, true)
+	calculate_layout()
+	queue_redraw()
+
+
+func _on_safe_area_changed(_insets: Dictionary) -> void:
+	_apply_safe_area()
 
 
 func load_level(index: int) -> void:
@@ -488,15 +515,25 @@ func calculate_layout(custom_viewport_size: Vector2 = Vector2.ZERO) -> void:
 	var viewport_size: Vector2 = custom_viewport_size if custom_viewport_size != Vector2.ZERO else size
 	if viewport_size.x <= 0.0 or viewport_size.y <= 0.0:
 		viewport_size = Vector2(720.0, 1280.0)
-	var playable_height: float = viewport_size.y - 140.0 # Space between top and bottom bars
-	var max_tile_w: float = (viewport_size.x - 36.0) / float(grid.width)
+
+	var insets: Dictionary = safe_area_mgr.get_safe_insets(self) if safe_area_mgr else { "top": 0.0, "bottom": 0.0, "left": 0.0, "right": 0.0 }
+	var safe_top: float = insets.get("top", 0.0)
+	var safe_bottom: float = insets.get("bottom", 0.0)
+	var safe_horiz: float = insets.get("left", 0.0) + insets.get("right", 0.0)
+
+	var top_offset: float = 70.0 + safe_top
+	var bottom_offset: float = 70.0 + safe_bottom
+	var playable_height: float = viewport_size.y - (top_offset + bottom_offset)
+	var playable_width: float = viewport_size.x - (36.0 + safe_horiz)
+
+	var max_tile_w: float = playable_width / float(grid.width)
 	var max_tile_h: float = playable_height / float(grid.height)
 	tile_size = floor(min(max_tile_w, max_tile_h))
 
 	var board_pixel_size: Vector2 = Vector2(grid.width * tile_size, grid.height * tile_size)
 	grid_origin = Vector2(
 		floor((viewport_size.x - board_pixel_size.x) / 2.0),
-		floor(70.0 + (playable_height - board_pixel_size.y) / 2.0)
+		floor(top_offset + (playable_height - board_pixel_size.y) / 2.0)
 	)
 
 

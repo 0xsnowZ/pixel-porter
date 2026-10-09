@@ -1,8 +1,12 @@
 # Godot 4+ cache and imported assets
 .godot/
 
-# Export presets (can contain credentials/keystores)
-export_presets.cfg
+# Secret Android signing keys and credentials
+*.keystore
+*.jks
+
+# Build artifacts
+build/
 
 # System / editor files
 .DS_Store
