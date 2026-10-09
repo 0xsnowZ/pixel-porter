@@ -289,6 +289,10 @@ func _build_level_grid() -> void:
 func _refresh_level_grid_buttons() -> void:
 	var unlocked_lvl: int = save_mgr.unlocked_level if save_mgr else 0
 
+	if has_node("LevelSelectView/TopBar/Margin/HBox/TotalStarsLabel") and save_mgr != null:
+		var stars_lbl = get_node("LevelSelectView/TopBar/Margin/HBox/TotalStarsLabel") as Label
+		stars_lbl.text = "★ %d/150" % save_mgr.get_total_stars()
+
 	for child in level_grid.get_children():
 		if not child is Button:
 			continue
@@ -300,7 +304,14 @@ func _refresh_level_grid_buttons() -> void:
 		if is_completed:
 			var record: Dictionary = save_mgr.get_level_record(lvl_idx)
 			var moves: int = record.get("best_moves", 0)
-			child.text = "%d\n★ %dm" % [lvl_idx + 1, moves]
+			var stars: int = record.get("stars", 1)
+			var star_str: String = ""
+			match stars:
+				3: star_str = "★★★"
+				2: star_str = "★★☆"
+				1: star_str = "★☆☆"
+				_: star_str = "★"
+			child.text = "%d\n%s %dm" % [lvl_idx + 1, star_str, moves]
 			child.disabled = false
 			child.theme_type_variation = &"SuccessButton"
 			child.modulate = Color(1.0, 1.0, 1.0)

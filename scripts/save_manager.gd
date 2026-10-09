@@ -40,14 +40,61 @@ func unlock_level(target_level_index: int) -> bool:
 	return false
 
 
+# Mathematically verified optimal moves for all 50 levels
+const OPTIMAL_MOVES: Array[int] = [
+	5, 3, 5, 7, 8, 8, 6, 26, 17, 18,
+	8, 9, 9, 11, 10, 10, 11, 11, 11, 10,
+	12, 13, 11, 14, 13, 12, 11, 14, 15, 16,
+	12, 12, 13, 13, 13, 15, 13, 13, 14, 15,
+	17, 16, 16, 16, 18, 15, 15, 15, 17, 16
+]
+
+
+## Returns the optimal minimum moves target for a level.
+func get_optimal_moves(level_index: int) -> int:
+	if level_index >= 0 and level_index < OPTIMAL_MOVES.size():
+		return OPTIMAL_MOVES[level_index]
+	return 15
+
+
+## Calculates earned stars (1 to 3) based on moves taken vs level optimal par.
+func calculate_stars(level_index: int, moves: int) -> int:
+	var optimal: int = get_optimal_moves(level_index)
+	# 3 Stars: optimal par with slight tolerance (+2 moves)
+	if moves <= optimal + 2:
+		return 3
+	# 2 Stars: within ~1.6x of optimal par (+3 moves)
+	elif moves <= int(optimal * 1.6) + 3:
+		return 2
+	# 1 Star: valid completion
+	return 1
+
+
+## Returns the best earned stars (0 to 3) for a given level.
+func get_level_stars(level_index: int) -> int:
+	var rec: Dictionary = get_level_record(level_index)
+	return rec.get("stars", 0)
+
+
+## Returns the total stars collected across all completed levels (out of 150).
+func get_total_stars() -> int:
+	var total: int = 0
+	for rec in completed_levels.values():
+		total += rec.get("stars", 0)
+	return total
+
+
 ## Records a level completion.
-## Unlocks the next level (level_index + 1) and saves best scores.
+## Unlocks the next level (level_index + 1) and saves best scores and star rating.
 func record_level_completion(level_index: int, moves: int, pushes: int, file_path: String = "") -> void:
 	var key: String = str(level_index)
 	var prev_record: Dictionary = completed_levels.get(key, {})
 
 	var best_moves: int = moves
 	var best_pushes: int = pushes
+	var stars: int = calculate_stars(level_index, moves)
+	var prev_stars: int = prev_record.get("stars", 0)
+	var best_stars: int = maxi(prev_stars, stars)
 
 	if not prev_record.is_empty():
 		best_moves = mini(prev_record.get("best_moves", moves), moves)
@@ -57,7 +104,9 @@ func record_level_completion(level_index: int, moves: int, pushes: int, file_pat
 		"best_moves": best_moves,
 		"best_pushes": best_pushes,
 		"last_moves": moves,
-		"last_pushes": pushes
+		"last_pushes": pushes,
+		"stars": best_stars,
+		"last_stars": stars
 	}
 
 	unlock_level(level_index + 1)

@@ -20,6 +20,9 @@ var sfx_win: AudioStreamWAV
 var sfx_restart: AudioStreamWAV
 var sfx_click: AudioStreamWAV
 var sfx_goal_lock: AudioStreamWAV
+var sfx_star1: AudioStreamWAV
+var sfx_star2: AudioStreamWAV
+var sfx_star3: AudioStreamWAV
 
 # AudioStreamPlayer voice pool for overlapping SFX
 var _players: Array[AudioStreamPlayer] = []
@@ -99,6 +102,15 @@ func play_goal_lock() -> void:
 	play_stream(sfx_goal_lock, -1.0)
 
 
+## Star awarded chime (1, 2, or 3)
+func play_star(star_num: int = 1) -> void:
+	match star_num:
+		1: play_stream(sfx_star1, 0.0)
+		2: play_stream(sfx_star2, 0.5)
+		3: play_stream(sfx_star3, 1.0)
+		_: play_stream(sfx_star1, 0.0)
+
+
 # ==============================================================================
 # Procedural Retro 8-Bit Audio Synthesis
 # ==============================================================================
@@ -110,6 +122,9 @@ func _generate_all_sfx() -> void:
 	sfx_restart = _synth_restart()
 	sfx_click = _synth_click()
 	sfx_goal_lock = _synth_goal_lock()
+	sfx_star1 = _synth_star_chime(587.33, false)
+	sfx_star2 = _synth_star_chime(739.99, false)
+	sfx_star3 = _synth_star_chime(880.00, true)
 
 
 func _create_wav(data_bytes: PackedByteArray) -> AudioStreamWAV:
@@ -275,6 +290,35 @@ func _synth_goal_lock() -> AudioStreamWAV:
 		var wave: float = sin(phase1) * 0.75 + sin(phase2) * 0.25
 		var env: float = pow(1.0 - t, 1.8)
 		var sample_val: int = int(clampi(int(wave * env * 22000.0), -32767, 32767))
+		bytes.encode_s16(i * 2, sample_val)
+
+	return _create_wav(bytes)
+
+
+## Generates an arcade star award chime (180ms bell with harmonic shimmer)
+func _synth_star_chime(pitch_hz: float, is_major_chord: bool) -> AudioStreamWAV:
+	var duration: float = 0.22 if is_major_chord else 0.16
+	var total_samples: int = int(duration * MIX_RATE)
+	var bytes: PackedByteArray = PackedByteArray()
+	bytes.resize(total_samples * 2)
+
+	var phase1: float = 0.0
+	var phase2: float = 0.0
+	var phase3: float = 0.0
+
+	for i in range(total_samples):
+		var t: float = float(i) / float(total_samples)
+		var f1: float = pitch_hz
+		var f2: float = pitch_hz * 1.5 if is_major_chord else pitch_hz * 2.0
+		var f3: float = pitch_hz * 2.0 if is_major_chord else pitch_hz * 3.0
+
+		phase1 += (f1 * TAU) / float(MIX_RATE)
+		phase2 += (f2 * TAU) / float(MIX_RATE)
+		phase3 += (f3 * TAU) / float(MIX_RATE)
+
+		var wave: float = sin(phase1) * 0.60 + sin(phase2) * 0.25 + sin(phase3) * 0.15
+		var env: float = pow(1.0 - t, 2.0)
+		var sample_val: int = int(clampi(int(wave * env * 24000.0), -32767, 32767))
 		bytes.encode_s16(i * 2, sample_val)
 
 	return _create_wav(bytes)

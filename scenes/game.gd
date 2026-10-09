@@ -61,11 +61,18 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var restart_button: Button = $BottomBar/Margin/HBox/RestartButton
 @onready var next_button: Button = $BottomBar/Margin/HBox/NextButton
 @onready var win_modal: PanelContainer = $WinModal
-@onready var win_title: Label = $WinModal/VBox/WinTitle
-@onready var win_stats: Label = $WinModal/VBox/WinStats
-@onready var win_menu_button: Button = $WinModal/VBox/WinActions/WinMenuBtn
-@onready var next_level_button: Button = $WinModal/VBox/WinActions/NextLevelBtn
+@onready var win_title: Label = $WinModal.find_child("WinTitle", true, false) if has_node("WinModal") else null
+@onready var win_stats: Label = $WinModal.find_child("WinStats", true, false) if has_node("WinModal") else null
+@onready var win_menu_button: Button = $WinModal.find_child("WinMenuBtn", true, false) if has_node("WinModal") else null
+@onready var next_level_button: Button = $WinModal.find_child("NextLevelBtn", true, false) if has_node("WinModal") else null
+@onready var win_retry_button: Button = $WinModal.find_child("WinRetryBtn", true, false) if has_node("WinModal") else null
+@onready var level_placard_label: Label = $WinModal.find_child("LevelPlacardLabel", true, false) if has_node("WinModal") else null
+@onready var star_1: Label = $WinModal.find_child("Star1", true, false) if has_node("WinModal") else null
+@onready var star_2: Label = $WinModal.find_child("Star2", true, false) if has_node("WinModal") else null
+@onready var star_3: Label = $WinModal.find_child("Star3", true, false) if has_node("WinModal") else null
 @onready var restart_dialog: ConfirmationDialog = $RestartConfirmDialog
+
+var level_start_time: int = 0
 
 # Board sprite textures
 var tex_wall: Texture2D = preload("res://assets/wall_brick.png")
@@ -97,12 +104,20 @@ func _initialize_nodes() -> void:
 			undo_button = $BottomBar/Margin/HBox/UndoButton
 		restart_button = $BottomBar/Margin/HBox/RestartButton
 		next_button = $BottomBar/Margin/HBox/NextButton
-		win_modal = $WinModal
-		win_title = $WinModal/VBox/WinTitle
-		win_stats = $WinModal/VBox/WinStats
-		win_menu_button = $WinModal/VBox/WinActions/WinMenuBtn
-		next_level_button = $WinModal/VBox/WinActions/NextLevelBtn
 		restart_dialog = $RestartConfirmDialog
+
+	if win_modal == null and has_node("WinModal"):
+		win_modal = $WinModal
+	if win_modal != null:
+		win_title = win_modal.find_child("WinTitle", true, false)
+		win_stats = win_modal.find_child("WinStats", true, false)
+		win_menu_button = win_modal.find_child("WinMenuBtn", true, false)
+		next_level_button = win_modal.find_child("NextLevelBtn", true, false)
+		win_retry_button = win_modal.find_child("WinRetryBtn", true, false)
+		level_placard_label = win_modal.find_child("LevelPlacardLabel", true, false)
+		star_1 = win_modal.find_child("Star1", true, false)
+		star_2 = win_modal.find_child("Star2", true, false)
+		star_3 = win_modal.find_child("Star3", true, false)
 
 
 func _ready() -> void:
@@ -151,10 +166,22 @@ func _ready() -> void:
 		prev_button.pressed.connect(_on_prev_level_pressed)
 	if not next_button.pressed.is_connected(_on_next_level_pressed):
 		next_button.pressed.connect(_on_next_level_pressed)
-	if not next_level_button.pressed.is_connected(_on_next_level_pressed):
+	if next_level_button != null and not next_level_button.pressed.is_connected(_on_next_level_pressed):
 		next_level_button.pressed.connect(_on_next_level_pressed)
+	if win_retry_button != null and not win_retry_button.pressed.is_connected(_on_win_retry_pressed):
+		win_retry_button.pressed.connect(_on_win_retry_pressed)
 	if not restart_dialog.confirmed.is_connected(_do_restart):
 		restart_dialog.confirmed.connect(_do_restart)
+
+	if star_1:
+		star_1.pivot_offset = Vector2(28, 28)
+		star_1.rotation_degrees = -10.0
+	if star_2:
+		star_2.pivot_offset = Vector2(34, 34)
+		star_2.rotation_degrees = 0.0
+	if star_3:
+		star_3.pivot_offset = Vector2(28, 28)
+		star_3.rotation_degrees = 10.0
 
 	if loc_mgr:
 		restart_dialog.ok_button_text = loc_mgr.tr_text("BTN_RESTART")
@@ -173,8 +200,12 @@ func _ready() -> void:
 	_attach_spring_physics(undo_button)
 	_attach_spring_physics(restart_button)
 	_attach_spring_physics(next_button)
-	_attach_spring_physics(win_menu_button)
-	_attach_spring_physics(next_level_button)
+	if win_menu_button:
+		_attach_spring_physics(win_menu_button)
+	if next_level_button:
+		_attach_spring_physics(next_level_button)
+	if win_retry_button:
+		_attach_spring_physics(win_retry_button)
 
 
 func _apply_safe_area() -> void:
@@ -208,6 +239,7 @@ func load_level(index: int) -> void:
 
 	is_animating = false
 	queued_move_dir = Vector2i.ZERO
+	level_start_time = Time.get_ticks_msec()
 	if win_modal:
 		win_modal.hide()
 	if ad_mgr:
@@ -249,13 +281,23 @@ func _update_ui() -> void:
 			undo_button.text = loc_mgr.tr_text("BTN_UNDO")
 		prev_button.text = loc_mgr.tr_text("BTN_PREV")
 		next_button.text = loc_mgr.tr_text("BTN_NEXT")
-		win_menu_button.text = loc_mgr.tr_text("WIN_MENU_BTN")
-		next_level_button.text = loc_mgr.tr_text("WIN_NEXT_BTN")
+		if win_menu_button != null:
+			win_menu_button.text = "⌂ " + loc_mgr.tr_text("WIN_MENU_BTN")
+		if next_level_button != null:
+			next_level_button.text = "▶ " + loc_mgr.tr_text("WIN_NEXT_BTN")
+		if win_retry_button != null:
+			win_retry_button.text = loc_mgr.tr_text("WIN_RETRY_BTN")
 	else:
 		level_label.text = "LEVEL %d / %d" % [current_level_index + 1, level_paths.size()]
 		stats_label.text = "MOVES: %d  |  PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
 		if undo_button != null:
 			undo_button.text = "Undo ↶"
+		if win_menu_button != null:
+			win_menu_button.text = "⌂ MENU"
+		if next_level_button != null:
+			next_level_button.text = "▶ NEXT"
+		if win_retry_button != null:
+			win_retry_button.text = "↺ RETRY"
 
 	if undo_button != null:
 		undo_button.disabled = (grid == null or not grid.can_undo())
@@ -323,25 +365,90 @@ func _on_level_won() -> void:
 
 	# Delay win popup slightly so player sees the celebration burst and crate snap to goal
 	await get_tree().create_timer(0.35).timeout
-	var rec: Dictionary = save_mgr.get_level_record(current_level_index) if save_mgr else {}
-	var best_m: int = rec.get("best_moves", grid.moves_count)
-	var best_p: int = rec.get("best_pushes", grid.pushes_count)
+	var elapsed_ms: int = Time.get_ticks_msec() - level_start_time
+	var elapsed_sec: int = maxi(int(elapsed_ms / 1000), 1)
+	var time_formatted: String = "%02d:%02d" % [elapsed_sec / 60, elapsed_sec % 60]
+
+	var earned_stars: int = save_mgr.calculate_stars(current_level_index, grid.moves_count) if save_mgr else 1
+	var optimal_moves: int = save_mgr.get_optimal_moves(current_level_index) if save_mgr else 10
+	var three_star_target: int = optimal_moves + 2
+
+	# Populate card stats
+	var moves_card = win_modal.find_child("MovesCard", true, false) if win_modal else null
+	var time_card = win_modal.find_child("TimeCard", true, false) if win_modal else null
+	var pushes_card = win_modal.find_child("PushesCard", true, false) if win_modal else null
+
+	var moves_val_lbl = moves_card.find_child("Val", true, false) if moves_card else null
+	var time_val_lbl = time_card.find_child("Val", true, false) if time_card else null
+	var pushes_val_lbl = pushes_card.find_child("Val", true, false) if pushes_card else null
+
+	var moves_title_lbl = moves_card.find_child("Title", true, false) if moves_card else null
+	var time_title_lbl = time_card.find_child("Title", true, false) if time_card else null
+	var pushes_title_lbl = pushes_card.find_child("Title", true, false) if pushes_card else null
+
+	if moves_val_lbl: moves_val_lbl.text = str(grid.moves_count)
+	if time_val_lbl: time_val_lbl.text = time_formatted
+	if pushes_val_lbl: pushes_val_lbl.text = str(grid.pushes_count)
+
+	if level_placard_label:
+		level_placard_label.text = "LEVEL %d" % [current_level_index + 1]
 
 	if loc_mgr:
-		win_title.text = loc_mgr.tr_text("WIN_TITLE", [current_level_index + 1])
-		win_stats.text = loc_mgr.tr_text("WIN_STATS", [grid.moves_count, grid.pushes_count, best_m, best_p])
-		if current_level_index >= level_paths.size() - 1:
-			next_level_button.text = loc_mgr.tr_text("BTN_CAMPAIGN_COMPLETE")
-		else:
-			next_level_button.text = loc_mgr.tr_text("WIN_NEXT_BTN")
+		if moves_title_lbl: moves_title_lbl.text = loc_mgr.tr_text("STAT_MOVES_TITLE")
+		if time_title_lbl: time_title_lbl.text = loc_mgr.tr_text("STAT_TIME_TITLE")
+		if pushes_title_lbl: pushes_title_lbl.text = loc_mgr.tr_text("STAT_PUSHES_TITLE")
+		if win_title: win_title.text = loc_mgr.tr_text("WIN_BANNER")
+		if win_menu_button: win_menu_button.text = "⌂ " + loc_mgr.tr_text("WIN_MENU_BTN")
+		if win_retry_button: win_retry_button.text = loc_mgr.tr_text("WIN_RETRY_BTN")
+		if next_level_button:
+			if current_level_index >= level_paths.size() - 1:
+				next_level_button.text = "★ " + loc_mgr.tr_text("BTN_CAMPAIGN_COMPLETE")
+			else:
+				next_level_button.text = "▶ " + loc_mgr.tr_text("WIN_NEXT_BTN")
+		if win_stats: win_stats.text = loc_mgr.tr_text("WIN_TARGET_HINT", [three_star_target])
 	else:
-		win_title.text = "LEVEL %d COMPLETED!" % [current_level_index + 1]
-		win_stats.text = "Solved in %d moves (%d pushes)\nBest: %d moves (%d pushes)" % [grid.moves_count, grid.pushes_count, best_m, best_p]
-		if current_level_index >= level_paths.size() - 1:
-			next_level_button.text = "Finish Campaign ★"
-		else:
-			next_level_button.text = "Next Level →"
+		if win_title: win_title.text = "LEVEL COMPLETED!"
+		if win_menu_button: win_menu_button.text = "⌂ MENU"
+		if win_retry_button: win_retry_button.text = "↺ RETRY"
+		if next_level_button:
+			if current_level_index >= level_paths.size() - 1:
+				next_level_button.text = "★ Finish Campaign"
+			else:
+				next_level_button.text = "▶ NEXT"
+		if win_stats: win_stats.text = "3★ Target: ≤ %d moves" % three_star_target
+
+	# Prepare stars in unlit state
+	var stars: Array = [star_1, star_2, star_3]
+	var dim_color: Color = Color(0.38, 0.40, 0.48, 0.55)
+	var gold_color: Color = Color(1.0, 0.88, 0.22, 1.0)
+	for s in stars:
+		if s:
+			s.modulate = dim_color
+			s.scale = Vector2.ONE
+			s.pivot_offset = s.size / 2.0
+
 	win_modal.show()
+	_animate_stars_sequence(stars, earned_stars, gold_color)
+
+
+func _animate_stars_sequence(stars: Array, earned: int, gold_color: Color) -> void:
+	for i in range(mini(earned, stars.size())):
+		var s = stars[i]
+		if s == null:
+			continue
+		var star_num: int = i + 1
+		var delay: float = 0.22 + float(i) * 0.28
+		var tw: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+		tw.tween_interval(delay)
+		tw.tween_callback(func():
+			s.modulate = gold_color
+			s.scale = Vector2(1.6, 1.6)
+			if audio_mgr:
+				audio_mgr.play_star(star_num)
+			if haptic_mgr:
+				haptic_mgr.vibrate_target()
+		)
+		tw.tween_property(s, "scale", Vector2.ONE, 0.22)
 
 
 func _on_level_reset() -> void:
@@ -542,6 +649,16 @@ func _on_next_level_pressed() -> void:
 			if ad_mgr.is_showing_ad:
 				await ad_mgr.interstitial_closed
 		load_level(next_idx)
+
+
+func _on_win_retry_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+	if win_modal != null:
+		win_modal.hide()
+	load_level(current_level_index)
 
 
 func _on_menu_pressed() -> void:

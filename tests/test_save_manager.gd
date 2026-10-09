@@ -21,6 +21,7 @@ func _init() -> void:
 
 	run_suite("Default State & Unlock Rules", test_defaults_and_unlocks)
 	run_suite("Score Recording & Best Move Tracking", test_score_recording)
+	run_suite("3-Star Rating Calculations & Tracking", test_star_rating_system)
 	run_suite("Persistence (Save & Load to Disk)", test_persistence)
 	run_suite("Corrupt & Missing File Resilience", test_corrupt_and_missing_file)
 
@@ -132,6 +133,24 @@ func test_score_recording() -> void:
 	assert_equal(rec.get("best_moves"), 10, "Best moves preserved at 10")
 	assert_equal(rec.get("best_pushes"), 6, "Best pushes preserved at 6")
 	assert_equal(rec.get("last_moves"), 18, "Last moves updated to 18")
+	mgr.free()
+
+
+func test_star_rating_system() -> void:
+	var mgr = SaveManagerScript.new()
+
+	assert_equal(mgr.get_optimal_moves(0), 5, "Level 0 optimal moves is 5")
+	assert_equal(mgr.calculate_stars(0, 15), 1, "15 moves earns 1 star on Level 0")
+	assert_equal(mgr.calculate_stars(0, 10), 2, "10 moves earns 2 stars on Level 0")
+	assert_equal(mgr.calculate_stars(0, 6), 3, "6 moves earns 3 stars on Level 0")
+
+	mgr.record_level_completion(0, 15, 8, TEST_SAVE_PATH)
+	assert_equal(mgr.get_level_stars(0), 1, "Level 0 stars is 1")
+	assert_equal(mgr.get_total_stars(), 1, "Total stars is 1")
+
+	mgr.record_level_completion(0, 5, 3, TEST_SAVE_PATH)
+	assert_equal(mgr.get_level_stars(0), 3, "Level 0 stars improved to 3")
+	assert_equal(mgr.get_total_stars(), 3, "Total stars is 3")
 	mgr.free()
 
 

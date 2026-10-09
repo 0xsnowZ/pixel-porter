@@ -238,6 +238,153 @@ def render_gameplay_preview():
     print("Saved preview_gameplay.png")
 
 
+def render_win_modal_preview():
+    # Base is gameplay preview
+    gp_path = os.path.join(ARTIFACT_DIR, "preview_gameplay.png")
+    if os.path.exists(gp_path):
+        base = Image.open(gp_path).convert("RGBA")
+    else:
+        bg_path = os.path.join(ASSETS_DIR, "warehouse_bg.jpg")
+        base = Image.open(bg_path).convert("RGBA").resize((W, H))
+
+    # Dim overlay
+    dim = Image.new("RGBA", (W, H), (10, 14, 22, 190))
+    win_img = Image.alpha_composite(base, dim)
+    draw = ImageDraw.Draw(win_img)
+
+    # Confetti celebration particles
+    import random
+    rng = random.Random(42)
+    confetti_colors = [
+        (255, 215, 0, 220),   # Gold
+        (50, 205, 50, 220),    # Lime green
+        (255, 69, 0, 220),     # Orange red
+        (30, 144, 255, 220),   # Dodger blue
+        (255, 105, 180, 220),  # Hot pink
+        (138, 43, 226, 220),   # Purple
+    ]
+    for _ in range(45):
+        cx = rng.randint(40, W - 40)
+        cy = rng.randint(120, H - 150)
+        cw = rng.randint(8, 16)
+        ch = rng.randint(5, 10)
+        col = rng.choice(confetti_colors)
+        draw.rectangle([cx, cy, cx + cw, cy + ch], fill=col)
+
+    # Main victory card modal: [55, 210, 485, 725]
+    mx0, my0, mx1, my1 = 55, 210, 485, 725
+    r = 16
+    # Modal drop shadow
+    draw.rounded_rectangle([mx0 + 2, my0 + 6, mx1 + 2, my1 + 6], radius=r, fill=(0, 0, 0, 160))
+    # Modal background
+    draw.rounded_rectangle([mx0, my0, mx1, my1], radius=r, fill=(20, 26, 38, 250))
+    # Modal gold border
+    draw.rounded_rectangle([mx0, my0, mx1, my1], radius=r, outline=(235, 192, 71), width=3)
+
+    # Arched Header Banner: [85, 188, 455, 254]
+    bx0, by0, bx1, by1 = 85, 188, 455, 254
+    draw.rounded_rectangle([bx0 + 2, by0 + 4, bx1 + 2, by1 + 4], radius=12, fill=(0, 0, 0, 120))
+    draw.rounded_rectangle([bx0, by0, bx1, by1], radius=12, fill=(217, 46, 46))
+    draw.rounded_rectangle([bx0, by0, bx1, by1], radius=12, outline=(255, 217, 89), width=3)
+    f_banner = get_font(21)
+    b_text = "LEVEL COMPLETED!"
+    bbox = f_banner.getbbox(b_text)
+    btw = bbox[2] - bbox[0]
+    draw.text(((W - btw)//2, by0 + 17), b_text, font=f_banner, fill=(255, 245, 220))
+
+    # 3 Golden Stars
+    f_star_sm = get_font(42)
+    f_star_lg = get_font(56)
+
+    # Star 1 (Left)
+    draw.text((155, 276), "★", font=f_star_sm, fill=(0, 0, 0, 180))
+    draw.text((154, 274), "★", font=f_star_sm, fill=(255, 217, 56))
+
+    # Star 2 (Center, enlarged & elevated)
+    draw.text((246, 256), "★", font=f_star_lg, fill=(0, 0, 0, 180))
+    draw.text((245, 254), "★", font=f_star_lg, fill=(255, 226, 64))
+
+    # Star 3 (Right)
+    draw.text((337, 276), "★", font=f_star_sm, fill=(0, 0, 0, 180))
+    draw.text((336, 274), "★", font=f_star_sm, fill=(255, 217, 56))
+
+    # Wooden Placard for Level Number: [175, 342, 365, 396]
+    px0, py0, px1, py1 = 175, 342, 365, 396
+    draw.rounded_rectangle([px0, py0, px1, py1], radius=8, fill=(64, 41, 26))
+    draw.rounded_rectangle([px0, py0, px1, py1], radius=8, outline=(217, 158, 64), width=2)
+    f_placard = get_font(20)
+    p_text = "LEVEL 4"
+    bbox = f_placard.getbbox(p_text)
+    ptw = bbox[2] - bbox[0]
+    draw.text(((W - ptw)//2, py0 + 13), p_text, font=f_placard, fill=(255, 230, 166))
+
+    # 3 Stat Cards: MOVES, TIME, PUSHES
+    f_stat_title = get_font(10)
+    f_stat_val = get_font(18)
+    card_configs = [
+        (80, "👟", "MOVES", "4", (50, 140, 230)),
+        (215, "⏱", "TIME", "00:08", (230, 65, 65)),
+        (350, "📦", "PUSHES", "2", (235, 140, 45)),
+    ]
+    cw, ch = 110, 88
+    cy0 = 420
+    for cx0, icon, title, val, accent in card_configs:
+        cx1 = cx0 + cw
+        cy1 = cy0 + ch
+        # Card background
+        draw.rounded_rectangle([cx0, cy0, cx1, cy1], radius=10, fill=(16, 21, 31, 230))
+        draw.rounded_rectangle([cx0, cy0, cx1, cy1], radius=10, outline=(82, 97, 122, 180), width=2)
+        # Accent top bar
+        draw.line([(cx0 + 8, cy0 + 3), (cx1 - 8, cy0 + 3)], fill=accent, width=3)
+
+        # Title
+        t_box = f_stat_title.getbbox(title)
+        ttw = t_box[2] - t_box[0]
+        draw.text(((cx0 + cx1 - ttw)//2, cy0 + 16), title, font=f_stat_title, fill=(150, 170, 195))
+
+        # Value
+        v_box = f_stat_val.getbbox(val)
+        vtw = v_box[2] - v_box[0]
+        draw.text(((cx0 + cx1 - vtw)//2, cy0 + 44), val, font=f_stat_val, fill=(245, 248, 255))
+
+    # Target Hint
+    f_hint = get_regular_font(13)
+    hint_text = "★ 3★ Target: ≤ 7 moves ★"
+    h_box = f_hint.getbbox(hint_text)
+    htw = h_box[2] - h_box[0]
+    draw.text(((W - htw)//2, 532), hint_text, font=f_hint, fill=(215, 230, 248))
+
+    # 3 Chunky Action Buttons: Red Menu (⌂), Green Next (▶), Blue Retry (↺)
+    f_btn_icon = get_font(18)
+
+    # Red Menu Button
+    draw_styled_button_custom(draw, (80, 615, 185, 680), "⌂ MENU", (210, 56, 56), (255, 140, 140), (120, 25, 25), f_btn_icon)
+    # Green Next Button (larger in center)
+    draw_styled_button_custom(draw, (200, 615, 340, 680), "▶ NEXT", (46, 148, 82), (115, 230, 148), (20, 82, 35), f_btn_icon)
+    # Blue Retry Button
+    draw_styled_button_custom(draw, (355, 615, 460, 680), "↺ RETRY", (46, 132, 224), (160, 215, 255), (20, 75, 140), f_btn_icon)
+
+    out_path = os.path.join(ARTIFACT_DIR, "preview_win_modal.png")
+    win_img.save(out_path)
+    print("Saved preview_win_modal.png")
+
+
+def draw_styled_button_custom(draw, rect, text, bg, border_top, border_bot, font):
+    x0, y0, x1, y1 = rect
+    r = 10
+    draw.rounded_rectangle([x0 + 1, y0 + 3, x1 + 1, y1 + 3], radius=r, fill=(0, 0, 0, 100))
+    draw.rounded_rectangle([x0, y0, x1, y1], radius=r, fill=bg)
+    draw.rounded_rectangle([x0, y0, x1, y1], radius=r, outline=border_top, width=2)
+    draw.line([(x0 + r, y1), (x1 - r, y1)], fill=border_bot, width=4)
+    bbox = font.getbbox(text)
+    tw = bbox[2] - bbox[0]
+    th = bbox[3] - bbox[1]
+    tx = (x0 + x1 - tw) // 2
+    ty = (y0 + y1 - th) // 2 - 2
+    draw.text((tx, ty + 1), text, font=font, fill=(0, 0, 0, 200))
+    draw.text((tx, ty), text, font=font, fill=(255, 255, 255))
+
+
 def render_splash_screen_preview():
     splash_path = os.path.join(ASSETS_DIR, "splash.png")
     if os.path.exists(splash_path):
@@ -251,3 +398,4 @@ if __name__ == "__main__":
     render_main_menu_preview()
     render_gameplay_preview()
     render_splash_screen_preview()
+    render_win_modal_preview()

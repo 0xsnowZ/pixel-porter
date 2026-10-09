@@ -136,45 +136,213 @@ anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -180.0
-offset_top = -110.0
-offset_right = 180.0
-offset_bottom = 110.0
+offset_left = -220.0
+offset_top = -245.0
+offset_right = 220.0
+offset_bottom = 245.0
 grow_horizontal = 2
 grow_vertical = 2
+theme_type_variation = &"WinModalPanel"
 
 [node name="VBox" type="VBoxContainer" parent="WinModal"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 12
 alignment = 1
 
-[node name="WinTitle" type="Label" parent="WinModal/VBox"]
+[node name="BannerPanel" type="PanelContainer" parent="WinModal/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.98, 0.85, 0.28, 1)
-theme_override_font_sizes/font_size = 24
-text = "★ LEVEL COMPLETED! ★"
+theme_type_variation = &"BannerPanel"
+
+[node name="WinTitle" type="Label" parent="WinModal/VBox/BannerPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.85, 1)
+theme_override_font_sizes/font_size = 22
+text = "LEVEL COMPLETED!"
+horizontal_alignment = 1
+
+[node name="StarsRow" type="HBoxContainer" parent="WinModal/VBox"]
+custom_minimum_size = Vector2(0, 68)
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="Star1" type="Label" parent="WinModal/VBox/StarsRow"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.22, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_outline_color = Color(0.5, 0.3, 0.05, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 46
+text = "★"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Star2" type="Label" parent="WinModal/VBox/StarsRow"]
+custom_minimum_size = Vector2(68, 68)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.88, 0.25, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_outline_color = Color(0.5, 0.3, 0.05, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 58
+text = "★"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Star3" type="Label" parent="WinModal/VBox/StarsRow"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.85, 0.22, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 2
+theme_override_constants/shadow_offset_y = 3
+theme_override_colors/font_outline_color = Color(0.5, 0.3, 0.05, 1)
+theme_override_constants/outline_size = 3
+theme_override_font_sizes/font_size = 46
+text = "★"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlacardPanel" type="PanelContainer" parent="WinModal/VBox"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_type_variation = &"PlacardPanel"
+
+[node name="LevelPlacardLabel" type="Label" parent="WinModal/VBox/PlacardPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.9, 0.65, 1)
+theme_override_font_sizes/font_size = 20
+text = "LEVEL 1"
+horizontal_alignment = 1
+
+[node name="StatsGrid" type="HBoxContainer" parent="WinModal/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="MovesCard" type="PanelContainer" parent="WinModal/VBox/StatsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"StatCard"
+
+[node name="VBox" type="VBoxContainer" parent="WinModal/VBox/StatsGrid/MovesCard"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="Icon" type="Label" parent="WinModal/VBox/StatsGrid/MovesCard/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "👟"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="WinModal/VBox/StatsGrid/MovesCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "MOVES"
+horizontal_alignment = 1
+
+[node name="Val" type="Label" parent="WinModal/VBox/StatsGrid/MovesCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "0"
+horizontal_alignment = 1
+
+[node name="TimeCard" type="PanelContainer" parent="WinModal/VBox/StatsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"StatCard"
+
+[node name="VBox" type="VBoxContainer" parent="WinModal/VBox/StatsGrid/TimeCard"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="Icon" type="Label" parent="WinModal/VBox/StatsGrid/TimeCard/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "⏱"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="WinModal/VBox/StatsGrid/TimeCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "TIME"
+horizontal_alignment = 1
+
+[node name="Val" type="Label" parent="WinModal/VBox/StatsGrid/TimeCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "00:00"
+horizontal_alignment = 1
+
+[node name="PushesCard" type="PanelContainer" parent="WinModal/VBox/StatsGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"StatCard"
+
+[node name="VBox" type="VBoxContainer" parent="WinModal/VBox/StatsGrid/PushesCard"]
+layout_mode = 2
+theme_override_constants/separation = 2
+alignment = 1
+
+[node name="Icon" type="Label" parent="WinModal/VBox/StatsGrid/PushesCard/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "📦"
+horizontal_alignment = 1
+
+[node name="Title" type="Label" parent="WinModal/VBox/StatsGrid/PushesCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.55, 0.65, 0.75, 1)
+theme_override_font_sizes/font_size = 10
+text = "PUSHES"
+horizontal_alignment = 1
+
+[node name="Val" type="Label" parent="WinModal/VBox/StatsGrid/PushesCard/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.95, 0.97, 1, 1)
+theme_override_font_sizes/font_size = 18
+text = "0"
 horizontal_alignment = 1
 
 [node name="WinStats" type="Label" parent="WinModal/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.90, 0.94, 0.98, 1)
-theme_override_font_sizes/font_size = 16
-text = "Solved in 5 moves (3 pushes)"
+theme_override_colors/font_color = Color(0.85, 0.92, 0.98, 0.9)
+theme_override_font_sizes/font_size = 13
+text = "3★ Target: ≤ 7 moves"
 horizontal_alignment = 1
 
 [node name="WinActions" type="HBoxContainer" parent="WinModal/VBox"]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 10
 alignment = 1
 
 [node name="WinMenuBtn" type="Button" parent="WinModal/VBox/WinActions"]
-custom_minimum_size = Vector2(110, 48)
+custom_minimum_size = Vector2(96, 54)
 layout_mode = 2
-text = "Menu"
+theme_type_variation = &"DangerButton"
+text = "⌂ MENU"
 
 [node name="NextLevelBtn" type="Button" parent="WinModal/VBox/WinActions"]
-custom_minimum_size = Vector2(150, 48)
+custom_minimum_size = Vector2(140, 54)
 layout_mode = 2
-size_flags_horizontal = 4
-theme_type_variation = &"PrimaryButton"
-text = "Next Level →"
+size_flags_horizontal = 3
+theme_type_variation = &"SuccessButton"
+text = "▶ NEXT"
+
+[node name="WinRetryBtn" type="Button" parent="WinModal/VBox/WinActions"]
+custom_minimum_size = Vector2(96, 54)
+layout_mode = 2
+theme_type_variation = &"InfoButton"
+text = "↺ RETRY"
+

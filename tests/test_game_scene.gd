@@ -29,6 +29,7 @@ func _init() -> void:
 	test_layout_and_framing()
 	test_undo_button_interaction()
 	test_juice_and_micro_interactions()
+	test_win_modal_three_star_system()
 
 	print("\n" + "=".repeat(54))
 	print("Game Scene Results: %d passed, %d failed" % [passes, fails])
@@ -245,3 +246,35 @@ func test_juice_and_micro_interactions() -> void:
 	assert_eq(game.board_shake_offset, Vector2.ZERO, "Board shake offset returned to Vector2.ZERO")
 
 	game.free()
+
+
+func test_win_modal_three_star_system() -> void:
+	print("--- Running Suite: 3-Star Victory Modal & Stat Badges ---")
+	var loc: Node = LocalizationManagerScript.new()
+	var save_mgr: Node = SaveManagerScript.new()
+	var game: Control = create_test_game(loc, save_mgr)
+
+	assert_true(game.win_modal != null, "Win modal initialized")
+	assert_true(game.star_1 != null, "Star 1 label initialized")
+	assert_true(game.star_2 != null, "Star 2 label initialized")
+	assert_true(game.star_3 != null, "Star 3 label initialized")
+	assert_true(game.level_placard_label != null, "Level placard initialized")
+	assert_true(game.win_retry_button != null, "Win retry button initialized")
+	assert_true(not game.win_modal.visible, "Win modal hidden during normal play")
+
+	# Test Retry button functionality
+	game.grid.moves_count = 5
+	game.win_modal.show()
+	assert_true(game.win_modal.visible, "Win modal shown for test")
+	game._on_win_retry_pressed()
+	assert_true(not game.win_modal.visible, "Win modal hidden on retry")
+	assert_eq(game.grid.moves_count, 0, "Level reset to 0 moves on retry")
+
+	# Test Star rating calculation integration with save manager
+	assert_eq(save_mgr.calculate_stars(0, 5), 3, "Optimal moves achieves 3 stars")
+	assert_eq(save_mgr.calculate_stars(0, 10), 2, "Moderate moves achieves 2 stars")
+	assert_eq(save_mgr.calculate_stars(0, 20), 1, "Completed with high moves achieves 1 star")
+
+	game.free()
+	save_mgr.free()
+	loc.free()

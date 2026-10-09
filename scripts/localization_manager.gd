@@ -142,6 +142,36 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "CHOIX DU NIVEAU",
 		"ar": "اختيار المستوى"
 	},
+	"WIN_BANNER": {
+		"en": "LEVEL COMPLETED!",
+		"fr": "NIVEAU TERMINÉ !",
+		"ar": "اكتمل المستوى!"
+	},
+	"STAT_MOVES_TITLE": {
+		"en": "MOVES",
+		"fr": "MOUV.",
+		"ar": "حركات"
+	},
+	"STAT_TIME_TITLE": {
+		"en": "TIME",
+		"fr": "TEMPS",
+		"ar": "الوقت"
+	},
+	"STAT_PUSHES_TITLE": {
+		"en": "PUSHES",
+		"fr": "POUSSÉES",
+		"ar": "دفعات"
+	},
+	"WIN_RETRY_BTN": {
+		"en": "↺ Retry",
+		"fr": "↺ Rejouer",
+		"ar": "إعادة ↺"
+	},
+	"WIN_TARGET_HINT": {
+		"en": "3★ Target: ≤ %d moves",
+		"fr": "Objectif 3★ : ≤ %d mouv.",
+		"ar": "هدف 3★: ≤ %d حركة"
+	},
 	"WIN_TITLE": {
 		"en": "LEVEL %d COMPLETED!",
 		"fr": "NIVEAU %d TERMINÉ !",

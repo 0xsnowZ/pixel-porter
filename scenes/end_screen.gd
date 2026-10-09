@@ -103,6 +103,7 @@ func _update_ui() -> void:
 	var total_solved: int = 0
 	var total_moves: int = 0
 	var total_pushes: int = 0
+	var total_stars: int = 0
 
 	if save_mgr and "completed_levels" in save_mgr:
 		for key in save_mgr.completed_levels.keys():
@@ -110,6 +111,11 @@ func _update_ui() -> void:
 			var rec: Dictionary = save_mgr.completed_levels[key]
 			total_moves += rec.get("best_moves", 0)
 			total_pushes += rec.get("best_pushes", 0)
+			total_stars += rec.get("stars", 0)
+
+	if has_node("Margin/VBox/StatsPanel/PanelMargin/PanelVBox/StarsSummaryLabel"):
+		var stars_lbl = $Margin/VBox/StatsPanel/PanelMargin/PanelVBox/StarsSummaryLabel as Label
+		stars_lbl.text = "★ Total Stars: %d / 150 ★" % total_stars
 
 	if loc_mgr:
 		title_label.text = loc_mgr.tr_text("END_TITLE")
