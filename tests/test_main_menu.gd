@@ -171,6 +171,20 @@ func test_sound_and_credits() -> void:
 	assert_true(menu.save_mgr.sound_enabled, "Sound setting toggled back to true")
 	assert_equal(menu.sound_btn.text, "SOUND: ON", "Sound button displays 'SOUND: ON'")
 
+	# Haptics toggle
+	menu.save_mgr.haptics_enabled = true
+	menu._update_menu_state()
+	assert_true(menu.haptics_btn != null, "Haptics button exists in MainMenu")
+	assert_equal(menu.haptics_btn.text, "HAPTICS: ON", "Haptics button displays 'HAPTICS: ON'")
+
+	menu._on_haptics_toggle_pressed()
+	assert_false(menu.save_mgr.haptics_enabled, "Haptics setting toggled to false")
+	assert_equal(menu.haptics_btn.text, "HAPTICS: OFF", "Haptics button displays 'HAPTICS: OFF'")
+
+	menu._on_haptics_toggle_pressed()
+	assert_true(menu.save_mgr.haptics_enabled, "Haptics setting toggled back to true")
+	assert_equal(menu.haptics_btn.text, "HAPTICS: ON", "Haptics button displays 'HAPTICS: ON'")
+
 	# Credits modal
 	menu._show_credits()
 	assert_true(menu.credits_modal.visible, "Credits modal is visible after _show_credits")

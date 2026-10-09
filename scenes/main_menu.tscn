@@ -87,6 +87,13 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "SOUND: ON"
 
+[node name="HapticsToggleBtn" type="Button" parent="MainView/Buttons"]
+custom_minimum_size = Vector2(260, 50)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "HAPTICS: ON"
+
 [node name="LanguageBtn" type="Button" parent="MainView/Buttons"]
 custom_minimum_size = Vector2(260, 50)
 layout_mode = 2

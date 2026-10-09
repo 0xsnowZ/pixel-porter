@@ -18,6 +18,7 @@ var completed_levels: Dictionary = {} # String(level_index) -> { "best_moves": i
 # Settings (PRD Sections 6, 8, 9, 10)
 var sound_enabled: bool = true
 var music_enabled: bool = true
+var haptics_enabled: bool = true
 var language: String = "en"
 
 
@@ -84,6 +85,7 @@ func to_dict() -> Dictionary:
 		"settings": {
 			"sound_enabled": sound_enabled,
 			"music_enabled": music_enabled,
+			"haptics_enabled": haptics_enabled,
 			"language": language
 		}
 	}
@@ -98,6 +100,7 @@ func from_dict(data: Dictionary) -> void:
 	var settings: Dictionary = data.get("settings", {})
 	sound_enabled = settings.get("sound_enabled", true)
 	music_enabled = settings.get("music_enabled", true)
+	haptics_enabled = settings.get("haptics_enabled", true)
 	language = settings.get("language", "en")
 
 
@@ -157,5 +160,6 @@ func reset_all_progress(custom_path: String = "") -> void:
 	completed_levels.clear()
 	sound_enabled = true
 	music_enabled = true
+	haptics_enabled = true
 	language = "en"
 	save_data(custom_path)

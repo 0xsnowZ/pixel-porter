@@ -14,6 +14,7 @@ const AVAILABLE_LEVELS_COUNT: int = 50 # All 50 verified solvable levels active
 var save_mgr: Node = null
 var audio_mgr: Node = null
 var loc_mgr: Node = null
+var haptic_mgr: Node = null
 
 # Node references
 @onready var main_view: VBoxContainer = $MainView
@@ -25,6 +26,7 @@ var loc_mgr: Node = null
 @onready var play_btn: Button = $MainView/Buttons/PlayBtn
 @onready var level_select_btn: Button = $MainView/Buttons/LevelSelectBtn
 @onready var sound_btn: Button = $MainView/Buttons/SoundToggleBtn
+@onready var haptics_btn: Button = $MainView/Buttons/HapticsToggleBtn
 @onready var language_btn: Button = $MainView/Buttons/LanguageBtn
 @onready var credits_btn: Button = $MainView/Buttons/CreditsBtn
 
@@ -43,6 +45,7 @@ func _initialize_nodes() -> void:
 		play_btn = $MainView/Buttons/PlayBtn
 		level_select_btn = $MainView/Buttons/LevelSelectBtn
 		sound_btn = $MainView/Buttons/SoundToggleBtn
+		haptics_btn = $MainView/Buttons/HapticsToggleBtn
 		language_btn = $MainView/Buttons/LanguageBtn
 		credits_btn = $MainView/Buttons/CreditsBtn
 		level_grid = $LevelSelectView/Scroll/Margin/LevelGrid
@@ -64,6 +67,9 @@ func _ready() -> void:
 	if is_inside_tree() and get_tree().root.has_node("LocalizationManager"):
 		loc_mgr = get_tree().root.get_node("LocalizationManager")
 
+	if is_inside_tree() and get_tree().root.has_node("HapticManager"):
+		haptic_mgr = get_tree().root.get_node("HapticManager")
+
 	if not continue_btn.pressed.is_connected(_on_continue_pressed):
 		continue_btn.pressed.connect(_on_continue_pressed)
 	if not play_btn.pressed.is_connected(_on_play_pressed):
@@ -72,6 +78,8 @@ func _ready() -> void:
 		level_select_btn.pressed.connect(_show_level_select)
 	if not sound_btn.pressed.is_connected(_on_sound_toggle_pressed):
 		sound_btn.pressed.connect(_on_sound_toggle_pressed)
+	if haptics_btn and not haptics_btn.pressed.is_connected(_on_haptics_toggle_pressed):
+		haptics_btn.pressed.connect(_on_haptics_toggle_pressed)
 	if not language_btn.pressed.is_connected(_on_language_pressed):
 		language_btn.pressed.connect(_on_language_pressed)
 	if not credits_btn.pressed.is_connected(_show_credits):
@@ -121,6 +129,7 @@ func _update_menu_state() -> void:
 	var last_lvl: int = save_mgr.last_played_level if save_mgr else 0
 	var has_progress: bool = (unlocked_lvl > 0 or (save_mgr and save_mgr.is_level_completed(0)))
 	var is_sound_on: bool = save_mgr.sound_enabled if save_mgr else true
+	var is_haptics_on: bool = save_mgr.haptics_enabled if save_mgr else true
 
 	if loc_mgr:
 		if has_progress:
@@ -133,6 +142,11 @@ func _update_menu_state() -> void:
 
 		var sound_status: String = loc_mgr.tr_text("MENU_SOUND_ON" if is_sound_on else "MENU_SOUND_OFF")
 		sound_btn.text = loc_mgr.tr_text("MENU_SOUND", [sound_status])
+
+		if haptics_btn:
+			var haptic_status: String = loc_mgr.tr_text("MENU_HAPTICS_ON" if is_haptics_on else "MENU_HAPTICS_OFF")
+			haptics_btn.text = loc_mgr.tr_text("MENU_HAPTICS", [haptic_status])
+
 		language_btn.text = loc_mgr.tr_text("MENU_LANGUAGE", [loc_mgr.get_language_display_name()])
 		level_select_btn.text = loc_mgr.tr_text("MENU_LEVEL_SELECT")
 		credits_btn.text = loc_mgr.tr_text("MENU_CREDITS")
@@ -150,6 +164,8 @@ func _update_menu_state() -> void:
 			continue_btn.visible = false
 			play_btn.text = "PLAY"
 		sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
+		if haptics_btn:
+			haptics_btn.text = "HAPTICS: %s" % ("ON" if is_haptics_on else "OFF")
 		language_btn.text = "LANGUAGE: English"
 
 
@@ -158,6 +174,8 @@ func _on_language_pressed() -> void:
 		loc_mgr.cycle_language()
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	_update_menu_state()
 	_refresh_level_grid_buttons()
 
@@ -165,6 +183,8 @@ func _on_language_pressed() -> void:
 func _on_continue_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	var target_lvl: int = save_mgr.last_played_level if save_mgr else 0
 	_start_game_at_level(target_lvl)
 
@@ -172,6 +192,8 @@ func _on_continue_pressed() -> void:
 func _on_play_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	_start_game_at_level(0)
 
 
@@ -179,6 +201,25 @@ func _on_sound_toggle_pressed() -> void:
 	if save_mgr:
 		save_mgr.sound_enabled = not save_mgr.sound_enabled
 		save_mgr.save_data()
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+	_update_menu_state()
+
+
+func _on_haptics_toggle_pressed() -> void:
+	if save_mgr:
+		save_mgr.haptics_enabled = not save_mgr.haptics_enabled
+		save_mgr.save_data()
+		if haptic_mgr:
+			haptic_mgr.set_haptic_enabled(save_mgr.haptics_enabled)
+	elif haptic_mgr:
+		haptic_mgr.toggle_haptics()
+
+	if save_mgr and save_mgr.haptics_enabled and haptic_mgr:
+		haptic_mgr.vibrate_click()
+
 	if audio_mgr:
 		audio_mgr.play_click()
 	_update_menu_state()

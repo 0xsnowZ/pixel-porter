@@ -22,6 +22,7 @@ var save_mgr: Node = null
 var audio_mgr: Node = null
 var loc_mgr: Node = null
 var ad_mgr: Node = null
+var haptic_mgr: Node = null
 
 # Visual settings
 var tile_size: float = 64.0
@@ -88,6 +89,9 @@ func _ready() -> void:
 
 	if ad_mgr == null and is_inside_tree() and get_tree().root.has_node("AdManager"):
 		ad_mgr = get_tree().root.get_node("AdManager")
+
+	if haptic_mgr == null and is_inside_tree() and get_tree().root.has_node("HapticManager"):
+		haptic_mgr = get_tree().root.get_node("HapticManager")
 
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
@@ -194,11 +198,18 @@ func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 	_animate_crate(from_pos, to_pos)
 	if audio_mgr:
 		audio_mgr.play_push()
+	if haptic_mgr:
+		if grid != null and grid.goals.has(to_pos):
+			haptic_mgr.vibrate_target()
+		else:
+			haptic_mgr.vibrate_push()
 
 
 func _on_level_won() -> void:
 	if audio_mgr:
 		audio_mgr.play_win()
+	if haptic_mgr:
+		haptic_mgr.vibrate_win()
 	if save_mgr:
 		save_mgr.record_level_completion(current_level_index, grid.moves_count, grid.pushes_count)
 	if ad_mgr:
@@ -277,7 +288,9 @@ func try_move(dir: Vector2i) -> void:
 		return
 
 	if grid != null:
-		grid.move(dir)
+		var moved: bool = grid.move(dir)
+		if not moved and haptic_mgr:
+			haptic_mgr.vibrate_bump()
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -355,6 +368,8 @@ func _on_restart_pressed() -> void:
 func _do_restart() -> void:
 	if audio_mgr:
 		audio_mgr.play_restart()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	if grid:
 		grid.restart()
 
@@ -362,6 +377,8 @@ func _do_restart() -> void:
 func _on_prev_level_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	if current_level_index > 0:
 		load_level(current_level_index - 1)
 
@@ -369,6 +386,8 @@ func _on_prev_level_pressed() -> void:
 func _on_next_level_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 
 	# If completing the final level (Level 50), navigate to the Campaign End Screen (PRD Section 6)
 	if current_level_index >= level_paths.size() - 1:
@@ -387,6 +406,8 @@ func _on_next_level_pressed() -> void:
 func _on_menu_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 

@@ -52,6 +52,21 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "NON",
 		"ar": "معطّل"
 	},
+	"MENU_HAPTICS": {
+		"en": "HAPTICS: %s",
+		"fr": "HAPTIQUE : %s",
+		"ar": "الاهتزاز: %s"
+	},
+	"MENU_HAPTICS_ON": {
+		"en": "ON",
+		"fr": "OUI",
+		"ar": "مفعّل"
+	},
+	"MENU_HAPTICS_OFF": {
+		"en": "OFF",
+		"fr": "NON",
+		"ar": "معطّل"
+	},
 	"MENU_LANGUAGE": {
 		"en": "LANGUAGE: %s",
 		"fr": "LANGUE : %s",

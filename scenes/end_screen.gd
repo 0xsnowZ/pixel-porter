@@ -14,6 +14,7 @@ const SaveManagerScript = preload("res://scripts/save_manager.gd")
 var save_mgr: Node = null
 var audio_mgr: Node = null
 var loc_mgr: Node = null
+var haptic_mgr: Node = null
 
 var celebration_particles: Array[Dictionary] = []
 var particle_spawn_timer: float = 0.0
@@ -52,6 +53,9 @@ func _ready() -> void:
 	if loc_mgr == null and is_inside_tree() and get_tree().root.has_node("LocalizationManager"):
 		loc_mgr = get_tree().root.get_node("LocalizationManager")
 
+	if haptic_mgr == null and is_inside_tree() and get_tree().root.has_node("HapticManager"):
+		haptic_mgr = get_tree().root.get_node("HapticManager")
+
 	if not level_select_btn.pressed.is_connected(_on_level_select_pressed):
 		level_select_btn.pressed.connect(_on_level_select_pressed)
 	if not menu_btn.pressed.is_connected(_on_menu_pressed):
@@ -62,6 +66,8 @@ func _ready() -> void:
 
 	if audio_mgr:
 		audio_mgr.play_win()
+	if haptic_mgr:
+		haptic_mgr.vibrate_win()
 
 
 func _update_ui() -> void:
@@ -180,10 +186,14 @@ func _draw() -> void:
 func _on_level_select_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
 
 
 func _on_menu_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")
