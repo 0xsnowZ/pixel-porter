@@ -184,8 +184,8 @@ func test_level_1_single_crate_tutorial() -> void:
 ## - Verifying clone() independent behavior
 func test_level_2_two_crates_and_partial_completion() -> void:
 	var grid = GridLogicScript.new()
-	var loaded: bool = grid.load_from_file("res://levels/level_02.sok")
-	assert_true(loaded, "Level 2 loaded from file")
+	var loaded: bool = grid.load_from_file("res://levels/level_05.sok")
+	assert_true(loaded, "Level 5 loaded from file")
 	assert_equal(grid.get_crate_count(), 2, "Level 2 has 2 crates")
 	assert_equal(grid.get_goal_count(), 2, "Level 2 has 2 goals")
 	assert_equal(grid.get_crates_on_goal_count(), 0, "Initially 0 crates on goal")
@@ -228,8 +228,8 @@ func test_level_2_two_crates_and_partial_completion() -> void:
 ## - Full solve of 3-crate puzzle
 func test_level_3_prd_rules_edge_cases_and_multi_crate() -> void:
 	var grid = GridLogicScript.new()
-	var loaded: bool = grid.load_from_file("res://levels/level_03.sok")
-	assert_true(loaded, "Level 3 loaded from file")
+	var loaded: bool = grid.load_from_file("res://levels/level_10.sok")
+	assert_true(loaded, "Level 10 loaded from file")
 	assert_equal(grid.get_crate_count(), 3, "Level 3 has 3 crates")
 	assert_equal(grid.get_goal_count(), 3, "Level 3 has 3 goals")
 	assert_false(grid.is_won(), "Level 3 is not won initially")

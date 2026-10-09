@@ -9,7 +9,7 @@ extends Control
 
 const SaveManagerScript = preload("res://scripts/save_manager.gd")
 const TOTAL_LEVELS_COUNT: int = 50
-const AVAILABLE_LEVELS_COUNT: int = 3 # Currently authored .sok levels
+const AVAILABLE_LEVELS_COUNT: int = 10 # 10 verified solvable levels for Week 1
 
 var save_mgr: Node = null
 
@@ -48,8 +48,8 @@ func _initialize_nodes() -> void:
 
 func _ready() -> void:
 	_initialize_nodes()
-	if has_node("/root/SaveManager"):
-		save_mgr = get_node("/root/SaveManager")
+	if is_inside_tree() and get_tree().root.has_node("SaveManager"):
+		save_mgr = get_tree().root.get_node("SaveManager")
 	else:
 		save_mgr = SaveManagerScript.new()
 		add_child(save_mgr)

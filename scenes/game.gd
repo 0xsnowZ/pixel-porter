@@ -11,7 +11,14 @@ const SaveManagerScript = preload("res://scripts/save_manager.gd")
 var level_paths: Array[String] = [
 	"res://levels/level_01.sok",
 	"res://levels/level_02.sok",
-	"res://levels/level_03.sok"
+	"res://levels/level_03.sok",
+	"res://levels/level_04.sok",
+	"res://levels/level_05.sok",
+	"res://levels/level_06.sok",
+	"res://levels/level_07.sok",
+	"res://levels/level_08.sok",
+	"res://levels/level_09.sok",
+	"res://levels/level_10.sok"
 ]
 var current_level_index: int = 0
 
@@ -49,8 +56,8 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
 
 func _ready() -> void:
-	if has_node("/root/SaveManager"):
-		save_mgr = get_node("/root/SaveManager")
+	if is_inside_tree() and get_tree().root.has_node("SaveManager"):
+		save_mgr = get_tree().root.get_node("SaveManager")
 	else:
 		save_mgr = SaveManagerScript.new()
 		add_child(save_mgr)

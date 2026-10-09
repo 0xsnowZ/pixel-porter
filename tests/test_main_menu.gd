@@ -80,6 +80,7 @@ func assert_equal(actual: Variant, expected: Variant, message: String) -> void:
 func create_test_menu() -> Control:
 	var menu: Control = MainMenuScene.instantiate()
 	root.add_child(menu)
+	menu._ready()
 	return menu
 
 

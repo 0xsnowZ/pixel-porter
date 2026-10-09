@@ -1,0 +1,102 @@
+extends SceneTree
+
+## Headless test script for SokobanSolver (Pixel Porter PRD v1.md Section 7).
+## Solves and verifies all 10 shipped level files on disk.
+## Run via: godot --headless --path . -s tests/test_solver.gd
+
+const SokobanSolverScript = preload("res://scripts/sokoban_solver.gd")
+const GridLogicScript = preload("res://scripts/grid_logic.gd")
+
+var _passed_suites: int = 0
+var _failed_suites: int = 0
+var _total_assertions: int = 0
+var _failed_assertions: int = 0
+
+
+func _init() -> void:
+	print("==================================================")
+	print("   Pixel Porter - SokobanSolver Headless Tests   ")
+	print("==================================================")
+
+	run_suite("All 10 Shipped Levels Verification", test_all_10_levels_solvable)
+	run_suite("Unsolvable & Deadlock Detection", test_unsolvable_deadlock)
+
+	print("\n==================================================")
+	print("Test Suites: %d passed, %d failed" % [_passed_suites, _failed_suites])
+	print("Assertions : %d total, %d failed" % [_total_assertions, _failed_assertions])
+	print("==================================================")
+
+	if _failed_assertions > 0 or _failed_suites > 0:
+		printerr("FAILED: Test suite had failures.")
+		quit(1)
+	else:
+		print("SUCCESS: All SokobanSolver tests passed successfully!")
+		quit(0)
+
+
+func run_suite(suite_name: String, test_callable: Callable) -> void:
+	print("\n--- Running Suite: %s ---" % suite_name)
+	var prev_failures: int = _failed_assertions
+	test_callable.call()
+	if _failed_assertions == prev_failures:
+		_passed_suites += 1
+	else:
+		_failed_suites += 1
+
+
+func assert_true(condition: bool, message: String) -> void:
+	_total_assertions += 1
+	if condition:
+		print("  [PASS] %s" % message)
+	else:
+		_failed_assertions += 1
+		printerr("  [FAIL] Assertion failed: %s" % message)
+
+
+func assert_false(condition: bool, message: String) -> void:
+	assert_true(not condition, message)
+
+
+func assert_equal(actual: Variant, expected: Variant, message: String) -> void:
+	_total_assertions += 1
+	if actual == expected:
+		print("  [PASS] %s (got %s)" % [message, str(actual)])
+	else:
+		_failed_assertions += 1
+		printerr("  [FAIL] %s - Expected: %s, Got: %s" % [message, str(expected), str(actual)])
+
+
+func test_all_10_levels_solvable() -> void:
+	for i in range(1, 11):
+		var path: String = "res://levels/level_%02d.sok" % i
+		assert_true(FileAccess.file_exists(path), "Level file %02d exists" % i)
+
+		var grid = GridLogicScript.new()
+		var loaded: bool = grid.load_from_file(path)
+		assert_true(loaded, "Level %02d loaded successfully" % i)
+
+		var result = SokobanSolverScript.solve(grid)
+		print("    Level %02d: %s" % [i, str(result)])
+		assert_true(result.is_solvable, "Level %02d is solvable" % i)
+		assert_true(result.moves > 0, "Level %02d requires at least 1 move (got %d)" % [i, result.moves])
+		assert_true(result.pushes > 0, "Level %02d requires at least 1 push (got %d)" % [i, result.pushes])
+
+		# Verify executing solver solution produces winning state
+		var test_grid = grid.clone()
+		var executed_count = test_grid.execute_moves(result.solution_str)
+		assert_equal(executed_count, result.moves, "Level %02d executed all %d solution moves" % [i, result.moves])
+		assert_true(test_grid.is_won(), "Level %02d is WON when executing solver solution" % i)
+
+
+func test_unsolvable_deadlock() -> void:
+	# A level where the crate is trapped in a corner with no goal
+	var trapped_text: String = """
+#####
+#@$ #
+# # #
+#  .#
+#####
+"""
+	var result = SokobanSolverScript.solve(trapped_text, 1000)
+	print("    Trapped level result: %s" % str(result))
+	assert_false(result.is_solvable, "Trapped corner crate is correctly pruned and reported unsolvable")
