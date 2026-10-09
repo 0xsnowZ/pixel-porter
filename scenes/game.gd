@@ -740,4 +740,3 @@ func _draw_player(rect: Rect2) -> void:
 		draw_circle(Vector2(eye_x2, eye_y), 2.0, Color(0.1, 0.1, 0.1))
 		draw_circle(Vector2(eye_x1 - 0.5, eye_y - 0.5), 0.8, Color(1.0, 1.0, 1.0))
 		draw_circle(Vector2(eye_x2 - 0.5, eye_y - 0.5), 0.8, Color(1.0, 1.0, 1.0))
-

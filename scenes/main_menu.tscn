@@ -1,6 +1,7 @@
-[gd_scene format=3 uid="uid://pfg88sj4moc8"]
+[gd_scene load_steps=3 format=3 uid="uid://pfg88sj4moc8"]
 
 [ext_resource type="Script" path="res://scripts/main_menu.gd" id="1_menu"]
+[ext_resource type="Texture2D" path="res://assets/logo.png" id="2_logo"]
 
 [node name="MainMenu" type="Control"]
 layout_mode = 3
@@ -28,25 +29,33 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 28
+theme_override_constants/separation = 16
 alignment = 1
 
 [node name="Header" type="VBoxContainer" parent="MainView"]
 layout_mode = 2
-theme_override_constants/separation = 8
+theme_override_constants/separation = 6
 alignment = 1
+
+[node name="LogoRect" type="TextureRect" parent="MainView/Header"]
+custom_minimum_size = Vector2(160, 160)
+layout_mode = 2
+size_flags_horizontal = 4
+texture = ExtResource("2_logo")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="GameTitle" type="Label" parent="MainView/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.95, 0.8, 0.22, 1)
-theme_override_font_sizes/font_size = 38
+theme_override_font_sizes/font_size = 32
 text = "PIXEL PORTER"
 horizontal_alignment = 1
 
 [node name="GameSubtitle" type="Label" parent="MainView/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.7, 0.74, 0.8, 1)
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 text = "A CLASSIC SOKOBAN PUZZLE"
 horizontal_alignment = 1
 
