@@ -4,7 +4,6 @@ extends Control
 ## Renders the grid, handles swipes and keyboard input, animates moves,
 ## and implements PRD Section 4 & 5 gameplay and UI requirements.
 
-const GridLogic = preload("res://scripts/grid_logic.gd")
 const SaveManagerScript = preload("res://scripts/save_manager.gd")
 
 # Levels available (50 verified solvable levels)
@@ -366,8 +365,8 @@ func _on_level_won() -> void:
 	# Delay win popup slightly so player sees the celebration burst and crate snap to goal
 	await get_tree().create_timer(0.35).timeout
 	var elapsed_ms: int = Time.get_ticks_msec() - level_start_time
-	var elapsed_sec: int = maxi(int(elapsed_ms / 1000), 1)
-	var time_formatted: String = "%02d:%02d" % [elapsed_sec / 60, elapsed_sec % 60]
+	var elapsed_sec: int = maxi(int(elapsed_ms / 1000.0), 1)
+	var time_formatted: String = "%02d:%02d" % [int(elapsed_sec / 60.0), elapsed_sec % 60]
 
 	var earned_stars: int = save_mgr.calculate_stars(current_level_index, grid.moves_count) if save_mgr else 1
 	var optimal_moves: int = save_mgr.get_optimal_moves(current_level_index) if save_mgr else 10
