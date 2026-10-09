@@ -78,14 +78,8 @@ def render_main_menu_preview():
     # Logo
     logo_path = os.path.join(ASSETS_DIR, "logo.png")
     if os.path.exists(logo_path):
-        logo = Image.open(logo_path).convert("RGBA").resize((200, 200))
-        # Logo subtle backlight glow
-        glow = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-        g_draw = ImageDraw.Draw(glow)
-        g_draw.ellipse([(W//2 - 120, 70), (W//2 + 120, 290)], fill=(255, 195, 45, 60))
-        glow = glow.filter(ImageFilter.GaussianBlur(25))
-        menu_img = Image.alpha_composite(menu_img, glow)
-        menu_img.paste(logo, (W//2 - 100, 80), logo)
+        logo = Image.open(logo_path).convert("RGBA").resize((220, 226))
+        menu_img.paste(logo, (W//2 - 110, 65), logo)
 
     draw = ImageDraw.Draw(menu_img)
     f_sub = get_font(13)

@@ -111,7 +111,7 @@ func _ready() -> void:
 	# Ambient breathing animation on logo
 	if has_node("MainView/Header/LogoRect"):
 		var logo: TextureRect = $MainView/Header/LogoRect as TextureRect
-		logo.pivot_offset = Vector2(90, 90)
+		logo.pivot_offset = Vector2(115, 115)
 		var tw: Tween = create_tween().set_loops()
 		tw.tween_property(logo, "scale", Vector2(1.03, 1.03), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
