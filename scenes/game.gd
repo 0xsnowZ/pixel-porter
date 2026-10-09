@@ -429,7 +429,8 @@ func _on_level_won() -> void:
 		if s:
 			s.modulate = dim_color
 			s.scale = Vector2.ONE
-			s.pivot_offset = s.size / 2.0
+			var s_sz: Vector2 = s.custom_minimum_size if s.custom_minimum_size != Vector2.ZERO else s.size
+			s.pivot_offset = s_sz / 2.0
 
 	if win_blur_overlay:
 		win_blur_overlay.modulate.a = 0.0
@@ -452,7 +453,9 @@ func _animate_stars_sequence(stars: Array, earned: int, gold_color: Color) -> vo
 		tw.tween_interval(delay)
 		tw.tween_callback(func():
 			s.modulate = gold_color
-			s.scale = Vector2(1.6, 1.6)
+			var s_sz: Vector2 = s.size if s.size != Vector2.ZERO else s.custom_minimum_size
+			s.pivot_offset = s_sz / 2.0
+			s.scale = Vector2(1.35, 1.35)
 			if audio_mgr:
 				audio_mgr.play_star(star_num)
 			if haptic_mgr:

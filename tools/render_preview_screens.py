@@ -287,21 +287,38 @@ def render_win_modal_preview():
     btw = bbox[2] - bbox[0]
     draw.text(((W - btw)//2, by0 + 17), b_text, font=f_banner, fill=(255, 245, 220))
 
-    # 3 Golden Stars
-    f_star_sm = get_font(42)
-    f_star_lg = get_font(56)
+    # 3 Golden Stars (Enlarged Hero Element)
+    f_star_sm = get_font(68)
+    f_star_lg = get_font(88)
+
+    b_sm = f_star_sm.getbbox("★")
+    w_sm = b_sm[2] - b_sm[0]
+    b_lg = f_star_lg.getbbox("★")
+    w_lg = b_lg[2] - b_lg[0]
+
+    x2 = (W - w_lg) // 2
+    x1 = 170 - w_sm // 2
+    x3 = 370 - w_sm // 2
+    y_lg = 240
+    y_sm = 258
 
     # Star 1 (Left)
-    draw.text((155, 276), "★", font=f_star_sm, fill=(0, 0, 0, 180))
-    draw.text((154, 274), "★", font=f_star_sm, fill=(255, 217, 56))
+    draw.text((x1 + 3, y_sm + 4), "★", font=f_star_sm, fill=(0, 0, 0, 190))
+    for ox, oy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
+        draw.text((x1 + ox, y_sm + oy), "★", font=f_star_sm, fill=(110, 65, 10))
+    draw.text((x1, y_sm), "★", font=f_star_sm, fill=(255, 218, 56))
 
     # Star 2 (Center, enlarged & elevated)
-    draw.text((246, 256), "★", font=f_star_lg, fill=(0, 0, 0, 180))
-    draw.text((245, 254), "★", font=f_star_lg, fill=(255, 226, 64))
+    draw.text((x2 + 4, y_lg + 5), "★", font=f_star_lg, fill=(0, 0, 0, 210))
+    for ox, oy in [(-3, 0), (3, 0), (0, -3), (0, 3)]:
+        draw.text((x2 + ox, y_lg + oy), "★", font=f_star_lg, fill=(110, 65, 10))
+    draw.text((x2, y_lg), "★", font=f_star_lg, fill=(255, 228, 68))
 
     # Star 3 (Right)
-    draw.text((337, 276), "★", font=f_star_sm, fill=(0, 0, 0, 180))
-    draw.text((336, 274), "★", font=f_star_sm, fill=(255, 217, 56))
+    draw.text((x3 + 3, y_sm + 4), "★", font=f_star_sm, fill=(0, 0, 0, 190))
+    for ox, oy in [(-2, 0), (2, 0), (0, -2), (0, 2)]:
+        draw.text((x3 + ox, y_sm + oy), "★", font=f_star_sm, fill=(110, 65, 10))
+    draw.text((x3, y_sm), "★", font=f_star_sm, fill=(255, 218, 56))
 
     # Wooden Placard for Level Number: [175, 342, 365, 396]
     px0, py0, px1, py1 = 175, 342, 365, 396
