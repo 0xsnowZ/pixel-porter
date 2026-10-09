@@ -1,0 +1,10 @@
+# Godot 4+ cache and imported assets
+.godot/
+
+# Export presets (can contain credentials/keystores)
+export_presets.cfg
+
+# System / editor files
+.DS_Store
+Thumbs.db
+*.tmp
