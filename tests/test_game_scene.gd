@@ -260,14 +260,19 @@ func test_win_modal_three_star_system() -> void:
 	assert_true(game.star_3 != null, "Star 3 label initialized")
 	assert_true(game.level_placard_label != null, "Level placard initialized")
 	assert_true(game.win_retry_button != null, "Win retry button initialized")
+	assert_true(game.win_blur_overlay != null, "Win blur backdrop overlay initialized")
 	assert_true(not game.win_modal.visible, "Win modal hidden during normal play")
+	assert_true(not game.win_blur_overlay.visible, "Win blur overlay hidden during normal play")
 
 	# Test Retry button functionality
 	game.grid.moves_count = 5
 	game.win_modal.show()
+	game.win_blur_overlay.show()
 	assert_true(game.win_modal.visible, "Win modal shown for test")
+	assert_true(game.win_blur_overlay.visible, "Win blur overlay shown for test")
 	game._on_win_retry_pressed()
 	assert_true(not game.win_modal.visible, "Win modal hidden on retry")
+	assert_true(not game.win_blur_overlay.visible, "Win blur overlay hidden on retry")
 	assert_eq(game.grid.moves_count, 0, "Level reset to 0 moves on retry")
 
 	# Test Star rating calculation integration with save manager

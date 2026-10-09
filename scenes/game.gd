@@ -60,6 +60,7 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var restart_button: Button = $BottomBar/Margin/HBox/RestartButton
 @onready var next_button: Button = $BottomBar/Margin/HBox/NextButton
 @onready var win_modal: PanelContainer = $WinModal
+@onready var win_blur_overlay: ColorRect = $WinBlurOverlay if has_node("WinBlurOverlay") else null
 @onready var win_title: Label = $WinModal.find_child("WinTitle", true, false) if has_node("WinModal") else null
 @onready var win_stats: Label = $WinModal.find_child("WinStats", true, false) if has_node("WinModal") else null
 @onready var win_menu_button: Button = $WinModal.find_child("WinMenuBtn", true, false) if has_node("WinModal") else null
@@ -107,6 +108,8 @@ func _initialize_nodes() -> void:
 
 	if win_modal == null and has_node("WinModal"):
 		win_modal = $WinModal
+	if win_blur_overlay == null and has_node("WinBlurOverlay"):
+		win_blur_overlay = $WinBlurOverlay
 	if win_modal != null:
 		win_title = win_modal.find_child("WinTitle", true, false)
 		win_stats = win_modal.find_child("WinStats", true, false)
@@ -241,6 +244,8 @@ func load_level(index: int) -> void:
 	level_start_time = Time.get_ticks_msec()
 	if win_modal:
 		win_modal.hide()
+	if win_blur_overlay:
+		win_blur_overlay.hide()
 	if ad_mgr:
 		ad_mgr.preload_interstitial()
 
@@ -425,6 +430,12 @@ func _on_level_won() -> void:
 			s.modulate = dim_color
 			s.scale = Vector2.ONE
 			s.pivot_offset = s.size / 2.0
+
+	if win_blur_overlay:
+		win_blur_overlay.modulate.a = 0.0
+		win_blur_overlay.show()
+		var tw_blur: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_blur.tween_property(win_blur_overlay, "modulate:a", 1.0, 0.25)
 
 	win_modal.show()
 	_animate_stars_sequence(stars, earned_stars, gold_color)
@@ -657,6 +668,8 @@ func _on_win_retry_pressed() -> void:
 		haptic_mgr.vibrate_click()
 	if win_modal != null:
 		win_modal.hide()
+	if win_blur_overlay != null:
+		win_blur_overlay.hide()
 	load_level(current_level_index)
 
 

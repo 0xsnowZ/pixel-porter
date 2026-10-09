@@ -241,9 +241,10 @@ def render_win_modal_preview():
         bg_path = os.path.join(ASSETS_DIR, "warehouse_bg.jpg")
         base = Image.open(bg_path).convert("RGBA").resize((W, H))
 
-    # Dim overlay
-    dim = Image.new("RGBA", (W, H), (10, 14, 22, 190))
-    win_img = Image.alpha_composite(base, dim)
+    # Dim overlay with frosted glass blur backdrop
+    blurred_base = base.filter(ImageFilter.GaussianBlur(12))
+    dim = Image.new("RGBA", (W, H), (8, 12, 18, 175))
+    win_img = Image.alpha_composite(blurred_base, dim)
     draw = ImageDraw.Draw(win_img)
 
     # Confetti celebration particles
@@ -383,6 +384,39 @@ def render_splash_screen_preview():
     splash_path = os.path.join(ASSETS_DIR, "splash.png")
     if os.path.exists(splash_path):
         img = Image.open(splash_path).convert("RGBA").resize((W, H))
+        draw = ImageDraw.Draw(img)
+
+        # Draw the single dynamic Godot loading UI (matching scenes/splash_screen.tscn)
+        # Position: bottom margin 32px, height 140px
+        f_status = get_font(13)
+        f_prompt = get_regular_font(12)
+
+        # Status Label
+        status_text = "LOADING PUZZLE LEVELS..."
+        sb = f_status.getbbox(status_text)
+        stw = sb[2] - sb[0]
+        # Text shadow + text
+        draw.text(((W - stw) // 2, 836), status_text, font=f_status, fill=(0, 0, 0, 220))
+        draw.text(((W - stw) // 2, 834), status_text, font=f_status, fill=(250, 218, 72))
+
+        # Single crisp progress bar (40px margins left/right -> 460px wide, y: 862 to 878)
+        bx0, by0, bx1, by1 = 40, 860, W - 40, 876
+        # Background
+        draw.rounded_rectangle([bx0, by0, bx1, by1], radius=6, fill=(15, 20, 33), outline=(184, 138, 51), width=2)
+        # Fill (e.g. 75%)
+        progress = 0.75
+        fx1 = int(bx0 + (bx1 - bx0) * progress)
+        draw.rounded_rectangle([bx0 + 2, by0 + 2, fx1, by1 - 2], radius=4, fill=(245, 166, 36))
+        # Top highlight line on fill
+        draw.line([(bx0 + 4, by0 + 3), (fx1 - 2, by0 + 3)], fill=(255, 217, 115), width=1)
+
+        # Tap prompt
+        prompt_text = "TAP ANYWHERE TO START"
+        pb = f_prompt.getbbox(prompt_text)
+        ptw = pb[2] - pb[0]
+        draw.text(((W - ptw) // 2, 891), prompt_text, font=f_prompt, fill=(0, 0, 0, 200))
+        draw.text(((W - ptw) // 2, 890), prompt_text, font=f_prompt, fill=(190, 210, 235))
+
         out_path = os.path.join(ARTIFACT_DIR, "preview_splash_screen.png")
         img.save(out_path)
         print("Saved preview_splash_screen.png")
