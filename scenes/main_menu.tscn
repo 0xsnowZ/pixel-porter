@@ -111,6 +111,13 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "PORTER LOCKER 🦺"
 
+[node name="AchievementsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "ACHIEVEMENTS 🏆"
+
 [node name="SettingsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
 custom_minimum_size = Vector2(270, 48)
 layout_mode = 2
@@ -514,4 +521,66 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 15
 text = "Close"
+
+[node name="AchievementsModal" type="PanelContainer" parent="."]
+visible = false
+custom_minimum_size = Vector2(440, 480)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -240.0
+offset_right = 220.0
+offset_bottom = 240.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"WinModalPanel"
+
+[node name="Margin" type="MarginContainer" parent="AchievementsModal"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="AchievementsModal/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Title" type="Label" parent="AchievementsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 20
+text = "🏆 WAREHOUSE ACHIEVEMENTS 🏆"
+horizontal_alignment = 1
+
+[node name="CounterBadge" type="Label" parent="AchievementsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 13
+text = "🏆 0 / 9 Unlocked"
+horizontal_alignment = 1
+
+[node name="Scroll" type="ScrollContainer" parent="AchievementsModal/Margin/VBox"]
+custom_minimum_size = Vector2(0, 310)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemsVBox" type="VBoxContainer" parent="AchievementsModal/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CloseAchievementsBtn" type="Button" parent="AchievementsModal/Margin/VBox"]
+custom_minimum_size = Vector2(160, 42)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 15
+text = "Close"
+
 

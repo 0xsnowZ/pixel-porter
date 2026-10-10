@@ -34,6 +34,7 @@ func _init() -> void:
 	test_win_modal_three_star_system()
 	test_warehouse_chapter_themes_and_progression()
 	test_porter_locker_cosmetics_in_game()
+	test_rewarded_ad_hint_economy_in_game()
 
 	print("\n" + "=".repeat(54))
 	print("Game Scene Results: %d passed, %d failed" % [passes, fails])
@@ -100,7 +101,7 @@ func test_game_initialization_and_ui() -> void:
 	assert_true(game.undo_button.text == "Undo ↶", "Undo button localized in EN")
 	assert_true(game.undo_button.disabled, "Undo button is disabled initially")
 	assert_true(game.hint_button != null, "Hint button initialized in game")
-	assert_true(game.hint_button.text == "Hint 💡", "Hint button localized in EN")
+	assert_true("Hint 💡" in game.hint_button.text, "Hint button localized in EN")
 	assert_true(not game.hint_button.disabled, "Hint button is enabled initially")
 	assert_true(game.prev_button.disabled, "Prev button is disabled on first level")
 
@@ -110,11 +111,11 @@ func test_game_initialization_and_ui() -> void:
 	assert_eq(game.level_label.text, "NIVEAU 1 / 50", "Level label in FR")
 	assert_eq(game.restart_button.text, "Recommencer ↺", "Restart button localized in FR")
 	assert_eq(game.undo_button.text, "Annuler ↶", "Undo button localized in FR")
-	assert_eq(game.hint_button.text, "Indice 💡", "Hint button localized in FR")
+	assert_true("Indice 💡" in game.hint_button.text, "Hint button localized in FR")
 
 	loc.set_language("ar")
 	game._update_ui()
-	assert_eq(game.hint_button.text, "تلميح 💡", "Hint button localized in AR")
+	assert_true("تلميح 💡" in game.hint_button.text, "Hint button localized in AR")
 
 	# Test in-game music toggle button
 	assert_true(game.music_button != null, "Music button initialized in game")
@@ -390,9 +391,13 @@ func test_hint_system_and_solver() -> void:
 
 	assert_true(game.hint_button != null, "Hint button initialized in game")
 	assert_true(not game.hint_button.disabled, "Hint button enabled initially")
-	assert_eq(game.hint_button.text, "Hint 💡", "Hint button localized in EN")
+	assert_true("Hint 💡" in game.hint_button.text, "Hint button localized in EN")
 	assert_eq(game.active_hint_dir, Vector2i.ZERO, "No active hint direction initially")
 	assert_eq(game.hint_time_remaining, 0.0, "Hint timer starts at 0")
+
+	# Ensure sufficient hints for multiple solver test invocations
+	if game.save_mgr != null:
+		game.save_mgr.add_hints(10)
 
 	# 1. Trigger Hint on Level 1 (solvable)
 	game._on_hint_pressed()
@@ -564,6 +569,44 @@ func test_porter_locker_cosmetics_in_game() -> void:
 	assert_eq(loc.tr_text("LOCKER_TITLE"), "🦺 خزانة الحمال 🦺", "AR Locker title is خزانة الحمال")
 	assert_eq(loc.tr_text("SKIN_WORKER_SAFETY_VEST"), "سترة الأمان", "AR Safety Vest skin name")
 	assert_eq(loc.tr_text("SKIN_CRATE_STEEL_CONTAINER"), "حاوية فولاذية", "AR Steel Container skin name")
+
+	game.free()
+	loc.free()
+	save_mgr.free()
+
+
+func test_rewarded_ad_hint_economy_in_game() -> void:
+	print("--- Running Suite: Rewarded Video Ads & Hint Economy in Game (Phase 4) ---")
+	var loc: Node = LocalizationManagerScript.new()
+	var save_mgr: Node = SaveManagerScript.new()
+
+	var game: Control = create_test_game(loc, save_mgr)
+
+	# 1. Starting hints
+	assert_eq(game.save_mgr.hints_remaining, 3, "Initial hint inventory is 3")
+	assert_true("(3)" in game.hint_button.text, "Hint button displays remaining count (3)")
+
+	# 2. Exhaust hints to 0
+	game.save_mgr.hints_remaining = 0
+	game._update_hint_button_text()
+	assert_true("(0)" in game.hint_button.text, "Hint button displays remaining count (0)")
+
+	# 3. Tapping hint button at 0 hints presents Rewarded Ad Modal
+	game._on_hint_pressed()
+	assert_true(game.ad_reward_modal != null, "AdRewardModal created")
+	assert_true(game.ad_reward_modal.visible, "AdRewardModal shown when hints exhausted")
+
+	# 4. Tapping Watch Ad grants +3 hints and closes modal
+	game._on_watch_ad_pressed()
+	assert_true(game.save_mgr.hints_remaining >= 2, "Player awarded hints after watching ad")
+	assert_true(not game.ad_reward_modal.visible, "AdRewardModal hidden after reward granted")
+
+	# 5. Localization of rewarded ad modal
+	assert_eq(loc.tr_text("MODAL_REWARD_TITLE"), "NEED A HINT? 💡", "EN modal title localized")
+	loc.current_language = "fr"
+	assert_eq(loc.tr_text("MODAL_REWARD_TITLE"), "BESOIN D'UN INDICE ? 💡", "FR modal title localized")
+	loc.current_language = "ar"
+	assert_eq(loc.tr_text("MODAL_REWARD_TITLE"), "تحتاج مساعدة؟ 💡", "AR modal title localized")
 
 	game.free()
 	loc.free()

@@ -7,6 +7,8 @@ extends Node
 signal progress_saved
 signal progress_loaded
 signal level_unlocked(level_index: int)
+signal hints_changed(new_count: int)
+signal achievement_unlocked(achievement_id: String)
 
 const DEFAULT_SAVE_PATH: String = "user://pixel_porter_save.json"
 
@@ -28,6 +30,12 @@ var control_scheme: int = 0 # 0 = Swipe, 1 = D-Pad, 2 = Dual (Swipe + D-Pad)
 # The Porter Locker (Cosmetics & Star Economy - Phase 3)
 var selected_worker_skin: String = "classic"
 var selected_crate_skin: String = "classic_wood"
+
+# Rewarded Ad Hint Economy & Achievements (Phase 4)
+var hints_remaining: int = 3
+var total_crates_pushed: int = 0
+var unlocked_achievements: Array[String] = []
+var last_hint_refill_date: String = ""
 
 
 func _ready() -> void:
@@ -334,6 +342,12 @@ func to_dict() -> Dictionary:
 		"cosmetics": {
 			"worker_skin": selected_worker_skin,
 			"crate_skin": selected_crate_skin
+		},
+		"economy": {
+			"hints_remaining": hints_remaining,
+			"total_crates_pushed": total_crates_pushed,
+			"unlocked_achievements": unlocked_achievements,
+			"last_hint_refill_date": last_hint_refill_date
 		}
 	}
 
@@ -357,6 +371,15 @@ func from_dict(data: Dictionary) -> void:
 	var cosmetics: Dictionary = data.get("cosmetics", {})
 	selected_worker_skin = cosmetics.get("worker_skin", "classic")
 	selected_crate_skin = cosmetics.get("crate_skin", "classic_wood")
+
+	var economy: Dictionary = data.get("economy", {})
+	hints_remaining = int(economy.get("hints_remaining", 3))
+	total_crates_pushed = int(economy.get("total_crates_pushed", 0))
+	var raw_achievements = economy.get("unlocked_achievements", [])
+	unlocked_achievements = []
+	for a in raw_achievements:
+		unlocked_achievements.append(str(a))
+	last_hint_refill_date = str(economy.get("last_hint_refill_date", ""))
 
 
 ## Saves game state to JSON on disk.
@@ -423,7 +446,48 @@ func reset_all_progress(custom_path: String = "") -> void:
 	control_scheme = 0
 	selected_worker_skin = "classic"
 	selected_crate_skin = "classic_wood"
+	hints_remaining = 3
+	total_crates_pushed = 0
+	unlocked_achievements.clear()
+	last_hint_refill_date = ""
 	save_data(custom_path)
+
+
+func get_hints_remaining() -> int:
+	return hints_remaining
+
+
+func use_hint() -> bool:
+	if hints_remaining > 0:
+		hints_remaining -= 1
+		hints_changed.emit(hints_remaining)
+		save_data()
+		return true
+	return false
+
+
+func add_hints(amount: int) -> void:
+	hints_remaining += amount
+	hints_changed.emit(hints_remaining)
+	save_data()
+
+
+func record_crate_push() -> void:
+	total_crates_pushed += 1
+	save_data()
+
+
+func is_achievement_unlocked(id: String) -> bool:
+	return unlocked_achievements.has(id)
+
+
+func unlock_achievement(id: String) -> bool:
+	if not is_achievement_unlocked(id):
+		unlocked_achievements.append(id)
+		achievement_unlocked.emit(id)
+		save_data()
+		return true
+	return false
 
 
 func get_control_scheme_name() -> String:

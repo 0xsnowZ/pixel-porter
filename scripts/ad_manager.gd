@@ -15,6 +15,11 @@ signal interstitial_loaded
 signal interstitial_failed_to_load(error_code: int)
 signal interstitial_opened
 signal interstitial_closed
+signal rewarded_loaded
+signal rewarded_failed_to_load(error_code: int)
+signal rewarded_opened
+signal rewarded_earned(reward_type: String, amount: int)
+signal rewarded_closed
 signal consent_status_changed(status: int)
 
 enum ConsentStatus {
@@ -26,6 +31,7 @@ enum ConsentStatus {
 
 # Official Google AdMob Android test ad unit IDs
 const TEST_INTERSTITIAL_ID: String = "ca-app-pub-3940256099942544/1033173712"
+const TEST_REWARDED_ID: String = "ca-app-pub-3940256099942544/5224354917"
 
 # PRD Section 8 rules
 const AD_FREE_LEVEL_THRESHOLD: int = 3 # Levels 1 to 3 are ad-free (indices 0, 1, 2)
@@ -34,8 +40,11 @@ const MIN_COOLDOWN_MSEC: int = 60000   # At least 60 seconds between ads
 
 var is_test_mode: bool = true
 var interstitial_ad_unit_id: String = TEST_INTERSTITIAL_ID
+var rewarded_ad_unit_id: String = TEST_REWARDED_ID
 var is_interstitial_loaded: bool = false
+var is_rewarded_loaded: bool = false
 var is_showing_ad: bool = false
+var is_showing_rewarded: bool = false
 
 var completions_since_last_ad: int = 0
 var last_ad_show_time_msec: int = -99999999
@@ -49,6 +58,7 @@ func _ready() -> void:
 	_init_plugin_or_simulator()
 	request_consent()
 	preload_interstitial()
+	preload_rewarded()
 
 
 func _init_plugin_or_simulator() -> void:
@@ -146,10 +156,56 @@ func _simulate_ad_close() -> void:
 	preload_interstitial() # Preload next ad immediately
 
 
+## Preloads a rewarded video ad in the background.
+func preload_rewarded() -> void:
+	if is_rewarded_loaded:
+		return
+
+	if _plugin_singleton != null and _plugin_singleton.has_method("load_rewarded"):
+		_plugin_singleton.load_rewarded(rewarded_ad_unit_id)
+	else:
+		# Simulator: mark loaded
+		is_rewarded_loaded = true
+		rewarded_loaded.emit()
+
+
+## Returns true if a rewarded video ad is loaded and ready to present.
+func is_rewarded_ready() -> bool:
+	return is_rewarded_loaded
+
+
+## Shows a rewarded video ad for the hint economy.
+## Returns true if the ad presentation was started, false otherwise.
+func show_rewarded_for_hints() -> bool:
+	if not is_rewarded_loaded:
+		preload_rewarded()
+		return false
+
+	is_showing_rewarded = true
+	is_rewarded_loaded = false
+	rewarded_opened.emit()
+
+	if _plugin_singleton != null and _plugin_singleton.has_method("show_rewarded"):
+		_plugin_singleton.show_rewarded()
+	else:
+		_simulate_rewarded_close()
+
+	return true
+
+
+func _simulate_rewarded_close() -> void:
+	is_showing_rewarded = false
+	rewarded_earned.emit("hints", 3)
+	rewarded_closed.emit()
+	preload_rewarded()
+
+
 ## Resets state counters (used for unit testing).
 func reset_state() -> void:
 	completions_since_last_ad = 0
 	last_ad_show_time_msec = -99999999
 	is_interstitial_loaded = false
+	is_rewarded_loaded = false
 	is_showing_ad = false
+	is_showing_rewarded = false
 	total_ads_shown = 0

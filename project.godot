@@ -28,6 +28,7 @@ LocalizationManager="*res://scripts/localization_manager.gd"
 AdManager="*res://scripts/ad_manager.gd"
 HapticManager="*res://scripts/haptic_manager.gd"
 SafeAreaManager="*res://scripts/safe_area_manager.gd"
+AchievementManager="*res://scripts/achievement_manager.gd"
 
 [display]
 

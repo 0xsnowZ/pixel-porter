@@ -124,6 +124,9 @@ var touch_start_pos: Vector2 = Vector2.ZERO
 var is_touching: bool = false
 const SWIPE_THRESHOLD_PIXELS: float = 30.0
 
+var achievement_mgr: Node = null
+var ad_reward_modal: PanelContainer = null
+
 # UI references
 @onready var top_bar_margin: MarginContainer = $TopBar/Margin
 @onready var bottom_bar_margin: MarginContainer = $BottomBar/Margin
@@ -263,6 +266,15 @@ func _ready() -> void:
 	if safe_area_mgr:
 		safe_area_mgr.safe_area_changed.connect(_on_safe_area_changed)
 		_apply_safe_area()
+
+	if achievement_mgr == null and is_inside_tree() and get_tree().root.has_node("AchievementManager"):
+		achievement_mgr = get_tree().root.get_node("AchievementManager")
+
+	if ad_mgr != null and not ad_mgr.rewarded_earned.is_connected(_on_rewarded_hints_earned):
+		ad_mgr.rewarded_earned.connect(_on_rewarded_hints_earned)
+
+	if save_mgr != null and not save_mgr.hints_changed.is_connected(_on_hints_changed):
+		save_mgr.hints_changed.connect(_on_hints_changed)
 
 	grid = GridLogic.new()
 	grid.crate_pushed.connect(_on_crate_pushed)
@@ -470,8 +482,7 @@ func _update_ui() -> void:
 		restart_button.text = loc_mgr.tr_text("BTN_RESTART")
 		if undo_button != null:
 			undo_button.text = loc_mgr.tr_text("BTN_UNDO")
-		if hint_button != null:
-			hint_button.text = loc_mgr.tr_text("BTN_HINT")
+		_update_hint_button_text()
 		prev_button.text = loc_mgr.tr_text("BTN_PREV")
 		next_button.text = loc_mgr.tr_text("BTN_NEXT")
 		if win_menu_button != null:
@@ -485,8 +496,7 @@ func _update_ui() -> void:
 		stats_label.text = "MOVES: %d  |  PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
 		if undo_button != null:
 			undo_button.text = "Undo ↶"
-		if hint_button != null:
-			hint_button.text = "Hint 💡"
+		_update_hint_button_text()
 		if win_menu_button != null:
 			win_menu_button.text = "⌂ MENU"
 		if next_level_button != null:
@@ -545,6 +555,10 @@ func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 		else:
 			haptic_mgr.vibrate_push()
 
+	if save_mgr:
+		save_mgr.record_crate_push()
+	_check_achievements()
+
 
 func _on_level_won() -> void:
 	add_trauma(0.50)
@@ -556,6 +570,7 @@ func _on_level_won() -> void:
 		haptic_mgr.vibrate_win()
 	if save_mgr:
 		save_mgr.record_level_completion(current_level_index, grid.moves_count, grid.pushes_count)
+	_check_achievements()
 	if ad_mgr:
 		ad_mgr.record_level_completed(current_level_index)
 
@@ -946,6 +961,13 @@ func _on_hint_pressed() -> void:
 	if grid == null or grid.is_won():
 		return
 
+	# Check hint inventory (Phase 4: Rewarded Ad Hint Economy)
+	if save_mgr != null and save_mgr.get_hints_remaining() <= 0:
+		if audio_mgr:
+			audio_mgr.play_click()
+		_show_ad_reward_modal()
+		return
+
 	if audio_mgr:
 		audio_mgr.play_click()
 	if haptic_mgr:
@@ -962,6 +984,11 @@ func _on_hint_pressed() -> void:
 		_show_hint_toast(loc_mgr.tr_text("HINT_DEADLOCK") if loc_mgr else "No solution from here! Tap Undo ↶", Color(1.0, 0.4, 0.4))
 		clear_hint()
 		return
+
+	# Deduct 1 hint from inventory only when solution step was found
+	if save_mgr != null:
+		save_mgr.use_hint()
+		_update_hint_button_text()
 
 	# Solvable next step
 	if audio_mgr:
@@ -1644,3 +1671,154 @@ func _attach_spring_physics(btn: Button) -> void:
 		var tw: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_property(btn, "scale", Vector2.ONE, 0.10)
 	)
+
+
+func _update_hint_button_text() -> void:
+	if hint_button != null:
+		var hint_str: String = loc_mgr.tr_text("BTN_HINT") if loc_mgr else "Hint 💡"
+		var count: int = save_mgr.get_hints_remaining() if save_mgr else 3
+		hint_button.text = "%s (%d)" % [hint_str, count]
+
+
+func _on_hints_changed(_new_count: int) -> void:
+	_update_hint_button_text()
+
+
+func _create_ad_reward_modal() -> PanelContainer:
+	var modal: PanelContainer = PanelContainer.new()
+	modal.name = "AdRewardModal"
+	modal.anchors_preset = Control.PRESET_FULL_RECT
+	modal.anchor_right = 1.0
+	modal.anchor_bottom = 1.0
+	modal.mouse_filter = Control.MOUSE_FILTER_STOP
+
+	# Full dark backdrop scrim
+	var bg_rect: ColorRect = ColorRect.new()
+	bg_rect.anchors_preset = Control.PRESET_FULL_RECT
+	bg_rect.anchor_right = 1.0
+	bg_rect.anchor_bottom = 1.0
+	bg_rect.color = Color(0.04, 0.06, 0.10, 0.88)
+	bg_rect.mouse_filter = Control.MOUSE_FILTER_STOP
+	modal.add_child(bg_rect)
+
+	# Center container
+	var center: CenterContainer = CenterContainer.new()
+	center.anchors_preset = Control.PRESET_FULL_RECT
+	center.anchor_right = 1.0
+	center.anchor_bottom = 1.0
+	modal.add_child(center)
+
+	var card: PanelContainer = PanelContainer.new()
+	card.custom_minimum_size = Vector2(360, 240)
+	card.theme_type_variation = &"ConsoleCard"
+	center.add_child(card)
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 24)
+	margin.add_theme_constant_override("margin_top", 24)
+	margin.add_theme_constant_override("margin_right", 24)
+	margin.add_theme_constant_override("margin_bottom", 24)
+	card.add_child(margin)
+
+	var vbox: VBoxContainer = VBoxContainer.new()
+	vbox.add_theme_constant_override("separation", 16)
+	margin.add_child(vbox)
+
+	var title_lbl: Label = Label.new()
+	title_lbl.text = loc_mgr.tr_text("MODAL_REWARD_TITLE") if loc_mgr else "NEED A HINT? 💡"
+	title_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	title_lbl.add_theme_font_size_override("font_size", 20)
+	title_lbl.add_theme_color_override("font_color", Color(1.0, 0.88, 0.40))
+	vbox.add_child(title_lbl)
+
+	var desc_lbl: Label = Label.new()
+	desc_lbl.text = loc_mgr.tr_text("MODAL_REWARD_DESC") if loc_mgr else "You're out of hints. Watch a sponsor video to receive +3 Free Hints!"
+	desc_lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	desc_lbl.add_theme_font_size_override("font_size", 13)
+	desc_lbl.add_theme_color_override("font_color", Color(0.85, 0.90, 0.98))
+	vbox.add_child(desc_lbl)
+
+	var btn_vbox: VBoxContainer = VBoxContainer.new()
+	btn_vbox.add_theme_constant_override("separation", 10)
+	vbox.add_child(btn_vbox)
+
+	var watch_btn: Button = Button.new()
+	watch_btn.name = "WatchAdBtn"
+	watch_btn.text = loc_mgr.tr_text("BTN_WATCH_AD") if loc_mgr else "WATCH AD 🎬 (+3 💡)"
+	watch_btn.custom_minimum_size = Vector2(0, 46)
+	watch_btn.theme_type_variation = &"PrimaryButton"
+	watch_btn.pressed.connect(_on_watch_ad_pressed)
+	_attach_spring_physics(watch_btn)
+	btn_vbox.add_child(watch_btn)
+
+	var close_btn: Button = Button.new()
+	close_btn.name = "CloseRewardModalBtn"
+	close_btn.text = loc_mgr.tr_text("BTN_CLOSE") if loc_mgr else "CLOSE"
+	close_btn.custom_minimum_size = Vector2(0, 40)
+	close_btn.pressed.connect(_hide_ad_reward_modal)
+	_attach_spring_physics(close_btn)
+	btn_vbox.add_child(close_btn)
+
+	add_child(modal)
+	return modal
+
+
+func _show_ad_reward_modal() -> void:
+	if ad_reward_modal == null:
+		ad_reward_modal = _create_ad_reward_modal()
+	ad_reward_modal.show()
+	ad_reward_modal.modulate.a = 0.0
+	var tw = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(ad_reward_modal, "modulate:a", 1.0, 0.18)
+
+
+func _hide_ad_reward_modal() -> void:
+	if ad_reward_modal != null:
+		ad_reward_modal.hide()
+
+
+func _on_watch_ad_pressed() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	if ad_mgr != null:
+		var ok: bool = ad_mgr.show_rewarded_for_hints()
+		if not ok:
+			_on_rewarded_hints_earned("hints", 3)
+	else:
+		_on_rewarded_hints_earned("hints", 3)
+
+
+func _on_rewarded_hints_earned(reward_type: String, amount: int) -> void:
+	if reward_type == "hints":
+		if save_mgr != null:
+			save_mgr.add_hints(amount)
+		_hide_ad_reward_modal()
+		_update_hint_button_text()
+		var msg = loc_mgr.tr_text("TOAST_HINTS_ADDED") if loc_mgr else "+3 Hints Added! 💡"
+		_show_hint_toast(msg, Color(0.4, 1.0, 0.6))
+		if audio_mgr:
+			audio_mgr.play_win()
+		if haptic_mgr:
+			haptic_mgr.vibrate_target()
+		_on_hint_pressed()
+
+
+func _check_achievements() -> void:
+	if achievement_mgr != null and save_mgr != null:
+		var newly_unlocked: Array[String] = achievement_mgr.evaluate_progress(save_mgr)
+		for id in newly_unlocked:
+			var info = achievement_mgr.get_achievement_info(id)
+			_show_achievement_toast(info)
+
+
+func _show_achievement_toast(info: Dictionary) -> void:
+	var ach_name: String = loc_mgr.tr_text(info.get("name_key", "")) if loc_mgr else info.get("name", "Achievement")
+	var icon: String = info.get("icon", "🏆")
+	var toast_text: String = "🏆 UNLOCKED: %s %s" % [icon, ach_name]
+	_show_hint_toast(toast_text, Color(1.0, 0.85, 0.25))
+	if audio_mgr:
+		audio_mgr.play_win()
+	if haptic_mgr:
+		haptic_mgr.vibrate_target()
+

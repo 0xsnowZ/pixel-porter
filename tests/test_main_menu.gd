@@ -26,6 +26,7 @@ func _init() -> void:
 	run_suite("Sound Toggle & Credits Modal", test_sound_and_credits)
 	run_suite("Settings Modal & Audio Sliders", test_settings_modal_and_sliders)
 	run_suite("Porter Locker Modal & Cosmetic Equipping", test_porter_locker_modal)
+	run_suite("Warehouse Achievements Modal", test_achievements_modal)
 
 	_cleanup_test_file()
 
@@ -309,5 +310,38 @@ func test_porter_locker_modal() -> void:
 	# Close modal
 	menu._hide_locker()
 	assert_false(menu.locker_modal.visible, "Locker modal hidden via _hide_locker")
+
+	menu.queue_free()
+
+
+func test_achievements_modal() -> void:
+	var menu: Control = create_test_menu()
+
+	# 1. Elements exist
+	assert_true(menu.achievements_btn != null, "Achievements button exists on ConsoleCard")
+	assert_true(menu.achievements_modal != null, "Achievements modal exists")
+	assert_false(menu.achievements_modal.visible, "Achievements modal is hidden initially")
+	assert_true(menu.achievements_title_label != null, "Achievements title label exists")
+	assert_true(menu.achievements_counter_badge != null, "Achievements counter badge exists")
+	assert_true(menu.achievements_items_vbox != null, "Achievements items VBox exists")
+
+	# 2. Open achievements modal
+	menu._show_achievements()
+	assert_true(menu.achievements_modal.visible, "Achievements modal opens via _show_achievements")
+	assert_true("0 / 9" in menu.achievements_counter_badge.text or "0" in menu.achievements_counter_badge.text, "Achievements counter badge starts at 0")
+
+	# 3. 9 achievement cards populated
+	var cards = menu.achievements_items_vbox.get_children()
+	assert_equal(cards.size(), 9, "Achievements modal displays all 9 achievement cards")
+
+	# 4. Unlock an achievement and refresh
+	if menu.achievement_mgr:
+		menu.achievement_mgr.unlock("first_shift")
+		menu._refresh_achievements_ui()
+		assert_true("1 / 9" in menu.achievements_counter_badge.text, "Counter badge updates to 1 / 9 unlocked")
+
+	# 5. Close modal
+	menu._hide_achievements()
+	assert_false(menu.achievements_modal.visible, "Achievements modal hidden via _hide_achievements")
 
 	menu.queue_free()

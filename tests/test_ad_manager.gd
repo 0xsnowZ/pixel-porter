@@ -26,6 +26,7 @@ func _init() -> void:
 	test_cooldown_restriction()
 	test_ad_lifecycle_and_signals()
 	test_consent_hooks()
+	test_rewarded_ad_for_hints()
 
 	print("\n" + "=".repeat(56))
 	print("AdManager Results: %d passed, %d failed" % [passes, fails])
@@ -185,5 +186,39 @@ func test_consent_hooks() -> void:
 	assert_true(adm.consent_status != adm.ConsentStatus.UNKNOWN, "Consent status initialized")
 	adm.request_consent()
 	assert_eq(adm.consent_status, adm.ConsentStatus.OBTAINED, "Default development consent status is OBTAINED")
+
+	adm.free()
+
+
+func test_rewarded_ad_for_hints() -> void:
+	print("--- Running Suite: Rewarded Video Ads for Hints ---")
+	var adm: Node = AdManagerScript.new()
+	root.add_child(adm)
+	adm._ready()
+
+	assert_true(adm.is_rewarded_ready(), "Rewarded ad is preloaded on startup")
+	assert_eq(adm.rewarded_ad_unit_id, "ca-app-pub-3940256099942544/5224354917", "Google test rewarded ID configured")
+
+	var tracker: Dictionary = {
+		"opened": false,
+		"closed": false,
+		"reward_type": "",
+		"reward_amount": 0
+	}
+
+	adm.rewarded_opened.connect(func(): tracker["opened"] = true)
+	adm.rewarded_earned.connect(func(type: String, amount: int):
+		tracker["reward_type"] = type
+		tracker["reward_amount"] = amount
+	)
+	adm.rewarded_closed.connect(func(): tracker["closed"] = true)
+
+	var triggered: bool = adm.show_rewarded_for_hints()
+	assert_true(triggered, "show_rewarded_for_hints returned true")
+	assert_true(tracker["opened"], "rewarded_opened signal emitted")
+	assert_eq(tracker["reward_type"], "hints", "Reward type is 'hints'")
+	assert_eq(tracker["reward_amount"], 3, "Reward amount is 3 free hints")
+	assert_true(tracker["closed"], "rewarded_closed signal emitted")
+	assert_true(adm.is_rewarded_ready(), "Next rewarded ad auto-preloaded after completion")
 
 	adm.free()

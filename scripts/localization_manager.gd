@@ -471,6 +471,131 @@ const TRANSLATIONS: Dictionary = {
 		"en": "Level Select",
 		"fr": "Choix du Niveau",
 		"ar": "اختيار المستوى"
+	},
+	"MODAL_REWARD_TITLE": {
+		"en": "NEED A HINT? 💡",
+		"fr": "BESOIN D'UN INDICE ? 💡",
+		"ar": "تحتاج مساعدة؟ 💡"
+	},
+	"MODAL_REWARD_DESC": {
+		"en": "You're out of hints. Watch a sponsor video to receive +3 Free Hints!",
+		"fr": "Vous n'avez plus d'indices. Regardez une courte vidéo pour recevoir 3 indices gratuits !",
+		"ar": "نفدت تلميحاتك. شاهد فيديو للحصول على 3 تلميحات مجانية!"
+	},
+	"BTN_WATCH_AD": {
+		"en": "WATCH AD 🎬 (+3 💡)",
+		"fr": "REGARDER 🎬 (+3 💡)",
+		"ar": "مشاهدة إعلان 🎬 (+3 💡)"
+	},
+	"TOAST_HINTS_ADDED": {
+		"en": "+3 Hints Added! 💡",
+		"fr": "+3 Indices Ajoutés ! 💡",
+		"ar": "تمت إضافة 3 تلميحات! 💡"
+	},
+	"MENU_ACHIEVEMENTS": {
+		"en": "ACHIEVEMENTS 🏆",
+		"fr": "SUCCÈS 🏆",
+		"ar": "الإنجازات 🏆"
+	},
+	"ACHIEVEMENTS_TITLE": {
+		"en": "🏆 WAREHOUSE ACHIEVEMENTS 🏆",
+		"fr": "🏆 SUCCÈS DU PORTEUR 🏆",
+		"ar": "🏆 إنجازات المستودع 🏆"
+	},
+	"ACHIEVEMENTS_COUNTER": {
+		"en": "🏆 %d / 9 Unlocked",
+		"fr": "🏆 %d / 9 Débloqués",
+		"ar": "🏆 %d / 9 تم الفتح"
+	},
+	"ACH_FIRST_SHIFT": {
+		"en": "First Shift",
+		"fr": "Première Équipe",
+		"ar": "الوردية الأولى"
+	},
+	"ACH_FIRST_SHIFT_DESC": {
+		"en": "Complete your very first warehouse shift.",
+		"fr": "Terminez votre toute première livraison.",
+		"ar": "أكمل ورديتك الأولى في المستودع."
+	},
+	"ACH_CARGO_MASTER": {
+		"en": "Logistics Specialist",
+		"fr": "Spécialiste Logistique",
+		"ar": "خبير لوجستي"
+	},
+	"ACH_CARGO_MASTER_DESC": {
+		"en": "Conquer all 15 levels of Chapter 1 Cargo Bay.",
+		"fr": "Terminez les 15 niveaux de la Baie de chargement.",
+		"ar": "أتقن جميع مستويات خليج الشحن الـ 15."
+	},
+	"ACH_COLD_STORAGE": {
+		"en": "Sub-Zero Handler",
+		"fr": "Manutentionnaire Polaire",
+		"ar": "معالج الصقيع"
+	},
+	"ACH_COLD_STORAGE_DESC": {
+		"en": "Conquer all 20 levels of Chapter 2 Cold Storage.",
+		"fr": "Terminez les 20 niveaux de la Chambre froide.",
+		"ar": "أتقن جميع مستويات التخزين البارد الـ 20."
+	},
+	"ACH_DEPOT_CLEARED": {
+		"en": "Unstoppable Porter",
+		"fr": "Porteur Inarrêtable",
+		"ar": "حمال لا يتوقف"
+	},
+	"ACH_DEPOT_CLEARED_DESC": {
+		"en": "Complete all 50 handcrafted warehouse levels.",
+		"fr": "Terminez les 50 niveaux du jeu.",
+		"ar": "أكمل جميع مستويات المستودع الـ 50."
+	},
+	"ACH_PRECISION_STARTER": {
+		"en": "Precision Starter",
+		"fr": "Apprenti Précis",
+		"ar": "مبتدئ دقيق"
+	},
+	"ACH_PRECISION_STARTER_DESC": {
+		"en": "Earn 3 stars on at least 5 levels.",
+		"fr": "Obtenez 3 étoiles sur au moins 5 niveaux.",
+		"ar": "احصل على 3 نجوم في 5 مستويات على الأقل."
+	},
+	"ACH_PRECISION_MASTER": {
+		"en": "Precision Master",
+		"fr": "Maître de la Précision",
+		"ar": "أستاذ الدقة"
+	},
+	"ACH_PRECISION_MASTER_DESC": {
+		"en": "Earn 3 stars on at least 25 levels.",
+		"fr": "Obtenez 3 étoiles sur au moins 25 niveaux.",
+		"ar": "احصل على 3 نجوم في 25 مستوى على الأقل."
+	},
+	"ACH_PERFECTIONIST": {
+		"en": "Puzzle Perfectionist",
+		"fr": "Perfectionniste Absolu",
+		"ar": "خبير الألغاز المتقن"
+	},
+	"ACH_PERFECTIONIST_DESC": {
+		"en": "Achieve 3 stars on all 50 levels (150 Stars).",
+		"fr": "Obtenez 3 étoiles sur les 50 niveaux (150 étoiles).",
+		"ar": "احصل على 3 نجوم في جميع المستويات الـ 50 (150 نجمة)."
+	},
+	"ACH_STYLIN_PORTER": {
+		"en": "Stylin' Porter",
+		"fr": "Porteur Stylé",
+		"ar": "حمال أنيق"
+	},
+	"ACH_STYLIN_PORTER_DESC": {
+		"en": "Equip any unlockable cosmetic from The Porter Locker.",
+		"fr": "Équipez une tenue ou caisse du Vestiaire.",
+		"ar": "ارتدِ أي زي تجميلي من خزانة الحمال."
+	},
+	"ACH_HEAVY_LIFTER": {
+		"en": "Heavy Lifter",
+		"fr": "Force Herculéenne",
+		"ar": "رافع الأثقال"
+	},
+	"ACH_HEAVY_LIFTER_DESC": {
+		"en": "Push 100 crates across all your warehouse shifts.",
+		"fr": "Poussez 100 caisses au total.",
+		"ar": "ادفع 100 صندوق عبر جولاتك في المستودع."
 	}
 }
 
