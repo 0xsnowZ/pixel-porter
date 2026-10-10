@@ -124,6 +124,36 @@ func test_game_initialization_and_ui() -> void:
 	assert_true(save_mgr.music_enabled, "SaveManager music_enabled toggled back to true")
 	assert_eq(game.music_button.text, "♪", "Music button restored to ♪")
 
+	# Test in-game control mode & D-Pad overlay
+	assert_true(game.control_button != null, "Control mode button initialized in game")
+	assert_true(game.dpad_overlay != null, "D-Pad overlay initialized in game")
+	assert_false(game.dpad_overlay.visible, "D-Pad overlay hidden in default SWIPE mode")
+	assert_eq(game.control_button.text, "✋", "Control button displays ✋ icon in SWIPE mode")
+
+	# Cycle to D-PAD mode
+	game._on_control_button_pressed()
+	assert_eq(save_mgr.control_scheme, 1, "Control scheme cycled to 1 (D-PAD)")
+	assert_true(game.dpad_overlay.visible, "D-Pad overlay visible in D-PAD mode")
+	assert_eq(game.control_button.text, "✥", "Control button displays ✥ icon in D-PAD mode")
+
+	# Test D-Pad directional movement
+	game._on_dpad_down_pressed()
+	assert_eq(game.player_facing_dir, Vector2i.DOWN, "Player facing updated to DOWN via D-Pad")
+	game._on_dpad_up_pressed()
+	assert_eq(game.player_facing_dir, Vector2i.UP, "Player facing updated to UP via D-Pad")
+
+	# Cycle to DUAL mode
+	game._on_control_button_pressed()
+	assert_eq(save_mgr.control_scheme, 2, "Control scheme cycled to 2 (DUAL)")
+	assert_true(game.dpad_overlay.visible, "D-Pad overlay visible in DUAL mode")
+	assert_eq(game.control_button.text, "🎮", "Control button displays 🎮 icon in DUAL mode")
+
+	# Cycle back to SWIPE mode
+	game._on_control_button_pressed()
+	assert_eq(save_mgr.control_scheme, 0, "Control scheme cycled back to 0 (SWIPE)")
+	assert_false(game.dpad_overlay.visible, "D-Pad overlay hidden in SWIPE mode")
+	assert_eq(game.control_button.text, "✋", "Control button restores ✋ icon")
+
 	game.free()
 	save_mgr.free()
 	loc.free()

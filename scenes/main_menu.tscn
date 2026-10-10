@@ -411,6 +411,16 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "SOUND: ON"
 
+[node name="ControlBox" type="VBoxContainer" parent="SettingsModal/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="ControlModeBtn" type="Button" parent="SettingsModal/Margin/VBox/ControlBox"]
+custom_minimum_size = Vector2(0, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "CONTROLS: SWIPE"
+
 [node name="CloseSettingsBtn" type="Button" parent="SettingsModal/Margin/VBox"]
 custom_minimum_size = Vector2(160, 44)
 layout_mode = 2

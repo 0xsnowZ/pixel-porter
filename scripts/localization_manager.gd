@@ -107,6 +107,26 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "Pulsation industrielle",
 		"ar": "نبض صناعي"
 	},
+	"SETTINGS_CONTROLS": {
+		"en": "CONTROLS: %s",
+		"fr": "COMMANDES : %s",
+		"ar": "التحكم: %s"
+	},
+	"CONTROL_SWIPE": {
+		"en": "SWIPE",
+		"fr": "GLISSER",
+		"ar": "سحب"
+	},
+	"CONTROL_DPAD": {
+		"en": "D-PAD",
+		"fr": "TOUCHES",
+		"ar": "أزرار"
+	},
+	"CONTROL_DUAL": {
+		"en": "DUAL",
+		"fr": "DOUBLE",
+		"ar": "مزدوج"
+	},
 	"SETTINGS_CLOSE": {
 		"en": "Save & Close",
 		"fr": "Sauvegarder & Fermer",

@@ -239,6 +239,19 @@ func test_settings_modal_and_sliders() -> void:
 	assert_true(menu.save_mgr.music_enabled, "Music toggled back to true")
 	assert_equal(menu.music_toggle_btn.text, "MUSIC: ON", "Music toggle button text is ON")
 
+	# 6. Control scheme cycling
+	assert_true(menu.control_mode_btn != null, "Control mode button exists in Settings modal")
+	assert_true("SWIPE" in menu.control_mode_btn.text, "Initial control mode displays SWIPE")
+	menu._on_control_mode_pressed()
+	assert_equal(menu.save_mgr.control_scheme, 1, "Control scheme cycled to 1 (D-PAD)")
+	assert_true("D-PAD" in menu.control_mode_btn.text, "Control button updates to D-PAD")
+	menu._on_control_mode_pressed()
+	assert_equal(menu.save_mgr.control_scheme, 2, "Control scheme cycled to 2 (DUAL)")
+	assert_true("DUAL" in menu.control_mode_btn.text, "Control button updates to DUAL")
+	menu._on_control_mode_pressed()
+	assert_equal(menu.save_mgr.control_scheme, 0, "Control scheme cycled back to 0 (SWIPE)")
+	assert_true("SWIPE" in menu.control_mode_btn.text, "Control button cycles back to SWIPE")
+
 	# Close modal
 	menu._hide_settings()
 	assert_false(menu.settings_modal.visible, "Settings modal hidden via _hide_settings")

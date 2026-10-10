@@ -23,6 +23,7 @@ var sfx_volume: float = 0.8 # 0.0 to 1.0 linear volume
 var selected_bgm_track: int = 0 # 0 = Lo-Fi Warehouse Shift, 1 = Industrial Pulse
 var haptics_enabled: bool = true
 var language: String = "en"
+var control_scheme: int = 0 # 0 = Swipe, 1 = D-Pad, 2 = Dual (Swipe + D-Pad)
 
 
 func _ready() -> void:
@@ -141,7 +142,8 @@ func to_dict() -> Dictionary:
 			"sfx_volume": sfx_volume,
 			"selected_bgm_track": selected_bgm_track,
 			"haptics_enabled": haptics_enabled,
-			"language": language
+			"language": language,
+			"control_scheme": control_scheme
 		}
 	}
 
@@ -160,6 +162,7 @@ func from_dict(data: Dictionary) -> void:
 	selected_bgm_track = int(settings.get("selected_bgm_track", 0))
 	haptics_enabled = settings.get("haptics_enabled", true)
 	language = settings.get("language", "en")
+	control_scheme = int(settings.get("control_scheme", 0))
 
 
 ## Saves game state to JSON on disk.
@@ -223,4 +226,18 @@ func reset_all_progress(custom_path: String = "") -> void:
 	selected_bgm_track = 0
 	haptics_enabled = true
 	language = "en"
+	control_scheme = 0
 	save_data(custom_path)
+
+
+func get_control_scheme_name() -> String:
+	match control_scheme:
+		1: return "D-PAD"
+		2: return "DUAL"
+		_: return "SWIPE"
+
+
+func cycle_control_scheme() -> int:
+	control_scheme = (control_scheme + 1) % 3
+	save_data()
+	return control_scheme

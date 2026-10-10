@@ -286,6 +286,42 @@ def preview_shadow_comparison(tile_sz):
     print("Saved preview_player_shadow.png")
 
 
+def render_dpad_gameplay_preview():
+    # Base from gameplay preview
+    gp_path = os.path.join(ARTIFACT_DIR, "preview_gameplay.png")
+    if os.path.exists(gp_path):
+        dpad_img = Image.open(gp_path).convert("RGBA")
+    else:
+        bg_path = os.path.join(ASSETS_DIR, "warehouse_bg.jpg")
+        dpad_img = Image.open(bg_path).convert("RGBA").resize((W, H))
+
+    draw = ImageDraw.Draw(dpad_img)
+    f_btn = get_font(18)
+    f_arrow = get_font(22)
+
+    # TopBar Control Button (✥ icon active)
+    draw_styled_button(draw, (116, 12, 158, 54), "✥", is_primary=True, font=f_btn)
+
+    # Virtual D-Pad Overlay (Centered above BottomBar)
+    cx, cy = W // 2, 804
+    # Up
+    draw_styled_button(draw, (cx - 29, cy - 66, cx + 29, cy - 18), "▲", is_primary=False, font=f_arrow)
+    # Down
+    draw_styled_button(draw, (cx - 29, cy + 18, cx + 29, cy + 66), "▼", is_primary=False, font=f_arrow)
+    # Left
+    draw_styled_button(draw, (cx - 75, cy - 24, cx - 17, cy + 24), "◀", is_primary=False, font=f_arrow)
+    # Right
+    draw_styled_button(draw, (cx + 17, cy - 24, cx + 75, cy + 24), "▶", is_primary=False, font=f_arrow)
+
+    # Center connector plate
+    draw.rounded_rectangle([cx - 15, cy - 15, cx + 15, cy + 15], radius=6, fill=(26, 34, 48, 220), outline=(184, 138, 51), width=1)
+    draw.ellipse([cx - 4, cy - 4, cx + 4, cy + 4], fill=(215, 165, 55))
+
+    out_path = os.path.join(ARTIFACT_DIR, "preview_dpad_gameplay.png")
+    dpad_img.save(out_path)
+    print("Saved preview_dpad_gameplay.png")
+
+
 def render_win_modal_preview():
     # Base is gameplay preview
     gp_path = os.path.join(ARTIFACT_DIR, "preview_gameplay.png")
@@ -663,6 +699,7 @@ def render_level_select_preview():
 if __name__ == "__main__":
     render_main_menu_preview()
     render_gameplay_preview()
+    render_dpad_gameplay_preview()
     render_splash_screen_preview()
     render_win_modal_preview()
     render_level_select_preview()

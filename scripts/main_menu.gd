@@ -42,6 +42,7 @@ var safe_area_mgr: Node = null
 @onready var sfx_vol_label: Label = find_child("SfxVolLabel", true, false) as Label
 @onready var sfx_slider: HSlider = find_child("SfxSlider", true, false) as HSlider
 @onready var close_settings_btn: Button = _find_button("CloseSettingsBtn", "SettingsModal/Margin/VBox/CloseSettingsBtn")
+@onready var control_mode_btn: Button = _find_button("ControlModeBtn", "SettingsModal/Margin/VBox/ControlBox/ControlModeBtn")
 
 # Level Select elements
 @onready var level_grid: GridContainer = find_child("LevelGrid", true, false) as GridContainer
@@ -80,6 +81,7 @@ func _initialize_nodes() -> void:
 		sfx_vol_label = find_child("SfxVolLabel", true, false) as Label
 		sfx_slider = find_child("SfxSlider", true, false) as HSlider
 		close_settings_btn = _find_button("CloseSettingsBtn", "SettingsModal/Margin/VBox/CloseSettingsBtn")
+		control_mode_btn = _find_button("ControlModeBtn", "SettingsModal/Margin/VBox/ControlBox/ControlModeBtn")
 		level_grid = find_child("LevelGrid", true, false) as GridContainer
 		back_btn = _find_button("BackBtn", "LevelSelectView/TopBar/Margin/HBox/BackBtn")
 		close_credits_btn = _find_button("CloseCreditsBtn", "CreditsModal/VBox/CloseCreditsBtn")
@@ -125,6 +127,8 @@ func _ready() -> void:
 		settings_btn.pressed.connect(_show_settings)
 	if close_settings_btn and not close_settings_btn.pressed.is_connected(_hide_settings):
 		close_settings_btn.pressed.connect(_hide_settings)
+	if control_mode_btn and not control_mode_btn.pressed.is_connected(_on_control_mode_pressed):
+		control_mode_btn.pressed.connect(_on_control_mode_pressed)
 	if music_slider and not music_slider.value_changed.is_connected(_on_music_slider_changed):
 		music_slider.value_changed.connect(_on_music_slider_changed)
 	if music_toggle_btn and not music_toggle_btn.pressed.is_connected(_on_music_toggle_pressed):
@@ -151,7 +155,7 @@ func _ready() -> void:
 		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	# Tactile arcade button physics
-	for b in [continue_btn, play_btn, level_select_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, music_toggle_btn, track_cycle_btn]:
+	for b in [continue_btn, play_btn, level_select_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, music_toggle_btn, track_cycle_btn, control_mode_btn]:
 		_attach_spring_physics(b)
 
 
@@ -257,6 +261,12 @@ func _update_settings_ui() -> void:
 			track_name = loc_mgr.tr_text(key)
 		track_cycle_btn.text = "♪ " + track_name + " ▾"
 
+	if control_mode_btn:
+		var mode_name: String = save_mgr.get_control_scheme_name() if save_mgr and save_mgr.has_method("get_control_scheme_name") else "SWIPE"
+		var mode_key: String = "CONTROL_" + mode_name.replace("-", "")
+		var mode_text: String = loc_mgr.tr_text(mode_key) if loc_mgr else mode_name
+		control_mode_btn.text = loc_mgr.tr_text("SETTINGS_CONTROLS", [mode_text]) if loc_mgr else "CONTROLS: %s" % mode_name
+
 	if close_settings_btn and loc_mgr:
 		close_settings_btn.text = loc_mgr.tr_text("SETTINGS_CLOSE")
 
@@ -292,6 +302,20 @@ func _on_music_toggle_pressed() -> void:
 		audio_mgr.set_music_enabled(new_val)
 	elif save_mgr:
 		save_mgr.music_enabled = new_val
+	_update_settings_ui()
+
+
+func _on_control_mode_pressed() -> void:
+	if save_mgr and save_mgr.has_method("cycle_control_scheme"):
+		save_mgr.cycle_control_scheme()
+	elif save_mgr and "control_scheme" in save_mgr:
+		save_mgr.control_scheme = (save_mgr.control_scheme + 1) % 3
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
 	_update_settings_ui()
 
 

@@ -65,6 +65,12 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var bottom_bar_margin: MarginContainer = $BottomBar/Margin
 @onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
 @onready var music_button: Button = find_child("MusicBtn", true, false) as Button
+@onready var control_button: Button = find_child("ControlBtn", true, false) as Button
+@onready var dpad_overlay: Control = find_child("DPadOverlay", true, false) as Control
+@onready var dpad_up: Button = find_child("DPadUp", true, false) as Button
+@onready var dpad_down: Button = find_child("DPadDown", true, false) as Button
+@onready var dpad_left: Button = find_child("DPadLeft", true, false) as Button
+@onready var dpad_right: Button = find_child("DPadRight", true, false) as Button
 @onready var level_label: Label = $TopBar/Margin/HBox/LevelLabel
 @onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
 @onready var prev_button: Button = $BottomBar/Margin/HBox/PrevButton
@@ -122,6 +128,13 @@ func _initialize_nodes() -> void:
 		menu_button = $TopBar/Margin/HBox/MenuBtn
 		if has_node("TopBar/Margin/HBox/MusicBtn"):
 			music_button = $TopBar/Margin/HBox/MusicBtn
+		if has_node("TopBar/Margin/HBox/ControlBtn"):
+			control_button = $TopBar/Margin/HBox/ControlBtn
+		dpad_overlay = find_child("DPadOverlay", true, false) as Control
+		dpad_up = find_child("DPadUp", true, false) as Button
+		dpad_down = find_child("DPadDown", true, false) as Button
+		dpad_left = find_child("DPadLeft", true, false) as Button
+		dpad_right = find_child("DPadRight", true, false) as Button
 		level_label = $TopBar/Margin/HBox/LevelLabel
 		stats_label = $TopBar/Margin/HBox/StatsLabel
 		prev_button = $BottomBar/Margin/HBox/PrevButton
@@ -213,7 +226,18 @@ func _ready() -> void:
 		restart_dialog.canceled.connect(_on_restart_dialog_canceled)
 	if music_button != null and not music_button.pressed.is_connected(_on_music_btn_pressed):
 		music_button.pressed.connect(_on_music_btn_pressed)
+	if control_button != null and not control_button.pressed.is_connected(_on_control_button_pressed):
+		control_button.pressed.connect(_on_control_button_pressed)
+	if dpad_up != null and not dpad_up.pressed.is_connected(_on_dpad_up_pressed):
+		dpad_up.pressed.connect(_on_dpad_up_pressed)
+	if dpad_down != null and not dpad_down.pressed.is_connected(_on_dpad_down_pressed):
+		dpad_down.pressed.connect(_on_dpad_down_pressed)
+	if dpad_left != null and not dpad_left.pressed.is_connected(_on_dpad_left_pressed):
+		dpad_left.pressed.connect(_on_dpad_left_pressed)
+	if dpad_right != null and not dpad_right.pressed.is_connected(_on_dpad_right_pressed):
+		dpad_right.pressed.connect(_on_dpad_right_pressed)
 	_update_music_button_ui()
+	_update_control_scheme_ui()
 
 	if star_1:
 		star_1.pivot_offset = Vector2(28, 28)
@@ -252,6 +276,9 @@ func _ready() -> void:
 		_attach_spring_physics(next_level_button)
 	if win_retry_button:
 		_attach_spring_physics(win_retry_button)
+	for b in [control_button, dpad_up, dpad_down, dpad_left, dpad_right]:
+		if b != null:
+			_attach_spring_physics(b)
 
 
 func _apply_safe_area() -> void:
@@ -643,6 +670,8 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _handle_swipe(delta: Vector2) -> void:
+	if save_mgr and "control_scheme" in save_mgr and save_mgr.control_scheme == 1:
+		return # Swipe disabled when D-PAD only mode is active
 	if delta.length() < SWIPE_THRESHOLD_PIXELS:
 		return # Ignore taps and tiny movements (PRD Section 5)
 
@@ -718,6 +747,57 @@ func _update_music_button_ui() -> void:
 		is_on = save_mgr.music_enabled
 	music_button.text = "♪" if is_on else "♪̸"
 	music_button.modulate = Color(1.0, 0.92, 0.45) if is_on else Color(0.65, 0.70, 0.80, 0.65)
+
+
+func _on_control_button_pressed() -> void:
+	if save_mgr and save_mgr.has_method("cycle_control_scheme"):
+		save_mgr.cycle_control_scheme()
+	elif save_mgr and "control_scheme" in save_mgr:
+		save_mgr.control_scheme = (save_mgr.control_scheme + 1) % 3
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+	_update_control_scheme_ui()
+	calculate_layout()
+	queue_redraw()
+
+
+func _update_control_scheme_ui() -> void:
+	var scheme: int = save_mgr.control_scheme if save_mgr and "control_scheme" in save_mgr else 0
+	# 0 = Swipe, 1 = D-Pad, 2 = Dual
+	var show_dpad: bool = (scheme == 1 or scheme == 2)
+	if dpad_overlay:
+		dpad_overlay.visible = show_dpad
+	if control_button:
+		match scheme:
+			0:
+				control_button.text = "✋"
+				control_button.modulate = Color(0.75, 0.85, 0.98)
+			1:
+				control_button.text = "✥"
+				control_button.modulate = Color(1.0, 0.88, 0.25)
+			2:
+				control_button.text = "🎮"
+				control_button.modulate = Color(0.35, 0.92, 0.55)
+
+
+func _on_dpad_up_pressed() -> void:
+	try_move(Vector2i.UP)
+
+
+func _on_dpad_down_pressed() -> void:
+	try_move(Vector2i.DOWN)
+
+
+func _on_dpad_left_pressed() -> void:
+	try_move(Vector2i.LEFT)
+
+
+func _on_dpad_right_pressed() -> void:
+	try_move(Vector2i.RIGHT)
 
 
 func _on_undo_pressed() -> void:
@@ -1014,7 +1094,8 @@ func calculate_layout(custom_viewport_size: Vector2 = Vector2.ZERO) -> void:
 	var safe_horiz: float = insets.get("left", 0.0) + insets.get("right", 0.0)
 
 	var top_offset: float = 70.0 + safe_top
-	var bottom_offset: float = 70.0 + safe_bottom
+	var dpad_allowance: float = 160.0 if (dpad_overlay and dpad_overlay.visible) else 0.0
+	var bottom_offset: float = 70.0 + safe_bottom + dpad_allowance
 	var playable_height: float = viewport_size.y - (top_offset + bottom_offset)
 	var playable_width: float = viewport_size.x - (36.0 + safe_horiz)
 
