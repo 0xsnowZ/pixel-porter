@@ -32,6 +32,16 @@ var safe_area_mgr: Node = null
 @onready var haptics_btn: Button = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
 @onready var language_btn: Button = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
 @onready var credits_btn: Button = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
+@onready var locker_btn: Button = _find_button("LockerBtn", "MainView/ConsoleCard/Margin/Buttons/LockerBtn")
+@onready var locker_modal: PanelContainer = find_child("LockerModal", true, false) as PanelContainer
+@onready var outfits_tab_btn: Button = _find_button("OutfitsTabBtn", "LockerModal/Margin/VBox/TabsHBox/OutfitsTabBtn")
+@onready var crates_tab_btn: Button = _find_button("CratesTabBtn", "LockerModal/Margin/VBox/TabsHBox/CratesTabBtn")
+@onready var close_locker_btn: Button = _find_button("CloseLockerBtn", "LockerModal/Margin/VBox/CloseLockerBtn")
+@onready var locker_title_label: Label = find_child("LockerModal", true, false).find_child("Title", true, false) as Label if find_child("LockerModal", true, false) else null
+@onready var locker_stars_badge: Label = find_child("LockerModal", true, false).find_child("StarsBadge", true, false) as Label if find_child("LockerModal", true, false) else null
+@onready var locker_items_vbox: VBoxContainer = find_child("LockerModal", true, false).find_child("ItemsVBox", true, false) as VBoxContainer if find_child("LockerModal", true, false) else null
+
+var current_locker_tab: String = "outfits"
 
 # Settings elements
 @onready var music_vol_label: Label = find_child("MusicVolLabel", true, false) as Label
@@ -85,6 +95,15 @@ func _initialize_nodes() -> void:
 		level_grid = find_child("LevelGrid", true, false) as GridContainer
 		back_btn = _find_button("BackBtn", "LevelSelectView/TopBar/Margin/HBox/BackBtn")
 		close_credits_btn = _find_button("CloseCreditsBtn", "CreditsModal/VBox/CloseCreditsBtn")
+		locker_modal = find_child("LockerModal", true, false) as PanelContainer
+		locker_btn = _find_button("LockerBtn", "MainView/ConsoleCard/Margin/Buttons/LockerBtn")
+		outfits_tab_btn = _find_button("OutfitsTabBtn", "LockerModal/Margin/VBox/TabsHBox/OutfitsTabBtn")
+		crates_tab_btn = _find_button("CratesTabBtn", "LockerModal/Margin/VBox/TabsHBox/CratesTabBtn")
+		close_locker_btn = _find_button("CloseLockerBtn", "LockerModal/Margin/VBox/CloseLockerBtn")
+		if locker_modal != null:
+			locker_title_label = locker_modal.find_child("Title", true, false) as Label
+			locker_stars_badge = locker_modal.find_child("StarsBadge", true, false) as Label
+			locker_items_vbox = locker_modal.find_child("ItemsVBox", true, false) as VBoxContainer
 
 
 func _ready() -> void:
@@ -141,6 +160,14 @@ func _ready() -> void:
 		back_btn.pressed.connect(_show_main_view)
 	if not close_credits_btn.pressed.is_connected(_hide_credits):
 		close_credits_btn.pressed.connect(_hide_credits)
+	if locker_btn and not locker_btn.pressed.is_connected(_show_locker):
+		locker_btn.pressed.connect(_show_locker)
+	if close_locker_btn and not close_locker_btn.pressed.is_connected(_hide_locker):
+		close_locker_btn.pressed.connect(_hide_locker)
+	if outfits_tab_btn and not outfits_tab_btn.pressed.is_connected(_switch_locker_tab.bind("outfits")):
+		outfits_tab_btn.pressed.connect(_switch_locker_tab.bind("outfits"))
+	if crates_tab_btn and not crates_tab_btn.pressed.is_connected(_switch_locker_tab.bind("crates")):
+		crates_tab_btn.pressed.connect(_switch_locker_tab.bind("crates"))
 
 	_show_main_view()
 	_update_menu_state()
@@ -155,7 +182,7 @@ func _ready() -> void:
 		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	# Tactile arcade button physics
-	for b in [continue_btn, play_btn, level_select_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, music_toggle_btn, track_cycle_btn, control_mode_btn]:
+	for b in [continue_btn, play_btn, level_select_btn, locker_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, close_locker_btn, outfits_tab_btn, crates_tab_btn, music_toggle_btn, track_cycle_btn, control_mode_btn]:
 		_attach_spring_physics(b)
 
 
@@ -178,6 +205,8 @@ func _show_main_view() -> void:
 	credits_modal.hide()
 	if settings_modal:
 		settings_modal.hide()
+	if locker_modal:
+		locker_modal.hide()
 	_update_menu_state()
 
 
@@ -189,6 +218,8 @@ func _show_level_select() -> void:
 	credits_modal.hide()
 	if settings_modal:
 		settings_modal.hide()
+	if locker_modal:
+		locker_modal.hide()
 	_refresh_level_grid_buttons()
 
 
@@ -197,6 +228,8 @@ func _show_credits() -> void:
 		audio_mgr.play_click()
 	if settings_modal:
 		settings_modal.hide()
+	if locker_modal:
+		locker_modal.hide()
 	credits_modal.show()
 
 
@@ -210,6 +243,8 @@ func _show_settings() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
 	credits_modal.hide()
+	if locker_modal:
+		locker_modal.hide()
 	if settings_modal:
 		_update_settings_ui()
 		settings_modal.show()
@@ -223,6 +258,182 @@ func _hide_settings() -> void:
 	if save_mgr and save_mgr.has_method("save_data"):
 		save_mgr.save_data()
 	_update_menu_state()
+
+
+func _show_locker() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+	credits_modal.hide()
+	if settings_modal:
+		settings_modal.hide()
+	if locker_modal:
+		_refresh_locker_ui()
+		locker_modal.show()
+
+
+func _hide_locker() -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+	if locker_modal:
+		locker_modal.hide()
+	_update_menu_state()
+
+
+func _switch_locker_tab(tab: String) -> void:
+	if audio_mgr:
+		audio_mgr.play_click()
+	if haptic_mgr:
+		haptic_mgr.vibrate_click()
+	current_locker_tab = tab
+	if outfits_tab_btn:
+		outfits_tab_btn.theme_type_variation = &"PrimaryButton" if tab == "outfits" else &""
+	if crates_tab_btn:
+		crates_tab_btn.theme_type_variation = &"PrimaryButton" if tab == "crates" else &""
+	_refresh_locker_ui()
+
+
+func _on_equip_worker_skin(skin_id: String) -> void:
+	if save_mgr and save_mgr.has_method("equip_worker_skin"):
+		var ok: bool = save_mgr.equip_worker_skin(skin_id)
+		if ok:
+			if audio_mgr:
+				audio_mgr.play_star(3)
+			if haptic_mgr:
+				haptic_mgr.vibrate_target()
+	_refresh_locker_ui()
+
+
+func _on_equip_crate_skin(skin_id: String) -> void:
+	if save_mgr and save_mgr.has_method("equip_crate_skin"):
+		var ok: bool = save_mgr.equip_crate_skin(skin_id)
+		if ok:
+			if audio_mgr:
+				audio_mgr.play_star(3)
+			if haptic_mgr:
+				haptic_mgr.vibrate_target()
+	_refresh_locker_ui()
+
+
+func _refresh_locker_ui() -> void:
+	if locker_modal == null or save_mgr == null:
+		return
+
+	var total_stars: int = save_mgr.get_total_stars()
+	if locker_stars_badge:
+		locker_stars_badge.text = loc_mgr.tr_text("LOCKER_STARS_BADGE", [total_stars]) if loc_mgr else ("★ %d / 150 Stars Collected" % total_stars)
+
+	if outfits_tab_btn:
+		outfits_tab_btn.text = loc_mgr.tr_text("LOCKER_TAB_OUTFITS") if loc_mgr else "👕 OUTFITS"
+	if crates_tab_btn:
+		crates_tab_btn.text = loc_mgr.tr_text("LOCKER_TAB_CRATES") if loc_mgr else "📦 CRATES"
+	if close_locker_btn and loc_mgr:
+		close_locker_btn.text = loc_mgr.tr_text("BTN_CLOSE")
+
+	if locker_items_vbox == null:
+		return
+
+	for child in locker_items_vbox.get_children():
+		locker_items_vbox.remove_child(child)
+		child.queue_free()
+
+	if current_locker_tab == "outfits":
+		var skins = save_mgr.get_all_worker_skins()
+		for skin in skins:
+			var card = _create_locker_item_card(
+				skin["id"],
+				skin.get("icon", "🧢"),
+				loc_mgr.tr_text(skin["name_key"]) if loc_mgr else skin.get("name", ""),
+				loc_mgr.tr_text(skin["desc_key"]) if loc_mgr else skin.get("desc", ""),
+				skin.get("required_stars", 0),
+				total_stars,
+				save_mgr.selected_worker_skin == skin["id"],
+				Callable(self, "_on_equip_worker_skin").bind(skin["id"])
+			)
+			locker_items_vbox.add_child(card)
+	else:
+		var crates = save_mgr.get_all_crate_skins()
+		for crate in crates:
+			var card = _create_locker_item_card(
+				crate["id"],
+				crate.get("icon", "📦"),
+				loc_mgr.tr_text(crate["name_key"]) if loc_mgr else crate.get("name", ""),
+				loc_mgr.tr_text(crate["desc_key"]) if loc_mgr else crate.get("desc", ""),
+				crate.get("required_stars", 0),
+				total_stars,
+				save_mgr.selected_crate_skin == crate["id"],
+				Callable(self, "_on_equip_crate_skin").bind(crate["id"])
+			)
+			locker_items_vbox.add_child(card)
+
+
+func _create_locker_item_card(_item_id: String, icon: String, item_name: String, desc: String, req_stars: int, total_stars: int, is_equipped: bool, equip_callable: Callable) -> Control:
+	var panel: PanelContainer = PanelContainer.new()
+	panel.custom_minimum_size = Vector2(0, 68)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+
+	var margin: MarginContainer = MarginContainer.new()
+	margin.add_theme_constant_override("margin_left", 12)
+	margin.add_theme_constant_override("margin_top", 8)
+	margin.add_theme_constant_override("margin_right", 12)
+	margin.add_theme_constant_override("margin_bottom", 8)
+	panel.add_child(margin)
+
+	var hbox: HBoxContainer = HBoxContainer.new()
+	hbox.add_theme_constant_override("separation", 12)
+	margin.add_child(hbox)
+
+	var icon_lbl: Label = Label.new()
+	icon_lbl.text = icon
+	icon_lbl.add_theme_font_size_override("font_size", 26)
+	hbox.add_child(icon_lbl)
+
+	var info_vbox: VBoxContainer = VBoxContainer.new()
+	info_vbox.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	info_vbox.add_theme_constant_override("separation", 2)
+	hbox.add_child(info_vbox)
+
+	var name_lbl: Label = Label.new()
+	name_lbl.text = item_name
+	name_lbl.add_theme_font_size_override("font_size", 14)
+	name_lbl.add_theme_color_override("font_color", Color(0.98, 0.85, 0.30) if is_equipped else Color(0.90, 0.95, 1.0))
+	info_vbox.add_child(name_lbl)
+
+	var desc_lbl: Label = Label.new()
+	var is_unlocked: bool = (total_stars >= req_stars)
+	if is_unlocked:
+		desc_lbl.text = desc
+		desc_lbl.add_theme_color_override("font_color", Color(0.65, 0.72, 0.82))
+	else:
+		var req_text: String = loc_mgr.tr_text("LOCKER_LOCKED_STARS", [req_stars]) if loc_mgr else ("★ %d Stars required" % req_stars)
+		desc_lbl.text = req_text
+		desc_lbl.add_theme_color_override("font_color", Color(1.0, 0.55, 0.40))
+	desc_lbl.add_theme_font_size_override("font_size", 11)
+	desc_lbl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	info_vbox.add_child(desc_lbl)
+
+	var act_btn: Button = Button.new()
+	act_btn.custom_minimum_size = Vector2(96, 38)
+	act_btn.add_theme_font_size_override("font_size", 13)
+
+	if is_equipped:
+		act_btn.text = loc_mgr.tr_text("LOCKER_EQUIPPED") if loc_mgr else "✓ EQUIPPED"
+		act_btn.disabled = true
+		act_btn.theme_type_variation = &"PrimaryButton"
+	elif is_unlocked:
+		act_btn.text = loc_mgr.tr_text("LOCKER_EQUIP") if loc_mgr else "EQUIP"
+		act_btn.disabled = false
+		act_btn.pressed.connect(equip_callable)
+		_attach_spring_physics(act_btn)
+	else:
+		act_btn.text = "🔒 LOCKED"
+		act_btn.disabled = true
+
+	hbox.add_child(act_btn)
+	return panel
 
 
 func _update_settings_ui() -> void:
@@ -355,6 +566,8 @@ func _update_menu_state() -> void:
 
 		if settings_btn:
 			settings_btn.text = loc_mgr.tr_text("MENU_SETTINGS")
+		if locker_btn:
+			locker_btn.text = loc_mgr.tr_text("MENU_LOCKER")
 		language_btn.text = loc_mgr.tr_text("MENU_LANGUAGE", [loc_mgr.get_language_display_name()])
 		level_select_btn.text = loc_mgr.tr_text("MENU_LEVEL_SELECT")
 		credits_btn.text = loc_mgr.tr_text("MENU_CREDITS")
@@ -373,6 +586,8 @@ func _update_menu_state() -> void:
 			play_btn.text = "PLAY"
 		if settings_btn:
 			settings_btn.text = "SETTINGS ⚙"
+		if locker_btn:
+			locker_btn.text = "PORTER LOCKER 🦺"
 		if sound_btn:
 			sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
 		if haptics_btn:

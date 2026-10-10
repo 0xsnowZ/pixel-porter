@@ -23,6 +23,7 @@ func _init() -> void:
 	run_suite("Score Recording & Best Move Tracking", test_score_recording)
 	run_suite("3-Star Rating Calculations & Tracking", test_star_rating_system)
 	run_suite("Warehouse Chapters Progression (Phase 2)", test_warehouse_chapters_progression)
+	run_suite("Porter Locker Cosmetics & Star Economy (Phase 3)", test_porter_locker_cosmetics)
 	run_suite("Persistence (Save & Load to Disk)", test_persistence)
 	run_suite("Corrupt & Missing File Resilience", test_corrupt_and_missing_file)
 
@@ -266,4 +267,64 @@ func test_warehouse_chapters_progression() -> void:
 	assert_false(mgr.is_chapter_completed(0), "Chapter 0 not completed until all 15 levels are done")
 
 	mgr.free()
+
+
+func test_porter_locker_cosmetics() -> void:
+	var mgr = SaveManagerScript.new()
+
+	# 1. Defaults
+	assert_equal(mgr.selected_worker_skin, "classic", "Default worker skin is 'classic'")
+	assert_equal(mgr.selected_crate_skin, "classic_wood", "Default crate skin is 'classic_wood'")
+	assert_true(mgr.is_worker_skin_unlocked("classic"), "Classic worker skin is unlocked (0 stars)")
+	assert_true(mgr.is_crate_skin_unlocked("classic_wood"), "Classic wood crate is unlocked (0 stars)")
+
+	# 2. Locked status with 0 stars
+	assert_false(mgr.is_worker_skin_unlocked("safety_vest"), "Safety Vest is locked initially (needs 25 stars)")
+	assert_false(mgr.is_worker_skin_unlocked("foreman"), "Foreman uniform is locked initially (needs 60 stars)")
+	assert_false(mgr.is_worker_skin_unlocked("golden_porter"), "Golden Master is locked initially (needs 120 stars)")
+	assert_false(mgr.is_crate_skin_unlocked("steel_container"), "Steel Container is locked initially (needs 40 stars)")
+	assert_false(mgr.is_crate_skin_unlocked("hazard_box"), "Hazard Crate is locked initially (needs 80 stars)")
+
+	# 3. Equipping locked item fails
+	var equip_locked_ok: bool = mgr.equip_worker_skin("safety_vest")
+	assert_false(equip_locked_ok, "Cannot equip locked worker skin")
+	assert_equal(mgr.selected_worker_skin, "classic", "Equipped worker skin remains classic")
+
+	# 4. Award stars and unlock thresholds
+	for i in range(10): # 10 levels with 3 stars = 30 stars
+		mgr.completed_levels[str(i)] = { "stars": 3, "best_moves": 5, "best_pushes": 2 }
+
+	assert_equal(mgr.get_total_stars(), 30, "Total stars is now 30")
+	assert_true(mgr.is_worker_skin_unlocked("safety_vest"), "Safety Vest (25 stars) is now unlocked")
+	assert_false(mgr.is_crate_skin_unlocked("steel_container"), "Steel Container (40 stars) is still locked")
+
+	# 5. Equipping unlocked skin succeeds
+	var equip_ok: bool = mgr.equip_worker_skin("safety_vest")
+	assert_true(equip_ok, "Equipping unlocked Safety Vest returns true")
+	assert_equal(mgr.selected_worker_skin, "safety_vest", "Equipped worker skin is now safety_vest")
+
+	# 6. Reach 45 stars -> Steel Container unlocked
+	for i in range(10, 15): # +5 levels with 3 stars = 45 stars total
+		mgr.completed_levels[str(i)] = { "stars": 3, "best_moves": 5, "best_pushes": 2 }
+	assert_equal(mgr.get_total_stars(), 45, "Total stars is now 45")
+	assert_true(mgr.is_crate_skin_unlocked("steel_container"), "Steel Container (40 stars) is now unlocked")
+
+	var crate_equip_ok: bool = mgr.equip_crate_skin("steel_container")
+	assert_true(crate_equip_ok, "Equipping unlocked Steel Container returns true")
+	assert_equal(mgr.selected_crate_skin, "steel_container", "Equipped crate skin is now steel_container")
+
+	# 7. Persistence
+	mgr.save_data(TEST_SAVE_PATH)
+	var mgr2 = SaveManagerScript.new()
+	mgr2.load_data(TEST_SAVE_PATH)
+	assert_equal(mgr2.selected_worker_skin, "safety_vest", "Equipped worker skin persisted across save/load")
+	assert_equal(mgr2.selected_crate_skin, "steel_container", "Equipped crate skin persisted across save/load")
+
+	# 8. Reset restores defaults
+	mgr2.reset_all_progress(TEST_SAVE_PATH)
+	assert_equal(mgr2.selected_worker_skin, "classic", "Reset restores default classic worker skin")
+	assert_equal(mgr2.selected_crate_skin, "classic_wood", "Reset restores default classic crate skin")
+
+	mgr.free()
+	mgr2.free()
 

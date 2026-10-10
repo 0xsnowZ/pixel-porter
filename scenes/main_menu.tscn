@@ -104,6 +104,13 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 17
 text = "LEVEL SELECT"
 
+[node name="LockerBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(270, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 16
+text = "PORTER LOCKER 🦺"
+
 [node name="SettingsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
 custom_minimum_size = Vector2(270, 48)
 layout_mode = 2
@@ -427,3 +434,84 @@ layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 15
 text = "Save & Close"
+
+[node name="LockerModal" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -235.0
+offset_top = -280.0
+offset_right = 235.0
+offset_bottom = 280.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"WinModalPanel"
+
+[node name="Margin" type="MarginContainer" parent="LockerModal"]
+layout_mode = 2
+theme_override_constants/margin_left = 18
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 18
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="LockerModal/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="Title" type="Label" parent="LockerModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.98, 0.82, 0.25, 1)
+theme_override_font_sizes/font_size = 20
+text = "🦺 THE PORTER LOCKER 🦺"
+horizontal_alignment = 1
+
+[node name="StarsBadge" type="Label" parent="LockerModal/Margin/VBox"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.85, 0.9, 0.98, 1)
+theme_override_font_sizes/font_size = 13
+text = "★ 0 / 150 Stars Collected"
+horizontal_alignment = 1
+
+[node name="TabsHBox" type="HBoxContainer" parent="LockerModal/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="OutfitsTabBtn" type="Button" parent="LockerModal/Margin/VBox/TabsHBox"]
+custom_minimum_size = Vector2(160, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_type_variation = &"PrimaryButton"
+theme_override_font_sizes/font_size = 14
+text = "👕 OUTFITS"
+
+[node name="CratesTabBtn" type="Button" parent="LockerModal/Margin/VBox/TabsHBox"]
+custom_minimum_size = Vector2(160, 36)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 14
+text = "📦 CRATES"
+
+[node name="Scroll" type="ScrollContainer" parent="LockerModal/Margin/VBox"]
+custom_minimum_size = Vector2(0, 310)
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemsVBox" type="VBoxContainer" parent="LockerModal/Margin/VBox/Scroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="CloseLockerBtn" type="Button" parent="LockerModal/Margin/VBox"]
+custom_minimum_size = Vector2(160, 42)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 15
+text = "Close"
+

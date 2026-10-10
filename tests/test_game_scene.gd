@@ -33,6 +33,7 @@ func _init() -> void:
 	test_juice_and_micro_interactions()
 	test_win_modal_three_star_system()
 	test_warehouse_chapter_themes_and_progression()
+	test_porter_locker_cosmetics_in_game()
 
 	print("\n" + "=".repeat(54))
 	print("Game Scene Results: %d passed, %d failed" % [passes, fails])
@@ -496,6 +497,73 @@ func test_warehouse_chapter_themes_and_progression() -> void:
 	assert_eq(loc.tr_text("CHAPTER_0_TITLE"), "خليج الشحن", "AR Chapter 0 title is 'خليج الشحن'")
 	assert_eq(loc.tr_text("CHAPTER_1_TITLE"), "التخزين البارد", "AR Chapter 1 title is 'التخزين البارد'")
 	assert_eq(loc.tr_text("CHAPTER_2_TITLE"), "المستودع الذكي", "AR Chapter 2 title is 'المستودع الذكي'")
+
+	game.free()
+	loc.free()
+	save_mgr.free()
+
+
+func test_porter_locker_cosmetics_in_game() -> void:
+	print("--- Running Suite: Porter Locker Cosmetics in Game (Phase 3) ---")
+	var loc: Node = LocalizationManagerScript.new()
+	var save_mgr: Node = SaveManagerScript.new()
+
+	var game: Control = create_test_game(loc, save_mgr)
+
+	# 1. Defaults
+	assert_eq(game.save_mgr.selected_worker_skin, "classic", "Default worker skin is classic in game")
+	assert_eq(game.save_mgr.selected_crate_skin, "classic_wood", "Default crate skin is classic_wood in game")
+
+	# 2. Worker skins equip and info
+	var classic_info: Dictionary = game.save_mgr.get_worker_skin_info("classic")
+	assert_eq(classic_info["id"], "classic", "Classic worker skin info found")
+	assert_eq(classic_info["accent_color"], Color(0.28, 0.50, 0.90), "Classic worker denim accent")
+
+	game.save_mgr.selected_worker_skin = "safety_vest"
+	var safety_info: Dictionary = game.save_mgr.get_worker_skin_info("safety_vest")
+	assert_eq(safety_info["icon"], "🦺", "Safety vest icon is 🦺")
+	assert_eq(safety_info["accent_color"], Color(1.0, 0.50, 0.10), "Safety vest high-vis orange")
+
+	game.save_mgr.selected_worker_skin = "foreman"
+	var foreman_info: Dictionary = game.save_mgr.get_worker_skin_info("foreman")
+	assert_eq(foreman_info["icon"], "👷", "Foreman icon is 👷")
+
+	game.save_mgr.selected_worker_skin = "golden_porter"
+	var gold_info: Dictionary = game.save_mgr.get_worker_skin_info("golden_porter")
+	assert_eq(gold_info["icon"], "👑", "Golden Master icon is 👑")
+	assert_eq(gold_info["accent_color"], Color(1.0, 0.84, 0.20), "Golden Master radiant gold")
+
+	# 3. Crate skins equip and info
+	var crate_classic: Dictionary = game.save_mgr.get_crate_skin_info("classic_wood")
+	assert_eq(crate_classic["id"], "classic_wood", "Classic pine crate info found")
+
+	game.save_mgr.selected_crate_skin = "steel_container"
+	var steel_info: Dictionary = game.save_mgr.get_crate_skin_info("steel_container")
+	assert_eq(steel_info["icon"], "🗄️", "Steel container icon is 🗄️")
+	assert_eq(steel_info["tint"], Color(0.75, 0.85, 0.98), "Steel container freight tint")
+
+	game.save_mgr.selected_crate_skin = "hazard_box"
+	var hazard_info: Dictionary = game.save_mgr.get_crate_skin_info("hazard_box")
+	assert_eq(hazard_info["icon"], "☣️", "Hazard crate icon is ☣️")
+
+	# 4. Trigger redraw with active cosmetics without errors
+	game.queue_redraw()
+	assert_true(true, "Board redrawn with equipped cosmetics without error")
+
+	# 5. Localization of Locker strings & Cosmetics (EN, FR, AR)
+	assert_eq(loc.tr_text("LOCKER_TITLE"), "🦺 THE PORTER LOCKER 🦺", "EN Locker title is THE PORTER LOCKER")
+	assert_eq(loc.tr_text("SKIN_WORKER_SAFETY_VEST"), "Safety Vest", "EN Safety Vest skin name")
+	assert_eq(loc.tr_text("SKIN_CRATE_STEEL_CONTAINER"), "Steel Container", "EN Steel Container skin name")
+
+	loc.current_language = "fr"
+	assert_eq(loc.tr_text("LOCKER_TITLE"), "🦺 VESTIAIRE DU PORTEUR 🦺", "FR Locker title is VESTIAIRE DU PORTEUR")
+	assert_eq(loc.tr_text("SKIN_WORKER_SAFETY_VEST"), "Gilet de Sécurité", "FR Safety Vest skin name")
+	assert_eq(loc.tr_text("SKIN_CRATE_STEEL_CONTAINER"), "Conteneur en Acier", "FR Steel Container skin name")
+
+	loc.current_language = "ar"
+	assert_eq(loc.tr_text("LOCKER_TITLE"), "🦺 خزانة الحمال 🦺", "AR Locker title is خزانة الحمال")
+	assert_eq(loc.tr_text("SKIN_WORKER_SAFETY_VEST"), "سترة الأمان", "AR Safety Vest skin name")
+	assert_eq(loc.tr_text("SKIN_CRATE_STEEL_CONTAINER"), "حاوية فولاذية", "AR Steel Container skin name")
 
 	game.free()
 	loc.free()

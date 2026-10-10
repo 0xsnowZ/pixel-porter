@@ -1369,8 +1369,42 @@ func _draw_crate(rect: Rect2, on_goal: bool, logical_pos: Vector2i = Vector2i.ZE
 
 	var ch: Dictionary = get_current_chapter_theme()
 	var c_tex: Texture2D = tex_crate_goal if on_goal else tex_crate
-	var c_mod: Color = Color(1.0, 1.0, 1.0) if on_goal else ch["crate_tint"]
+
+	# Crate Skin from Porter Locker
+	var crate_skin_info: Dictionary = save_mgr.get_crate_skin_info() if (save_mgr and save_mgr.has_method("get_crate_skin_info")) else {}
+	var crate_skin_id: String = crate_skin_info.get("id", "classic_wood")
+	var crate_tint: Color = crate_skin_info.get("tint", Color.WHITE)
+
+	var c_mod: Color = Color(1.0, 1.0, 1.0) if on_goal else (ch["crate_tint"] * crate_tint)
 	draw_texture_rect(c_tex, draw_r, false, c_mod)
+
+	# Crate custom skin accessories (only when not on goal so goal star is unobstructed)
+	if not on_goal:
+		match crate_skin_id:
+			"steel_container":
+				# Cold-rolled metallic corner angle braces
+				var brace_len: float = draw_r.size.x * 0.22
+				var b_col: Color = Color(0.85, 0.92, 1.0, 0.75)
+				# Top-left corner
+				draw_line(draw_r.position, draw_r.position + Vector2(brace_len, 0), b_col, 2.0)
+				draw_line(draw_r.position, draw_r.position + Vector2(0, brace_len), b_col, 2.0)
+				# Top-right corner
+				draw_line(draw_r.position + Vector2(draw_r.size.x, 0), draw_r.position + Vector2(draw_r.size.x - brace_len, 0), b_col, 2.0)
+				draw_line(draw_r.position + Vector2(draw_r.size.x, 0), draw_r.position + Vector2(draw_r.size.x, brace_len), b_col, 2.0)
+				# Bottom-left corner
+				draw_line(draw_r.position + Vector2(0, draw_r.size.y), draw_r.position + Vector2(brace_len, draw_r.size.y), b_col, 2.0)
+				draw_line(draw_r.position + Vector2(0, draw_r.size.y), draw_r.position + Vector2(0, draw_r.size.y - brace_len), b_col, 2.0)
+				# Bottom-right corner
+				draw_line(draw_r.end, draw_r.end - Vector2(brace_len, 0), b_col, 2.0)
+				draw_line(draw_r.end, draw_r.end - Vector2(0, brace_len), b_col, 2.0)
+			"hazard_box":
+				# Caution diagonal hazard accent in center
+				var h_col: Color = Color(0.12, 0.12, 0.15, 0.70)
+				var c_len: float = draw_r.size.x * 0.35
+				draw_line(c_center - Vector2(c_len * 0.5, c_len * 0.5), c_center + Vector2(c_len * 0.5, c_len * 0.5), h_col, 3.5)
+				draw_line(c_center - Vector2(c_len * 0.5, -c_len * 0.5), c_center + Vector2(c_len * 0.5, -c_len * 0.5), h_col, 3.5)
+				# Glowing hazard border rim
+				draw_rect(draw_r.grow(-2), Color(1.0, 0.75, 0.15, 0.55), false, 1.5)
 
 	if on_goal:
 		var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
@@ -1421,7 +1455,36 @@ func _draw_player(rect: Rect2) -> void:
 	else:
 		p_tex = tex_player_down_w1 if current_walk_frame == 1 else (tex_player_down_w2 if current_walk_frame == 2 else tex_player_down)
 
-	draw_texture_rect(p_tex, rect, false)
+	# Equipped Worker Skin from Porter Locker
+	var skin_info: Dictionary = save_mgr.get_worker_skin_info() if (save_mgr and save_mgr.has_method("get_worker_skin_info")) else {}
+	var skin_id: String = skin_info.get("id", "classic")
+	var p_modulate: Color = skin_info.get("sprite_tint", Color.WHITE)
+
+	draw_texture_rect(p_tex, rect, false, p_modulate)
+
+	# Skin Accessory & Visual Accent Overlays
+	match skin_id:
+		"safety_vest":
+			# High-vis reflective horizontal safety chest stripes
+			var stripe_y: float = rect.position.y + rect.size.y * 0.54
+			var stripe_w: float = rect.size.x * 0.42
+			var stripe_x: float = center.x - stripe_w * 0.5
+			draw_line(Vector2(stripe_x, stripe_y), Vector2(stripe_x + stripe_w, stripe_y), Color(0.95, 0.98, 1.0, 0.85), 2.2)
+			draw_line(Vector2(stripe_x, stripe_y - 2), Vector2(stripe_x + stripe_w, stripe_y - 2), Color(1.0, 0.55, 0.10, 0.70), 1.2)
+		"foreman":
+			# Foreman hardhat brim highlight
+			var brim_y: float = rect.position.y + rect.size.y * 0.28
+			var brim_w: float = rect.size.x * 0.50
+			var brim_x: float = center.x - brim_w * 0.5
+			draw_line(Vector2(brim_x, brim_y), Vector2(brim_x + brim_w, brim_y), Color(1.0, 0.90, 0.25, 0.90), 2.0)
+		"golden_porter":
+			# Radiant golden sparkles & prestige shimmer
+			var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
+			var shimmer: float = sin(time_sec * 5.0) * 0.25 + 0.75
+			draw_circle(center + Vector2(0, -rect.size.y * 0.40), 2.5 * shimmer, Color(1.0, 0.95, 0.60, 0.85))
+			draw_circle(center + Vector2(-rect.size.x * 0.32, -rect.size.y * 0.10), 1.8 * (1.2 - shimmer), Color(1.0, 0.85, 0.30, 0.75))
+			draw_circle(center + Vector2(rect.size.x * 0.32, -rect.size.y * 0.15), 1.8 * shimmer, Color(1.0, 0.88, 0.40, 0.75))
+
 
 
 func _draw_hint_ghost(effective_origin: Vector2) -> void:

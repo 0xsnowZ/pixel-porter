@@ -157,6 +157,116 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "★ CHAPITRE %d : %s ★",
 		"ar": "★ الفصل %d: %s ★"
 	},
+	"MENU_LOCKER": {
+		"en": "PORTER LOCKER 🦺",
+		"fr": "VESTIAIRE 🦺",
+		"ar": "الخزانة 🦺"
+	},
+	"LOCKER_TITLE": {
+		"en": "🦺 THE PORTER LOCKER 🦺",
+		"fr": "🦺 VESTIAIRE DU PORTEUR 🦺",
+		"ar": "🦺 خزانة الحمال 🦺"
+	},
+	"LOCKER_STARS_BADGE": {
+		"en": "★ %d / 150 Stars Collected",
+		"fr": "★ %d / 150 Étoiles collectées",
+		"ar": "★ %d / 150 نجمة تم جمعها"
+	},
+	"LOCKER_TAB_OUTFITS": {
+		"en": "👕 OUTFITS",
+		"fr": "👕 TENUES",
+		"ar": "👕 الأزياء"
+	},
+	"LOCKER_TAB_CRATES": {
+		"en": "📦 CRATES",
+		"fr": "📦 CAISSES",
+		"ar": "📦 الصناديق"
+	},
+	"LOCKER_EQUIP": {
+		"en": "EQUIP",
+		"fr": "ÉQUIPER",
+		"ar": "تجهيز"
+	},
+	"LOCKER_EQUIPPED": {
+		"en": "✓ EQUIPPED",
+		"fr": "✓ ÉQUIPÉ",
+		"ar": "✓ مُجهّز"
+	},
+	"LOCKER_LOCKED_STARS": {
+		"en": "★ %d Stars required",
+		"fr": "★ %d Étoiles requises",
+		"ar": "★ %d نجمة مطلوبة"
+	},
+	"SKIN_WORKER_CLASSIC": {
+		"en": "Classic Denim",
+		"fr": "Denim Classique",
+		"ar": "جينز كلاسيكي"
+	},
+	"SKIN_WORKER_CLASSIC_DESC": {
+		"en": "Traditional blue work overalls & red porter cap.",
+		"fr": "Salopette de travail bleue traditionnelle et casquette rouge.",
+		"ar": "بدلة عمل زرقاء تقليدية وقبعة حمراء."
+	},
+	"SKIN_WORKER_SAFETY_VEST": {
+		"en": "Safety Vest",
+		"fr": "Gilet de Sécurité",
+		"ar": "سترة الأمان"
+	},
+	"SKIN_WORKER_SAFETY_VEST_DESC": {
+		"en": "High-visibility neon orange with reflective safety bands.",
+		"fr": "Orange fluo haute visibilité avec bandes réfléchissantes.",
+		"ar": "برتقالي نيون عالي الوضوح مع أشرطة عاكسة."
+	},
+	"SKIN_WORKER_FOREMAN": {
+		"en": "Foreman",
+		"fr": "Chef d'équipe",
+		"ar": "رئيس العمال"
+	},
+	"SKIN_WORKER_FOREMAN_DESC": {
+		"en": "Hard hat and khaki uniform for senior warehouse operations.",
+		"fr": "Casque de chantier et uniforme kaki d'opération.",
+		"ar": "خوذة صلبة وزي كاكي لعمليات المستودع المتقدمة."
+	},
+	"SKIN_WORKER_GOLDEN_PORTER": {
+		"en": "Golden Master",
+		"fr": "Maître Doré",
+		"ar": "المعلم الذهبي"
+	},
+	"SKIN_WORKER_GOLDEN_PORTER_DESC": {
+		"en": "Legendary radiant gold uniform for master logistical porters.",
+		"fr": "Uniforme d'or étincelant pour les maîtres logisticiens.",
+		"ar": "زي ذهبي لامع أسطوري لخبراء الخدمات اللوجستية."
+	},
+	"SKIN_CRATE_CLASSIC_WOOD": {
+		"en": "Classic Pine",
+		"fr": "Pin Classique",
+		"ar": "صنوبر كلاسيكي"
+	},
+	"SKIN_CRATE_CLASSIC_WOOD_DESC": {
+		"en": "Standard industrial wooden cargo shipping crate.",
+		"fr": "Caisse d'expédition industrielle standard en bois.",
+		"ar": "صندوق شحن خشبي صناعي قياسي."
+	},
+	"SKIN_CRATE_STEEL_CONTAINER": {
+		"en": "Steel Container",
+		"fr": "Conteneur en Acier",
+		"ar": "حاوية فولاذية"
+	},
+	"SKIN_CRATE_STEEL_CONTAINER_DESC": {
+		"en": "Reinforced cold-rolled steel freight crate with metallic trim.",
+		"fr": "Caisse en acier laminé à froid avec bordure métallique.",
+		"ar": "صندوق شحن فولاذي مقوى بحواف معدنية."
+	},
+	"SKIN_CRATE_HAZARD_BOX": {
+		"en": "Hazard Crate",
+		"fr": "Caisse Danger",
+		"ar": "صندوق الخطر"
+	},
+	"SKIN_CRATE_HAZARD_BOX_DESC": {
+		"en": "Caution-striped high-voltage container with glowing edges.",
+		"fr": "Conteneur haute tension à bandes de danger lumineuses.",
+		"ar": "صندوق عالي الجهد مع خطوط تحذيرية مضيئة."
+	},
 	"GAME_LEVEL_LABEL": {
 		"en": "LEVEL %d / %d",
 		"fr": "NIVEAU %d / %d",

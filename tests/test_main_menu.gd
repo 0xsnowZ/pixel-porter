@@ -25,6 +25,7 @@ func _init() -> void:
 	run_suite("50-Level Select Grid & Status Badges", test_level_select_grid)
 	run_suite("Sound Toggle & Credits Modal", test_sound_and_credits)
 	run_suite("Settings Modal & Audio Sliders", test_settings_modal_and_sliders)
+	run_suite("Porter Locker Modal & Cosmetic Equipping", test_porter_locker_modal)
 
 	_cleanup_test_file()
 
@@ -255,5 +256,58 @@ func test_settings_modal_and_sliders() -> void:
 	# Close modal
 	menu._hide_settings()
 	assert_false(menu.settings_modal.visible, "Settings modal hidden via _hide_settings")
+
+	menu.queue_free()
+
+
+func test_porter_locker_modal() -> void:
+	var menu: Control = create_test_menu()
+
+	# 1. Elements exist
+	assert_true(menu.locker_btn != null, "Locker button exists on ConsoleCard")
+	assert_true(menu.locker_modal != null, "Locker modal exists")
+	assert_false(menu.locker_modal.visible, "Locker modal is hidden initially")
+	assert_true(menu.locker_stars_badge != null, "Locker stars badge exists")
+	assert_true(menu.outfits_tab_btn != null, "Outfits tab button exists")
+	assert_true(menu.crates_tab_btn != null, "Crates tab button exists")
+	assert_true(menu.locker_items_vbox != null, "Locker items VBox exists")
+
+	# 2. Open locker modal
+	menu._show_locker()
+	assert_true(menu.locker_modal.visible, "Locker modal opens via _show_locker")
+	assert_equal(menu.current_locker_tab, "outfits", "Default locker tab is outfits")
+	assert_true("★" in menu.locker_stars_badge.text, "Locker stars badge reflects total stars")
+
+	# 3. Items populated for Outfits (4 worker skins)
+	var outfit_cards = menu.locker_items_vbox.get_children()
+	assert_equal(outfit_cards.size(), 4, "Locker displays 4 worker skin cards in outfits tab")
+
+	# 4. Switch tab to Crates (3 crate skins)
+	menu._switch_locker_tab("crates")
+	assert_equal(menu.current_locker_tab, "crates", "Switched current tab to crates")
+	var crate_cards = menu.locker_items_vbox.get_children()
+	assert_equal(crate_cards.size(), 3, "Locker displays 3 crate skin cards in crates tab")
+
+	# 5. Unlock and Equip cosmetics with stars
+	menu.save_mgr.reset_all_progress(TEST_SAVE_PATH)
+	for i in range(17):
+		menu.save_mgr.record_level_completion(i, 5, 2, TEST_SAVE_PATH)
+	assert_true(menu.save_mgr.get_total_stars() >= 50, "Player has >= 50 stars")
+
+	# Refresh locker UI with new stars
+	menu._refresh_locker_ui()
+
+	# Equip unlocked steel container (requires 40 stars)
+	menu._on_equip_crate_skin("steel_container")
+	assert_equal(menu.save_mgr.selected_crate_skin, "steel_container", "Equipped steel_container crate skin via locker")
+
+	# Switch back to outfits and equip safety vest (requires 25 stars)
+	menu._switch_locker_tab("outfits")
+	menu._on_equip_worker_skin("safety_vest")
+	assert_equal(menu.save_mgr.selected_worker_skin, "safety_vest", "Equipped safety_vest worker skin via locker")
+
+	# Close modal
+	menu._hide_locker()
+	assert_false(menu.locker_modal.visible, "Locker modal hidden via _hide_locker")
 
 	menu.queue_free()

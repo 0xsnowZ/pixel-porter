@@ -25,6 +25,10 @@ var haptics_enabled: bool = true
 var language: String = "en"
 var control_scheme: int = 0 # 0 = Swipe, 1 = D-Pad, 2 = Dual (Swipe + D-Pad)
 
+# The Porter Locker (Cosmetics & Star Economy - Phase 3)
+var selected_worker_skin: String = "classic"
+var selected_crate_skin: String = "classic_wood"
+
 
 func _ready() -> void:
 	load_data()
@@ -129,6 +133,147 @@ func is_chapter_completed(chapter_index: int) -> bool:
 	return true
 
 
+# Porter Locker Unlockable Outfits & Crate Skins (Phase 3)
+const WORKER_SKINS: Array[Dictionary] = [
+	{
+		"id": "classic",
+		"name": "Classic Denim",
+		"desc": "The signature red cap & blue work dungarees.",
+		"name_key": "SKIN_WORKER_CLASSIC",
+		"desc_key": "SKIN_WORKER_CLASSIC_DESC",
+		"required_stars": 0,
+		"icon": "🧢",
+		"accent_color": Color(0.28, 0.50, 0.90),
+		"sprite_tint": Color(1.0, 1.0, 1.0)
+	},
+	{
+		"id": "safety_vest",
+		"name": "Safety Vest",
+		"desc": "High-visibility neon orange with reflective safety stripes.",
+		"name_key": "SKIN_WORKER_SAFETY_VEST",
+		"desc_key": "SKIN_WORKER_SAFETY_VEST_DESC",
+		"required_stars": 25,
+		"icon": "🦺",
+		"accent_color": Color(1.0, 0.50, 0.10),
+		"sprite_tint": Color(1.05, 0.90, 0.70)
+	},
+	{
+		"id": "foreman",
+		"name": "Foreman",
+		"desc": "Polished industrial hardhat & durable khaki workwear.",
+		"name_key": "SKIN_WORKER_FOREMAN",
+		"desc_key": "SKIN_WORKER_FOREMAN_DESC",
+		"required_stars": 60,
+		"icon": "👷",
+		"accent_color": Color(0.95, 0.85, 0.20),
+		"sprite_tint": Color(1.02, 0.96, 0.75)
+	},
+	{
+		"id": "golden_porter",
+		"name": "Golden Master",
+		"desc": "Radiant prestige uniform reserved for master puzzle solvers.",
+		"name_key": "SKIN_WORKER_GOLDEN_PORTER",
+		"desc_key": "SKIN_WORKER_GOLDEN_PORTER_DESC",
+		"required_stars": 120,
+		"icon": "👑",
+		"accent_color": Color(1.0, 0.84, 0.20),
+		"sprite_tint": Color(1.20, 1.05, 0.40)
+	}
+]
+
+const CRATE_SKINS: Array[Dictionary] = [
+	{
+		"id": "classic_wood",
+		"name": "Classic Pine",
+		"desc": "Traditional pine shipping crate with steel corner brackets.",
+		"name_key": "SKIN_CRATE_CLASSIC_WOOD",
+		"desc_key": "SKIN_CRATE_CLASSIC_WOOD_DESC",
+		"required_stars": 0,
+		"icon": "📦",
+		"accent_color": Color(0.85, 0.65, 0.35),
+		"tint": Color(1.0, 1.0, 1.0)
+	},
+	{
+		"id": "steel_container",
+		"name": "Steel Container",
+		"desc": "Cold-rolled reinforced steel freight container.",
+		"name_key": "SKIN_CRATE_STEEL_CONTAINER",
+		"desc_key": "SKIN_CRATE_STEEL_CONTAINER_DESC",
+		"required_stars": 40,
+		"icon": "🗄️",
+		"accent_color": Color(0.60, 0.75, 0.95),
+		"tint": Color(0.75, 0.85, 0.98)
+	},
+	{
+		"id": "hazard_box",
+		"name": "Hazard Crate",
+		"desc": "High-voltage caution crate with pulsing safety markers.",
+		"name_key": "SKIN_CRATE_HAZARD_BOX",
+		"desc_key": "SKIN_CRATE_HAZARD_BOX_DESC",
+		"required_stars": 80,
+		"icon": "☣️",
+		"accent_color": Color(1.0, 0.70, 0.15),
+		"tint": Color(1.10, 0.88, 0.35)
+	}
+]
+
+
+func is_worker_skin_unlocked(skin_id: String) -> bool:
+	var total: int = get_total_stars()
+	for s in WORKER_SKINS:
+		if s["id"] == skin_id:
+			return total >= s["required_stars"]
+	return false
+
+
+func is_crate_skin_unlocked(skin_id: String) -> bool:
+	var total: int = get_total_stars()
+	for s in CRATE_SKINS:
+		if s["id"] == skin_id:
+			return total >= s["required_stars"]
+	return false
+
+
+func equip_worker_skin(skin_id: String) -> bool:
+	if is_worker_skin_unlocked(skin_id):
+		selected_worker_skin = skin_id
+		save_data()
+		return true
+	return false
+
+
+func equip_crate_skin(skin_id: String) -> bool:
+	if is_crate_skin_unlocked(skin_id):
+		selected_crate_skin = skin_id
+		save_data()
+		return true
+	return false
+
+
+func get_worker_skin_info(skin_id: String = "") -> Dictionary:
+	var id: String = selected_worker_skin if skin_id.is_empty() else skin_id
+	for s in WORKER_SKINS:
+		if s["id"] == id:
+			return s
+	return WORKER_SKINS[0]
+
+
+func get_crate_skin_info(skin_id: String = "") -> Dictionary:
+	var id: String = selected_crate_skin if skin_id.is_empty() else skin_id
+	for s in CRATE_SKINS:
+		if s["id"] == id:
+			return s
+	return CRATE_SKINS[0]
+
+
+func get_all_worker_skins() -> Array[Dictionary]:
+	return WORKER_SKINS
+
+
+func get_all_crate_skins() -> Array[Dictionary]:
+	return CRATE_SKINS
+
+
 ## Records a level completion.
 ## Unlocks the next level (level_index + 1) and saves best scores and star rating.
 func record_level_completion(level_index: int, moves: int, pushes: int, file_path: String = "") -> void:
@@ -185,6 +330,10 @@ func to_dict() -> Dictionary:
 			"haptics_enabled": haptics_enabled,
 			"language": language,
 			"control_scheme": control_scheme
+		},
+		"cosmetics": {
+			"worker_skin": selected_worker_skin,
+			"crate_skin": selected_crate_skin
 		}
 	}
 
@@ -204,6 +353,10 @@ func from_dict(data: Dictionary) -> void:
 	haptics_enabled = settings.get("haptics_enabled", true)
 	language = settings.get("language", "en")
 	control_scheme = int(settings.get("control_scheme", 0))
+
+	var cosmetics: Dictionary = data.get("cosmetics", {})
+	selected_worker_skin = cosmetics.get("worker_skin", "classic")
+	selected_crate_skin = cosmetics.get("crate_skin", "classic_wood")
 
 
 ## Saves game state to JSON on disk.
@@ -268,6 +421,8 @@ func reset_all_progress(custom_path: String = "") -> void:
 	haptics_enabled = true
 	language = "en"
 	control_scheme = 0
+	selected_worker_skin = "classic"
+	selected_crate_skin = "classic_wood"
 	save_data(custom_path)
 
 
