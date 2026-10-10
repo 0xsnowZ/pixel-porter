@@ -28,7 +28,7 @@ var safe_area_mgr: Node = null
 @onready var play_btn: Button = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
 @onready var level_select_btn: Button = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
 @onready var settings_btn: Button = _find_button("SettingsBtn", "MainView/Buttons/SettingsBtn")
-@onready var sound_btn: Button = _find_button("SoundToggleBtn", "MainView/Buttons/SoundToggleBtn")
+@onready var sound_btn: Button = _find_button("SoundToggleBtn", "SettingsModal/Margin/VBox/SfxBox/SoundToggleBtn")
 @onready var haptics_btn: Button = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
 @onready var language_btn: Button = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
 @onready var credits_btn: Button = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
@@ -68,7 +68,7 @@ func _initialize_nodes() -> void:
 		play_btn = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
 		level_select_btn = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
 		settings_btn = _find_button("SettingsBtn", "MainView/Buttons/SettingsBtn")
-		sound_btn = _find_button("SoundToggleBtn", "MainView/Buttons/SoundToggleBtn")
+		sound_btn = _find_button("SoundToggleBtn", "SettingsModal/Margin/VBox/SfxBox/SoundToggleBtn")
 		haptics_btn = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
 		language_btn = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
 		credits_btn = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
@@ -113,7 +113,7 @@ func _ready() -> void:
 		play_btn.pressed.connect(_on_play_pressed)
 	if not level_select_btn.pressed.is_connected(_show_level_select):
 		level_select_btn.pressed.connect(_show_level_select)
-	if not sound_btn.pressed.is_connected(_on_sound_toggle_pressed):
+	if sound_btn and not sound_btn.pressed.is_connected(_on_sound_toggle_pressed):
 		sound_btn.pressed.connect(_on_sound_toggle_pressed)
 	if haptics_btn and not haptics_btn.pressed.is_connected(_on_haptics_toggle_pressed):
 		haptics_btn.pressed.connect(_on_haptics_toggle_pressed)
@@ -321,8 +321,9 @@ func _update_menu_state() -> void:
 			continue_btn.visible = false
 			play_btn.text = loc_mgr.tr_text("MENU_PLAY")
 
-		var sound_status: String = loc_mgr.tr_text("MENU_SOUND_ON" if is_sound_on else "MENU_SOUND_OFF")
-		sound_btn.text = loc_mgr.tr_text("MENU_SOUND", [sound_status])
+		if sound_btn:
+			var sound_status: String = loc_mgr.tr_text("MENU_SOUND_ON" if is_sound_on else "MENU_SOUND_OFF")
+			sound_btn.text = loc_mgr.tr_text("MENU_SOUND", [sound_status])
 
 		if haptics_btn:
 			var haptic_status: String = loc_mgr.tr_text("MENU_HAPTICS_ON" if is_haptics_on else "MENU_HAPTICS_OFF")
@@ -348,7 +349,8 @@ func _update_menu_state() -> void:
 			play_btn.text = "PLAY"
 		if settings_btn:
 			settings_btn.text = "SETTINGS ⚙"
-		sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
+		if sound_btn:
+			sound_btn.text = "SOUND: %s" % ("ON" if is_sound_on else "OFF")
 		if haptics_btn:
 			haptics_btn.text = "HAPTICS: %s" % ("ON" if is_haptics_on else "OFF")
 		language_btn.text = "LANGUAGE: English"

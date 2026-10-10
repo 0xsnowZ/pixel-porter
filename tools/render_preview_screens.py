@@ -113,7 +113,7 @@ def render_main_menu_preview():
     buttons_data = [
         ("PLAY", True, f_btn_pri, 52),
         ("LEVEL SELECT", False, f_btn, 50),
-        ("SOUND: ON", False, f_btn, 48),
+        ("SETTINGS ⚙", False, f_btn, 48),
         ("HAPTICS: ON", False, f_btn, 48),
         ("LANGUAGE: English", False, f_btn, 48),
         ("CREDITS", False, f_btn, 44),
