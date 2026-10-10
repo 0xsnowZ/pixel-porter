@@ -225,11 +225,65 @@ def render_gameplay_preview():
                 elif ch == '$':
                     game_img.paste(tex_crate, (tx, ty), tex_crate)
                 elif ch == '@':
-                    game_img.paste(tex_player, (tx, ty), tex_player)
+                    # Ground contact shadow (positioned directly under boot soles)
+                    s_layer = Image.new("RGBA", (tile_sz, tile_sz), (0, 0, 0, 0))
+                    s_draw = ImageDraw.Draw(s_layer)
+                    rad = tile_sz / 2.0
+                    sc_x = rad
+                    sc_y = tile_sz * 0.93
+                    # Outer soft ambient shadow
+                    rx_o, ry_o = rad * 0.42, rad * 0.13
+                    s_draw.ellipse([sc_x - rx_o, sc_y - ry_o, sc_x + rx_o, sc_y + ry_o], fill=(0, 0, 0, 46))
+                    # Inner core contact shadow
+                    rx_i, ry_i = rad * 0.32, rad * 0.08
+                    s_draw.ellipse([sc_x - rx_i, sc_y - ry_i, sc_x + rx_i, sc_y + ry_i], fill=(0, 0, 0, 72))
+                    game_img.alpha_composite(s_layer, (tx, ty))
+                    game_img.alpha_composite(tex_player, (tx, ty))
 
     out_path = os.path.join(ARTIFACT_DIR, "preview_gameplay.png")
     game_img.save(out_path)
     print("Saved preview_gameplay.png")
+
+    # Also render close-up comparison of fixed shadow facing LEFT vs DOWN on warehouse floor
+    preview_shadow_comparison(tile_sz)
+
+
+def preview_shadow_comparison(tile_sz):
+    # Close-up comparison of fixed shadow on warehouse floor (DOWN vs LEFT)
+    tex_f1 = Image.open(os.path.join(ASSETS_DIR, "floor_tile_1.png")).convert("RGBA").resize((tile_sz, tile_sz))
+    tex_down = Image.open(os.path.join(ASSETS_DIR, "player_down.png")).convert("RGBA").resize((tile_sz, tile_sz))
+    tex_left = Image.open(os.path.join(ASSETS_DIR, "player_left.png")).convert("RGBA").resize((tile_sz, tile_sz))
+    
+    pad = 20
+    comp_w = tile_sz * 2 + pad * 3
+    comp_h = tile_sz + pad * 2 + 30
+    comp_img = Image.new("RGBA", (comp_w, comp_h), (24, 28, 38, 255))
+    d = ImageDraw.Draw(comp_img)
+
+    for idx, (p_tex, label, is_left) in enumerate([(tex_down, "Facing DOWN", False), (tex_left, "Facing LEFT", True)]):
+        bx = pad + idx * (tile_sz + pad)
+        by = pad + 24
+        # Floor
+        comp_img.alpha_composite(tex_f1, (bx, by))
+        # Shadow
+        s_layer = Image.new("RGBA", (tile_sz, tile_sz), (0, 0, 0, 0))
+        s_draw = ImageDraw.Draw(s_layer)
+        rad = tile_sz / 2.0
+        sc_x = rad + (-rad * 0.04 if is_left else 0.0)
+        sc_y = tile_sz * 0.93
+        rx_o, ry_o = rad * 0.42, rad * 0.13
+        s_draw.ellipse([sc_x - rx_o, sc_y - ry_o, sc_x + rx_o, sc_y + ry_o], fill=(0, 0, 0, 50))
+        rx_i, ry_i = rad * 0.32, rad * 0.08
+        s_draw.ellipse([sc_x - rx_i, sc_y - ry_i, sc_x + rx_i, sc_y + ry_i], fill=(0, 0, 0, 80))
+        comp_img.alpha_composite(s_layer, (bx, by))
+        # Character
+        comp_img.alpha_composite(p_tex, (bx, by))
+        # Label
+        d.text((bx + tile_sz//2, pad), label, fill=(220, 230, 245, 255), anchor="mt")
+
+    out_comp = os.path.join(ARTIFACT_DIR, "preview_player_shadow.png")
+    comp_img.save(out_comp)
+    print("Saved preview_player_shadow.png")
 
 
 def render_win_modal_preview():

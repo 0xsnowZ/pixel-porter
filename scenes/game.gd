@@ -1132,15 +1132,31 @@ func _draw_player(rect: Rect2) -> void:
 	var center: Vector2 = rect.get_center()
 	var radius: float = rect.size.x / 2.0
 
-	# Ground drop shadow
-	var pts: PackedVector2Array = []
-	var shadow_center: Vector2 = center + Vector2(0, radius * 0.52)
-	var rx: float = radius * 0.70
-	var ry: float = radius * 0.28
+	# Ground contact drop shadow (positioned directly under soles of boots)
+	var x_offset: float = 0.0
+	if player_facing_dir == Vector2i.LEFT:
+		x_offset = -radius * 0.04
+	elif player_facing_dir == Vector2i.RIGHT:
+		x_offset = radius * 0.04
+	var shadow_center: Vector2 = Vector2(center.x + x_offset, rect.position.y + rect.size.y * 0.93)
+
+	# 1. Outer soft ambient shadow
+	var pts_outer: PackedVector2Array = []
+	var rx_outer: float = radius * 0.42
+	var ry_outer: float = radius * 0.13
 	for i in range(16):
 		var a: float = i * (TAU / 16.0)
-		pts.append(shadow_center + Vector2(cos(a) * rx, sin(a) * ry))
-	draw_colored_polygon(pts, Color(0.0, 0.0, 0.0, 0.42))
+		pts_outer.append(shadow_center + Vector2(cos(a) * rx_outer, sin(a) * ry_outer))
+	draw_colored_polygon(pts_outer, Color(0.0, 0.0, 0.0, 0.18))
+
+	# 2. Inner core contact shadow (tight under soles)
+	var pts_inner: PackedVector2Array = []
+	var rx_inner: float = radius * 0.32
+	var ry_inner: float = radius * 0.08
+	for i in range(16):
+		var a: float = i * (TAU / 16.0)
+		pts_inner.append(shadow_center + Vector2(cos(a) * rx_inner, sin(a) * ry_inner))
+	draw_colored_polygon(pts_inner, Color(0.0, 0.0, 0.0, 0.28))
 
 	# Pick directional sprite (idle vs walk cycle frame 1/2)
 	var p_tex: Texture2D = tex_player_down
