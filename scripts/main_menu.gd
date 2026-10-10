@@ -471,7 +471,6 @@ func _refresh_level_grid_buttons() -> void:
 
 		if is_completed:
 			var record: Dictionary = save_mgr.get_level_record(lvl_idx)
-			var moves: int = record.get("best_moves", 0)
 			var stars: int = record.get("stars", 1)
 			var star_str: String = ""
 			match stars:
@@ -479,7 +478,7 @@ func _refresh_level_grid_buttons() -> void:
 				2: star_str = "★★☆"
 				1: star_str = "★☆☆"
 				_: star_str = "★"
-			child.text = "%d\n%s %dm" % [lvl_idx + 1, star_str, moves]
+			child.text = "%d\n%s" % [lvl_idx + 1, star_str]
 			child.disabled = false
 			child.theme_type_variation = &"LevelBtnCompleted"
 			child.modulate = Color(1.0, 1.0, 1.0)

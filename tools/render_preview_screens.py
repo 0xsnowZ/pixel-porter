@@ -607,12 +607,13 @@ def render_level_select_preview():
             draw.text((bx0 + (col_w - nw)//2, by0 + 12), num_str, font=f_lvl_num, fill=(0, 0, 0, 200))
             draw.text((bx0 + (col_w - nw)//2, by0 + 11), num_str, font=f_lvl_num, fill=(255, 240, 200))
 
-            # Sub: ★★★ 5m
-            sub_str = "★★★ %dm" % level_moves[idx]
-            sb = f_lvl_sub.getbbox(sub_str)
+            # Sub: ★★★ (just stars, no moves count)
+            sub_str = "★★★"
+            f_stars = get_font(13)
+            sb = f_stars.getbbox(sub_str)
             sw = sb[2] - sb[0]
-            draw.text((bx0 + (col_w - sw)//2, by0 + 48), sub_str, font=f_lvl_sub, fill=(0, 0, 0, 220))
-            draw.text((bx0 + (col_w - sw)//2, by0 + 47), sub_str, font=f_lvl_sub, fill=(250, 212, 77))
+            draw.text((bx0 + (col_w - sw)//2, by0 + 48), sub_str, font=f_stars, fill=(0, 0, 0, 220))
+            draw.text((bx0 + (col_w - sw)//2, by0 + 47), sub_str, font=f_stars, fill=(255, 216, 77))
 
         elif idx == 5:
             # Current Active Level: Glowing Radiant Amber

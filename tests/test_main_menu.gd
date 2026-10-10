@@ -139,7 +139,7 @@ func test_level_select_grid() -> void:
 	var btn0: Button = grid_buttons[0] as Button
 	assert_false(btn0.disabled, "Level 1 button is enabled (completed)")
 	assert_true("★" in btn0.text, "Level 1 button shows completed star badge")
-	assert_true("7m" in btn0.text, "Level 1 button shows best moves record (7m)")
+	assert_equal(btn0.text, "1\n★★★", "Level 1 button shows clean level number and stars")
 
 	var btn1: Button = grid_buttons[1] as Button
 	assert_false(btn1.disabled, "Level 2 button is enabled (current unlocked)")
