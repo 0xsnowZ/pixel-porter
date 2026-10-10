@@ -146,23 +146,46 @@ def render_gameplay_preview():
     f_stats = get_regular_font(15)
     f_btn = get_font(16)
 
-    # Top Bar
-    draw.rectangle([0, 0, W, 68], fill=(20, 28, 41, 245), outline=(184, 138, 51), width=1)
-    draw.line([(0, 68), (W, 68)], fill=(184, 138, 51), width=2)
-    # Menu btn
-    draw_styled_button(draw, (16, 12, 62, 54), "⌂", font=f_top)
-    # Level label
-    draw.text((80, 24), "LEVEL 1 / 50", font=f_top, fill=(250, 217, 72))
-    # Stats
-    draw.text((W - 200, 25), "MOVES: 0  |  PUSHES: 0", font=f_stats, fill=(225, 235, 250))
+    # Premium Floating Obsidian Console TopBar (2-Deck Layout)
+    top_h = 88
+    # Ambient drop shadow
+    draw.rounded_rectangle([0, 0, W, top_h + 10], radius=16, fill=(0, 0, 0, 140))
+    draw.rounded_rectangle([0, 0, W, top_h + 5], radius=16, fill=(0, 0, 0, 180))
+    # Obsidian body with bottom rounded corners
+    draw.rounded_rectangle([0, 0, W, top_h], radius=16, fill=(15, 20, 33, 248), outline=(64, 89, 128, 100), width=1)
+    # Radiant gold bottom rim
+    draw.line([(16, top_h), (W - 16, top_h)], fill=(235, 189, 71), width=3)
 
-    # Bottom Bar
+    # Deck 1: Nav Buttons (Menu, Music, Control)
+    draw_styled_button(draw, (14, 8, 54, 46), "⌂", font=f_top)
+    draw_styled_button(draw, (60, 8, 100, 46), "♪", font=f_btn)
+    draw_styled_button(draw, (106, 8, 146, 46), "✥", is_primary=True, font=f_btn)
+
+    # Deck 1: Stage Badge (Chapter + Level Pill)
+    badge_x0, badge_x1 = W - 230, W - 14
+    draw.rounded_rectangle([badge_x0, 8, badge_x1, 46], radius=12, fill=(23, 31, 49, 235), outline=(217, 173, 64), width=1)
+    draw.text((badge_x0 + 12, 16), "📦 CH. 1", font=get_font(13), fill=(250, 217, 72))
+    draw.text((badge_x0 + 84, 16), "•", font=get_regular_font(13), fill=(140, 158, 184))
+    draw.text((badge_x0 + 102, 16), "LEVEL 1 / 50", font=get_font(14), fill=(255, 225, 95))
+
+    # Deck 2: In-Game Stat Ribbon Dashboard
+    rib_x0, rib_x1 = 14, W - 14
+    rib_y0, rib_y1 = 52, 80
+    draw.rounded_rectangle([rib_x0, rib_y0, rib_x1, rib_y1], radius=9, fill=(10, 15, 26, 220), outline=(61, 82, 117), width=1)
+    stat_txt = "MOVES: 0   •   PUSHES: 0   •   BEST: 12"
+    f_stat_rib = get_font(13)
+    s_bbox = f_stat_rib.getbbox(stat_txt)
+    s_w = s_bbox[2] - s_bbox[0]
+    draw.text(((W - s_w) // 2, rib_y0 + 5), stat_txt, font=f_stat_rib, fill=(230, 240, 252))
+
+    # Bottom Bar (Rebalanced HUD hierarchy)
     draw.rectangle([0, H - 76, W, H], fill=(20, 28, 41, 245))
     draw.line([(0, H - 76), (W, H - 76)], fill=(184, 138, 51), width=2)
-    draw_styled_button(draw, (16, H - 64, 96, H - 16), "< Prev", font=f_btn)
-    draw_styled_button(draw, (108, H - 64, 216, H - 16), "Undo ↶", font=f_btn)
-    draw_styled_button(draw, (228, H - 64, 428, H - 16), "Restart ↺", is_primary=True, font=f_btn)
-    draw_styled_button(draw, (440, H - 64, 524, H - 16), "Next >", is_success=True, font=f_btn)
+    draw_styled_button(draw, (14, H - 64, 78, H - 16), "< Prev", font=f_btn)
+    draw_styled_button(draw, (86, H - 64, 186, H - 16), "Undo ↶", font=f_btn)
+    draw_styled_button(draw, (194, H - 64, 334, H - 16), "Hint 💡 (3)", is_primary=True, font=f_btn)
+    draw_styled_button(draw, (342, H - 64, 434, H - 16), "Restart ↺", font=f_btn)
+    draw_styled_button(draw, (442, H - 64, 526, H - 16), "Next >", is_success=True, font=f_btn)
 
     # Game Board (5x5 grid from Level 1)
     # Level 1 map:

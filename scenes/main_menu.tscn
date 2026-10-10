@@ -180,8 +180,9 @@ theme_override_constants/margin_bottom = 10
 layout_mode = 2
 
 [node name="BackBtn" type="Button" parent="LevelSelectView/TopBar/Margin/HBox"]
-custom_minimum_size = Vector2(90, 42)
+custom_minimum_size = Vector2(96, 42)
 layout_mode = 2
+theme_type_variation = &"TopBarButton"
 theme_override_font_sizes/font_size = 15
 text = "← Back"
 
@@ -189,9 +190,9 @@ text = "← Back"
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(0.98, 0.85, 0.28, 1)
-theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 1
-theme_override_constants/shadow_offset_y = 1
+theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 20
 text = "SELECT LEVEL"
 horizontal_alignment = 1

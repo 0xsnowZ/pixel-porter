@@ -130,7 +130,7 @@ var ad_reward_modal: PanelContainer = null
 # UI references
 @onready var top_bar_margin: MarginContainer = $TopBar/Margin
 @onready var bottom_bar_margin: MarginContainer = $BottomBar/Margin
-@onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
+@onready var menu_button: Button = find_child("MenuBtn", true, false) as Button
 @onready var music_button: Button = find_child("MusicBtn", true, false) as Button
 @onready var control_button: Button = find_child("ControlBtn", true, false) as Button
 @onready var chapter_badge: Label = find_child("ChapterBadge", true, false) as Label
@@ -139,8 +139,8 @@ var ad_reward_modal: PanelContainer = null
 @onready var dpad_down: Button = find_child("DPadDown", true, false) as Button
 @onready var dpad_left: Button = find_child("DPadLeft", true, false) as Button
 @onready var dpad_right: Button = find_child("DPadRight", true, false) as Button
-@onready var level_label: Label = $TopBar/Margin/HBox/LevelLabel
-@onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
+@onready var level_label: Label = find_child("LevelLabel", true, false) as Label
+@onready var stats_label: Label = find_child("StatsLabel", true, false) as Label
 @onready var prev_button: Button = $BottomBar/Margin/HBox/PrevButton
 @onready var undo_button: Button = $BottomBar/Margin/HBox/UndoButton if has_node("BottomBar/Margin/HBox/UndoButton") else null
 @onready var hint_button: Button = $BottomBar/Margin/HBox/HintButton if has_node("BottomBar/Margin/HBox/HintButton") else null
@@ -192,23 +192,25 @@ func _initialize_nodes() -> void:
 	if top_bar_margin == null and has_node("TopBar/Margin"):
 		top_bar_margin = $TopBar/Margin
 		bottom_bar_margin = $BottomBar/Margin
-	if menu_button == null and has_node("TopBar/Margin/HBox/MenuBtn"):
-		menu_button = $TopBar/Margin/HBox/MenuBtn
-		if has_node("TopBar/Margin/HBox/MusicBtn"):
-			music_button = $TopBar/Margin/HBox/MusicBtn
-		if has_node("TopBar/Margin/HBox/ControlBtn"):
-			control_button = $TopBar/Margin/HBox/ControlBtn
-		if has_node("TopBar/Margin/HBox/ChapterBadge"):
-			chapter_badge = $TopBar/Margin/HBox/ChapterBadge
-		elif chapter_badge == null:
-			chapter_badge = find_child("ChapterBadge", true, false) as Label
+	if menu_button == null:
+		menu_button = find_child("MenuBtn", true, false) as Button
+	if music_button == null:
+		music_button = find_child("MusicBtn", true, false) as Button
+	if control_button == null:
+		control_button = find_child("ControlBtn", true, false) as Button
+	if chapter_badge == null:
+		chapter_badge = find_child("ChapterBadge", true, false) as Label
+	if level_label == null:
+		level_label = find_child("LevelLabel", true, false) as Label
+	if stats_label == null:
+		stats_label = find_child("StatsLabel", true, false) as Label
+	if dpad_overlay == null:
 		dpad_overlay = find_child("DPadOverlay", true, false) as Control
 		dpad_up = find_child("DPadUp", true, false) as Button
 		dpad_down = find_child("DPadDown", true, false) as Button
 		dpad_left = find_child("DPadLeft", true, false) as Button
 		dpad_right = find_child("DPadRight", true, false) as Button
-		level_label = $TopBar/Margin/HBox/LevelLabel
-		stats_label = $TopBar/Margin/HBox/StatsLabel
+	if prev_button == null and has_node("BottomBar/Margin/HBox/PrevButton"):
 		prev_button = $BottomBar/Margin/HBox/PrevButton
 		if has_node("BottomBar/Margin/HBox/UndoButton"):
 			undo_button = $BottomBar/Margin/HBox/UndoButton
@@ -474,7 +476,7 @@ func _update_ui() -> void:
 
 	if loc_mgr:
 		level_label.text = loc_mgr.tr_text("GAME_LEVEL_LABEL", [current_level_index + 1, level_paths.size()])
-		stats_label.text = "%s  |  %s%s" % [
+		stats_label.text = "%s   •   %s%s" % [
 			loc_mgr.tr_text("GAME_MOVES", [grid.moves_count]),
 			loc_mgr.tr_text("GAME_PUSHES", [grid.pushes_count]),
 			best_str
@@ -493,7 +495,7 @@ func _update_ui() -> void:
 			win_retry_button.text = loc_mgr.tr_text("WIN_RETRY_BTN")
 	else:
 		level_label.text = "LEVEL %d / %d" % [current_level_index + 1, level_paths.size()]
-		stats_label.text = "MOVES: %d  |  PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
+		stats_label.text = "MOVES: %d   •   PUSHES: %d%s" % [grid.moves_count, grid.pushes_count, best_str]
 		if undo_button != null:
 			undo_button.text = "Undo ↶"
 		_update_hint_button_text()
@@ -876,7 +878,8 @@ func _update_music_button_ui() -> void:
 	elif save_mgr != null and "music_enabled" in save_mgr:
 		is_on = save_mgr.music_enabled
 	music_button.text = "♪" if is_on else "♪̸"
-	music_button.modulate = Color(1.0, 0.92, 0.45) if is_on else Color(0.65, 0.70, 0.80, 0.65)
+	music_button.modulate = Color.WHITE
+	music_button.add_theme_color_override("font_color", Color(1.0, 0.85, 0.28, 1.0) if is_on else Color(0.55, 0.62, 0.72, 0.75))
 
 
 func _on_control_button_pressed() -> void:
@@ -902,16 +905,17 @@ func _update_control_scheme_ui() -> void:
 	if dpad_overlay:
 		dpad_overlay.visible = show_dpad
 	if control_button:
+		control_button.modulate = Color.WHITE
 		match scheme:
 			0:
 				control_button.text = "✋"
-				control_button.modulate = Color(0.75, 0.85, 0.98)
+				control_button.add_theme_color_override("font_color", Color(0.80, 0.90, 1.0, 1.0))
 			1:
 				control_button.text = "✥"
-				control_button.modulate = Color(1.0, 0.88, 0.25)
+				control_button.add_theme_color_override("font_color", Color(1.0, 0.85, 0.28, 1.0))
 			2:
 				control_button.text = "🎮"
-				control_button.modulate = Color(0.35, 0.92, 0.55)
+				control_button.add_theme_color_override("font_color", Color(0.38, 0.95, 0.60, 1.0))
 
 
 func _on_dpad_up_pressed() -> void:
@@ -1235,7 +1239,7 @@ func calculate_layout(custom_viewport_size: Vector2 = Vector2.ZERO) -> void:
 	var safe_bottom: float = insets.get("bottom", 0.0)
 	var safe_horiz: float = insets.get("left", 0.0) + insets.get("right", 0.0)
 
-	var top_offset: float = 70.0 + safe_top
+	var top_offset: float = 96.0 + safe_top
 	var dpad_allowance: float = 160.0 if (dpad_overlay and dpad_overlay.visible) else 0.0
 	var bottom_offset: float = 70.0 + safe_bottom + dpad_allowance
 	var playable_height: float = viewport_size.y - (top_offset + bottom_offset)

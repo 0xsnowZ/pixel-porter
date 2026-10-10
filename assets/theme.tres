@@ -571,9 +571,106 @@ corner_radius_bottom_right = 10
 corner_radius_bottom_left = 10
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_502fs"]
-bg_color = Color(0.08, 0.11, 0.16, 0.96)
+bg_color = Color(0.06, 0.08, 0.13, 0.96)
+border_width_top = 1
+border_width_bottom = 3
+border_color = Color(0.92, 0.74, 0.28, 0.92)
+corner_radius_bottom_right = 16
+corner_radius_bottom_left = 16
+shadow_color = Color(0, 0, 0, 0.65)
+shadow_size = 18
+shadow_offset = Vector2(0, 6)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar_btn_normal"]
+content_margin_left = 6.0
+content_margin_top = 5.0
+content_margin_right = 6.0
+content_margin_bottom = 7.0
+bg_color = Color(0.12, 0.16, 0.25, 0.95)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.28, 0.38, 0.54, 0.75)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.4)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar_btn_hover"]
+content_margin_left = 6.0
+content_margin_top = 5.0
+content_margin_right = 6.0
+content_margin_bottom = 7.0
+bg_color = Color(0.18, 0.24, 0.36, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 3
+border_color = Color(0.96, 0.8, 0.3, 0.95)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0.96, 0.78, 0.28, 0.25)
+shadow_size = 10
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_topbar_btn_pressed"]
+content_margin_left = 6.0
+content_margin_top = 7.0
+content_margin_right = 6.0
+content_margin_bottom = 5.0
+bg_color = Color(0.08, 0.11, 0.18, 0.98)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 1
+border_color = Color(0.85, 0.68, 0.22, 0.9)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stage_badge"]
+content_margin_left = 10.0
+content_margin_top = 3.0
+content_margin_right = 10.0
+content_margin_bottom = 3.0
+bg_color = Color(0.09, 0.12, 0.19, 0.92)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
 border_width_bottom = 2
-border_color = Color(0.72, 0.54, 0.2, 1)
+border_color = Color(0.85, 0.68, 0.25, 0.8)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+shadow_color = Color(0, 0, 0, 0.35)
+shadow_size = 6
+shadow_offset = Vector2(0, 2)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_stat_ribbon"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+bg_color = Color(0.04, 0.06, 0.1, 0.85)
+border_width_left = 1
+border_width_top = 1
+border_width_right = 1
+border_width_bottom = 2
+border_color = Color(0.24, 0.32, 0.46, 0.6)
+corner_radius_top_left = 10
+corner_radius_top_right = 10
+corner_radius_bottom_right = 10
+corner_radius_bottom_left = 10
+shadow_color = Color(0, 0, 0, 0.45)
+shadow_size = 4
+shadow_offset = Vector2(0, 2)
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_win_modal"]
 content_margin_left = 22.0
@@ -697,6 +794,21 @@ SuccessButton/styles/focus = SubResource("StyleBoxEmpty_wl1kw")
 SuccessButton/styles/hover = SubResource("StyleBoxFlat_357y2")
 SuccessButton/styles/normal = SubResource("StyleBoxFlat_llqld")
 SuccessButton/styles/pressed = SubResource("StyleBoxFlat_uy2me")
+TopBarButton/base_type = &"Button"
+TopBarButton/colors/font_color = Color(0.94, 0.96, 1, 1)
+TopBarButton/colors/font_hover_color = Color(1, 0.95, 0.6, 1)
+TopBarButton/colors/font_pressed_color = Color(1, 0.82, 0.25, 1)
+TopBarButton/colors/font_shadow_color = Color(0, 0, 0, 0.8)
+TopBarButton/constants/shadow_offset_y = 1
+TopBarButton/styles/disabled = SubResource("StyleBoxFlat_5x3i2")
+TopBarButton/styles/focus = SubResource("StyleBoxEmpty_wl1kw")
+TopBarButton/styles/hover = SubResource("StyleBoxFlat_topbar_btn_hover")
+TopBarButton/styles/normal = SubResource("StyleBoxFlat_topbar_btn_normal")
+TopBarButton/styles/pressed = SubResource("StyleBoxFlat_topbar_btn_pressed")
+StageBadgePanel/base_type = &"PanelContainer"
+StageBadgePanel/styles/panel = SubResource("StyleBoxFlat_stage_badge")
+StatRibbonPanel/base_type = &"PanelContainer"
+StatRibbonPanel/styles/panel = SubResource("StyleBoxFlat_stat_ribbon")
 TopBarPanel/base_type = &"PanelContainer"
 TopBarPanel/styles/panel = SubResource("StyleBoxFlat_502fs")
 WinModalPanel/base_type = &"PanelContainer"

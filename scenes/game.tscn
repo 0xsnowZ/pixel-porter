@@ -46,59 +46,94 @@ color = Color(0.06, 0.08, 0.12, 0.72)
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_bottom = 60.0
+offset_bottom = 86.0
 grow_horizontal = 2
 theme_type_variation = &"TopBarPanel"
 
 [node name="Margin" type="MarginContainer" parent="TopBar"]
 layout_mode = 2
-theme_override_constants/margin_left = 16
-theme_override_constants/margin_top = 10
-theme_override_constants/margin_right = 16
-theme_override_constants/margin_bottom = 10
+theme_override_constants/margin_left = 14
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 14
+theme_override_constants/margin_bottom = 8
 
-[node name="HBox" type="HBoxContainer" parent="TopBar/Margin"]
+[node name="VBox" type="VBoxContainer" parent="TopBar/Margin"]
 layout_mode = 2
-theme_override_constants/separation = 12
+theme_override_constants/separation = 6
+
+[node name="NavRow" type="HBoxContainer" parent="TopBar/Margin/VBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
 alignment = 1
 
-[node name="MenuBtn" type="Button" parent="TopBar/Margin/HBox"]
-custom_minimum_size = Vector2(46, 40)
+[node name="MenuBtn" type="Button" parent="TopBar/Margin/VBox/NavRow"]
+custom_minimum_size = Vector2(40, 38)
 layout_mode = 2
-theme_override_font_sizes/font_size = 20
+theme_type_variation = &"TopBarButton"
+theme_override_font_sizes/font_size = 19
 text = "⌂"
 
-[node name="MusicBtn" type="Button" parent="TopBar/Margin/HBox"]
-custom_minimum_size = Vector2(42, 40)
+[node name="MusicBtn" type="Button" parent="TopBar/Margin/VBox/NavRow"]
+custom_minimum_size = Vector2(40, 38)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"TopBarButton"
+theme_override_font_sizes/font_size = 17
 text = "♪"
 
-[node name="ControlBtn" type="Button" parent="TopBar/Margin/HBox"]
-custom_minimum_size = Vector2(42, 40)
+[node name="ControlBtn" type="Button" parent="TopBar/Margin/VBox/NavRow"]
+custom_minimum_size = Vector2(40, 38)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
+theme_type_variation = &"TopBarButton"
+theme_override_font_sizes/font_size = 17
 text = "✥"
 
-[node name="ChapterBadge" type="Label" parent="TopBar/Margin/HBox"]
+[node name="Spacer" type="Control" parent="TopBar/Margin/VBox/NavRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StageBadge" type="PanelContainer" parent="TopBar/Margin/VBox/NavRow"]
+layout_mode = 2
+theme_type_variation = &"StageBadgePanel"
+
+[node name="BadgeHBox" type="HBoxContainer" parent="TopBar/Margin/VBox/NavRow/StageBadge"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ChapterBadge" type="Label" parent="TopBar/Margin/VBox/NavRow/StageBadge/BadgeHBox"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.85, 0.28, 1)
 theme_override_font_sizes/font_size = 13
 text = "📦 CH. 1"
 
-[node name="LevelLabel" type="Label" parent="TopBar/Margin/HBox"]
+[node name="Divider" type="Label" parent="TopBar/Margin/VBox/NavRow/StageBadge/BadgeHBox"]
 layout_mode = 2
-size_flags_horizontal = 3
+theme_override_colors/font_color = Color(0.55, 0.62, 0.72, 0.8)
+theme_override_font_sizes/font_size = 12
+text = "•"
+
+[node name="LevelLabel" type="Label" parent="TopBar/Margin/VBox/NavRow/StageBadge/BadgeHBox"]
+layout_mode = 2
 theme_override_colors/font_color = Color(0.98, 0.85, 0.28, 1)
-theme_override_font_sizes/font_size = 20
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 16
 text = "LEVEL 1 / 50"
 
-[node name="StatsLabel" type="Label" parent="TopBar/Margin/HBox"]
+[node name="StatRibbon" type="PanelContainer" parent="TopBar/Margin/VBox"]
 layout_mode = 2
-theme_override_colors/font_color = Color(0.88, 0.92, 0.98, 1)
-theme_override_font_sizes/font_size = 16
-text = "MOVES: 0  |  PUSHES: 0"
-horizontal_alignment = 2
+theme_type_variation = &"StatRibbonPanel"
+
+[node name="StatsLabel" type="Label" parent="TopBar/Margin/VBox/StatRibbon"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.9, 0.94, 0.99, 1)
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.8)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 1
+theme_override_font_sizes/font_size = 13
+text = "MOVES: 0   •   PUSHES: 0"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HintToast" type="PanelContainer" parent="."]
 visible = false
@@ -107,9 +142,9 @@ anchors_preset = 5
 anchor_left = 0.5
 anchor_right = 0.5
 offset_left = -170.0
-offset_top = 74.0
+offset_top = 96.0
 offset_right = 170.0
-offset_bottom = 114.0
+offset_bottom = 136.0
 grow_horizontal = 2
 theme_type_variation = &"HUDMetricCard"
 
