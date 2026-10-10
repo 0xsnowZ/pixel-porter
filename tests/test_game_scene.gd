@@ -54,6 +54,15 @@ func assert_true(cond: bool, msg: String) -> void:
 		print("  [FAIL] %s" % msg)
 
 
+func assert_false(cond: bool, msg: String) -> void:
+	if not cond:
+		passes += 1
+		print("  [PASS] %s" % msg)
+	else:
+		fails += 1
+		print("  [FAIL] %s" % msg)
+
+
 func assert_eq(actual: Variant, expected: Variant, msg: String) -> void:
 	if actual == expected:
 		passes += 1
@@ -104,6 +113,16 @@ func test_game_initialization_and_ui() -> void:
 	loc.set_language("ar")
 	game._update_ui()
 	assert_eq(game.hint_button.text, "تلميح 💡", "Hint button localized in AR")
+
+	# Test in-game music toggle button
+	assert_true(game.music_button != null, "Music button initialized in game")
+	assert_eq(game.music_button.text, "♪", "Music button default icon is ♪")
+	game._on_music_btn_pressed()
+	assert_false(save_mgr.music_enabled, "SaveManager music_enabled toggled to false via game button")
+	assert_eq(game.music_button.text, "♪̸", "Music button shows muted icon ♪̸")
+	game._on_music_btn_pressed()
+	assert_true(save_mgr.music_enabled, "SaveManager music_enabled toggled back to true")
+	assert_eq(game.music_button.text, "♪", "Music button restored to ♪")
 
 	game.free()
 	save_mgr.free()

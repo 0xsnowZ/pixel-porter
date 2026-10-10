@@ -68,6 +68,12 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 20
 text = "⌂"
 
+[node name="MusicBtn" type="Button" parent="TopBar/Margin/HBox"]
+custom_minimum_size = Vector2(42, 40)
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "♪"
+
 [node name="LevelLabel" type="Label" parent="TopBar/Margin/HBox"]
 layout_mode = 2
 size_flags_horizontal = 3

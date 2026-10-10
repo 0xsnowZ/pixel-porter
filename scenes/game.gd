@@ -64,6 +64,7 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var top_bar_margin: MarginContainer = $TopBar/Margin
 @onready var bottom_bar_margin: MarginContainer = $BottomBar/Margin
 @onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
+@onready var music_button: Button = find_child("MusicBtn", true, false) as Button
 @onready var level_label: Label = $TopBar/Margin/HBox/LevelLabel
 @onready var stats_label: Label = $TopBar/Margin/HBox/StatsLabel
 @onready var prev_button: Button = $BottomBar/Margin/HBox/PrevButton
@@ -119,6 +120,8 @@ func _initialize_nodes() -> void:
 		bottom_bar_margin = $BottomBar/Margin
 	if menu_button == null and has_node("TopBar/Margin/HBox/MenuBtn"):
 		menu_button = $TopBar/Margin/HBox/MenuBtn
+		if has_node("TopBar/Margin/HBox/MusicBtn"):
+			music_button = $TopBar/Margin/HBox/MusicBtn
 		level_label = $TopBar/Margin/HBox/LevelLabel
 		stats_label = $TopBar/Margin/HBox/StatsLabel
 		prev_button = $BottomBar/Margin/HBox/PrevButton
@@ -206,6 +209,11 @@ func _ready() -> void:
 		win_retry_button.pressed.connect(_on_win_retry_pressed)
 	if not restart_dialog.confirmed.is_connected(_do_restart):
 		restart_dialog.confirmed.connect(_do_restart)
+	if not restart_dialog.canceled.is_connected(_on_restart_dialog_canceled):
+		restart_dialog.canceled.connect(_on_restart_dialog_canceled)
+	if music_button != null and not music_button.pressed.is_connected(_on_music_btn_pressed):
+		music_button.pressed.connect(_on_music_btn_pressed)
+	_update_music_button_ui()
 
 	if star_1:
 		star_1.pivot_offset = Vector2(28, 28)
@@ -287,6 +295,8 @@ func load_level(index: int) -> void:
 		win_blur_overlay.hide()
 	if ad_mgr:
 		ad_mgr.preload_interstitial()
+	if audio_mgr and audio_mgr.has_method("unduck_music"):
+		audio_mgr.unduck_music(0.8)
 
 	# Sync visual positions
 	visual_player_pos = Vector2(grid.get_player_pos())
@@ -402,6 +412,8 @@ func _on_level_won() -> void:
 	add_trauma(0.50)
 	if audio_mgr:
 		audio_mgr.play_win()
+		if audio_mgr.has_method("duck_music"):
+			audio_mgr.duck_music(-18.0, 0.3)
 	if haptic_mgr:
 		haptic_mgr.vibrate_win()
 	if save_mgr:
@@ -657,6 +669,8 @@ func _on_restart_pressed() -> void:
 			restart_dialog.dialog_text = loc_mgr.tr_text("RESTART_CONFIRM", [current_moves])
 		else:
 			restart_dialog.dialog_text = "You've made %d moves. Restart this level?" % current_moves
+		if audio_mgr and audio_mgr.has_method("duck_music"):
+			audio_mgr.duck_music(-10.0, 0.2)
 		if restart_dialog.is_inside_tree():
 			restart_dialog.popup_centered()
 	else:
@@ -666,10 +680,44 @@ func _on_restart_pressed() -> void:
 func _do_restart() -> void:
 	if audio_mgr:
 		audio_mgr.play_restart()
+		if audio_mgr.has_method("unduck_music"):
+			audio_mgr.unduck_music(0.5)
 	if haptic_mgr:
 		haptic_mgr.vibrate_click()
 	if grid:
 		grid.restart()
+
+
+func _on_restart_dialog_canceled() -> void:
+	if audio_mgr and audio_mgr.has_method("unduck_music"):
+		audio_mgr.unduck_music(0.5)
+
+
+func _on_music_btn_pressed() -> void:
+	if audio_mgr != null and audio_mgr.has_method("is_music_enabled"):
+		var cur_on: bool = audio_mgr.is_music_enabled()
+		audio_mgr.set_music_enabled(not cur_on)
+		if audio_mgr.has_method("play_click"):
+			audio_mgr.play_click()
+	elif save_mgr != null and "music_enabled" in save_mgr:
+		save_mgr.music_enabled = not save_mgr.music_enabled
+		if save_mgr.has_method("save_data"):
+			save_mgr.save_data()
+	if haptic_mgr != null and haptic_mgr.has_method("vibrate_click"):
+		haptic_mgr.vibrate_click()
+	_update_music_button_ui()
+
+
+func _update_music_button_ui() -> void:
+	if music_button == null:
+		return
+	var is_on: bool = true
+	if audio_mgr != null and audio_mgr.has_method("is_music_enabled"):
+		is_on = audio_mgr.is_music_enabled()
+	elif save_mgr != null and "music_enabled" in save_mgr:
+		is_on = save_mgr.music_enabled
+	music_button.text = "♪" if is_on else "♪̸"
+	music_button.modulate = Color(1.0, 0.92, 0.45) if is_on else Color(0.65, 0.70, 0.80, 0.65)
 
 
 func _on_undo_pressed() -> void:
@@ -824,6 +872,8 @@ func _on_win_retry_pressed() -> void:
 func _on_menu_pressed() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
+		if audio_mgr.has_method("unduck_music"):
+			audio_mgr.unduck_music(0.5)
 	if haptic_mgr:
 		haptic_mgr.vibrate_click()
 	get_tree().change_scene_to_file("res://scenes/main_menu.tscn")

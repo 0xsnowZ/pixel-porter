@@ -48,6 +48,8 @@ const BGM_TRACKS: Array[Dictionary] = [
 var music_player: AudioStreamPlayer = null
 var current_bgm_track: int = -1
 var _bgm_streams: Dictionary = {}
+var _duck_offset_db: float = 0.0
+var _music_fade_tween: Tween = null
 
 # AudioStreamPlayer voice pool for overlapping SFX
 var _players: Array[AudioStreamPlayer] = []
@@ -121,6 +123,13 @@ func get_music_volume_db() -> float:
 	return linear_to_db(clampf(linear, 0.001, 1.0))
 
 
+func get_effective_music_volume_db() -> float:
+	var base_db: float = get_music_volume_db()
+	if base_db <= -75.0:
+		return -80.0
+	return clampf(base_db + _duck_offset_db, -80.0, 6.0)
+
+
 func get_sfx_volume_db() -> float:
 	var linear: float = 0.8
 	if save_mgr != null and "sfx_volume" in save_mgr:
@@ -151,14 +160,57 @@ func play_music(track_index: int = -1) -> void:
 
 	if stream != null and music_player != null:
 		music_player.stream = stream
-		music_player.volume_db = get_music_volume_db()
+		music_player.volume_db = get_effective_music_volume_db()
 		if music_player.is_inside_tree():
 			music_player.play()
 
 
 func stop_music() -> void:
+	if _music_fade_tween != null and _music_fade_tween.is_valid():
+		_music_fade_tween.kill()
 	if music_player != null and music_player.playing:
 		music_player.stop()
+
+
+func fade_out_music(duration: float = 0.8) -> void:
+	if music_player == null or not music_player.playing or not is_inside_tree():
+		stop_music()
+		return
+	if _music_fade_tween != null and _music_fade_tween.is_valid():
+		_music_fade_tween.kill()
+	_music_fade_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_music_fade_tween.tween_property(music_player, "volume_db", -80.0, maxf(duration, 0.05))
+	_music_fade_tween.tween_callback(func():
+		if music_player != null:
+			music_player.stop()
+	)
+
+
+func fade_in_music(track_index: int = -1, duration: float = 0.8) -> void:
+	play_music(track_index)
+	if music_player != null and music_player.playing and is_inside_tree():
+		var target_db: float = get_effective_music_volume_db()
+		music_player.volume_db = -80.0
+		_smooth_volume_to(target_db, duration)
+
+
+func duck_music(amount_db: float = -16.0, duration: float = 0.35) -> void:
+	_duck_offset_db = amount_db
+	_smooth_volume_to(get_effective_music_volume_db(), duration)
+
+
+func unduck_music(duration: float = 0.7) -> void:
+	_duck_offset_db = 0.0
+	_smooth_volume_to(get_effective_music_volume_db(), duration)
+
+
+func _smooth_volume_to(target_db: float, duration: float) -> void:
+	if music_player == null or not is_inside_tree() or not is_music_enabled():
+		return
+	if _music_fade_tween != null and _music_fade_tween.is_valid():
+		_music_fade_tween.kill()
+	_music_fade_tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	_music_fade_tween.tween_property(music_player, "volume_db", target_db, maxf(duration, 0.05))
 
 
 func switch_music_track(track_index: int) -> void:
@@ -172,7 +224,7 @@ func set_music_volume(linear_vol: float) -> void:
 		if save_mgr.has_method("save_data"):
 			save_mgr.save_data()
 	if music_player != null:
-		music_player.volume_db = get_music_volume_db()
+		music_player.volume_db = get_effective_music_volume_db()
 
 
 func set_sfx_volume(linear_vol: float) -> void:
@@ -243,6 +295,7 @@ func play_push() -> void:
 
 ## Level won fanfare
 func play_win() -> void:
+	duck_music(-18.0, 0.25)
 	play_stream(sfx_win, 0.0)
 
 

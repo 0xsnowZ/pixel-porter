@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Pixel Porter - High-Quality Procedural Lo-Fi & Industrial BGM Composer
-Generates 2 lightweight, seamless looping background music tracks:
-1. assets/audio/bgm_lofi_shift.ogg (Lo-Fi Warehouse Shift - Relaxed chill study beats)
-2. assets/audio/bgm_industrial_pulse.ogg (Industrial Pulse - Focused ambient warehouse synth)
+Pixel Porter - Studio-Grade Procedural BGM Generator
+Generates 2 high-production, dynamic, non-fatiguing soundtrack pieces:
+1. assets/audio/bgm_lofi_shift.ogg ("Warehouse Chill" - Mellow 74 BPM Lo-Fi study beats with Rhodes piano, upright bass, gentle brushed drums & atmospheric breathing space)
+2. assets/audio/bgm_industrial_pulse.ogg ("Industrial Pulse" - Atmospheric 80 BPM Ambient Warehouse Soundscape with warm analog pads, kalimba bells & spacious reverb)
 """
 
 import os
@@ -17,55 +17,35 @@ ASSETS_AUDIO_DIR = "/home/snowz/godot/assets/audio"
 os.makedirs(ASSETS_AUDIO_DIR, exist_ok=True)
 
 
-def adsr(length, a=0.01, d=0.1, s=0.7, r=0.2):
-    """Generates an ADSR envelope of given sample length."""
-    na = int(length * a)
-    nd = int(length * d)
-    nr = int(length * r)
-    ns = length - na - nd - nr
-    if ns < 0:
-        ns = 0
-        scale = length / max(1, (na + nd + nr))
-        na = int(na * scale)
-        nd = int(nd * scale)
-        nr = length - na - nd
-    env = np.zeros(length, dtype=np.float32)
-    if na > 0:
-        env[:na] = np.linspace(0.0, 1.0, na)
-    if nd > 0:
-        env[na:na+nd] = np.linspace(1.0, s, nd)
-    if ns > 0:
-        env[na+nd:na+nd+ns] = s
-    if nr > 0:
-        env[na+nd+ns:] = np.linspace(s, 0.0, nr)
-    return env
-
-
 def midi_to_freq(m):
     return 440.0 * (2.0 ** ((m - 69) / 12.0))
 
 
-def apply_stereo_reverb(left, right, sr=SAMPLE_RATE, room_size=0.6, damping=0.3):
-    """Simple high-performance stereo comb/allpass delay feedback reverb."""
-    delays_l = [int(sr * d) for d in [0.029, 0.037, 0.043, 0.053]]
-    delays_r = [int(sr * d) for d in [0.031, 0.041, 0.047, 0.059]]
+def apply_fast_stereo_reverb(left, right, sr=SAMPLE_RATE):
+    """Fast vectorized multi-tap spatial delay."""
+    delays_l = [int(sr * d) for d in [0.031, 0.043, 0.059, 0.073]]
+    delays_r = [int(sr * d) for d in [0.037, 0.047, 0.061, 0.079]]
+    gains = [0.18, 0.14, 0.10, 0.08]
+
     out_l = np.copy(left)
     out_r = np.copy(right)
-    for dl in delays_l:
-        comb = np.zeros_like(left)
-        for i in range(dl, len(left)):
-            comb[i] = left[i - dl] + comb[i - dl] * room_size * (1.0 - damping)
-        out_l += comb * 0.15
-    for dr in delays_r:
-        comb = np.zeros_like(right)
-        for i in range(dr, len(right)):
-            comb[i] = right[i - dr] + comb[i - dr] * room_size * (1.0 - damping)
-        out_r += comb * 0.15
+
+    for dl, g in zip(delays_l, gains):
+        if dl < len(left):
+            tap = np.zeros_like(left)
+            tap[dl:] = left[:-dl] * g
+            out_l += tap
+
+    for dr, g in zip(delays_r, gains):
+        if dr < len(right):
+            tap = np.zeros_like(right)
+            tap[dr:] = right[:-dr] * g
+            out_r += tap
+
     return out_l, out_r
 
 
 def make_seamless_loop(audio_stereo, loop_samples, tail_samples):
-    """Wraps the tail over the start so the loop has zero cut in reverb/sound."""
     main = audio_stereo[:, :loop_samples].copy()
     tail = audio_stereo[:, loop_samples:loop_samples + tail_samples]
     wrap_len = min(tail.shape[1], main.shape[1])
@@ -74,287 +54,351 @@ def make_seamless_loop(audio_stereo, loop_samples, tail_samples):
 
 
 # ==============================================================================
-# TRACK 1: "Lo-Fi Warehouse Shift" (Tempo 78 BPM, 16 Bars)
+# TRACK 1: "Warehouse Chill" (Lo-Fi Study / Puzzle Beats - 32 Bars @ 74 BPM)
 # ==============================================================================
 
+def synth_rhodes_chord(chord_midi, duration_sec, sr=SAMPLE_RATE):
+    n_samples = int(duration_sec * sr)
+    t = np.linspace(0, duration_sec, n_samples, False)
+    chord_l = np.zeros(n_samples, dtype=np.float32)
+    chord_r = np.zeros(n_samples, dtype=np.float32)
+
+    # Gentle stereo tremolo
+    tremolo_l = 1.0 + 0.10 * np.sin(2.0 * np.pi * 3.6 * t)
+    tremolo_r = 1.0 + 0.10 * np.sin(2.0 * np.pi * 3.6 * t + 0.5 * math.pi)
+
+    for i, midi_val in enumerate(chord_midi):
+        freq = midi_to_freq(midi_val)
+        decay_1 = np.exp(-t / 2.2)
+        decay_2 = np.exp(-t / 1.1)
+        decay_3 = np.exp(-t / 0.55)
+        decay_tine = np.exp(-t / 0.035)
+
+        h1 = np.sin(2 * np.pi * freq * t) * decay_1
+        h2 = 0.32 * np.sin(2 * np.pi * 2.0 * freq * t) * decay_2
+        h3 = 0.10 * np.sin(2 * np.pi * 3.01 * freq * t) * decay_3
+        tine = 0.05 * np.sin(2 * np.pi * 6.82 * freq * t) * decay_tine
+
+        note_wave = (h1 + h2 + h3 + tine)
+        pan = 0.5 + 0.28 * math.sin(i * 1.7)
+        chord_l += note_wave * (1.0 - pan)
+        chord_r += note_wave * pan
+
+    # Soft tape saturation
+    chord_l = np.tanh(chord_l * 0.42) * tremolo_l
+    chord_r = np.tanh(chord_r * 0.42) * tremolo_r
+    return chord_l, chord_r
+
+
+def synth_warm_bass(midi_val, duration_sec, sr=SAMPLE_RATE):
+    n_samples = int(duration_sec * sr)
+    t = np.linspace(0, duration_sec, n_samples, False)
+    freq = midi_to_freq(midi_val)
+    attack = np.minimum(1.0, t / 0.02)
+    decay = np.exp(-t / 1.8)
+    env = attack * decay
+    w1 = np.sin(2 * np.pi * freq * t)
+    w2 = 0.20 * np.sin(2 * np.pi * 2 * freq * t) * np.exp(-t / 0.8)
+    return np.tanh((w1 + w2) * 1.2) * env * 0.28
+
+
 def generate_lofi_track():
-    bpm = 78.0
+    bpm = 74.0
     sr = SAMPLE_RATE
     beat_dur = 60.0 / bpm
     bar_dur = beat_dur * 4.0
-    total_bars = 16
+    total_bars = 32
     loop_samples = int(total_bars * bar_dur * sr)
-    tail_samples = int(3.0 * sr) # 3 seconds tail
+    tail_samples = int(4.0 * sr)
     total_samples = loop_samples + tail_samples
 
     left = np.zeros(total_samples, dtype=np.float32)
     right = np.zeros(total_samples, dtype=np.float32)
 
+    # 32-Bar Extended Neo-Soul / Lo-Fi Jazz Progression
     chord_seq = [
-        # Bar 0-3
-        ([50, 57, 60, 64, 69], 38), # Dm9, bass D2
-        ([43, 55, 59, 64, 67], 43), # G13, bass G2
-        ([48, 55, 59, 62, 67], 36), # Cmaj9, bass C2
-        ([45, 52, 55, 60, 64], 45), # Am9, bass A2
-        # Bar 4-7
-        ([50, 57, 60, 64, 69], 38),
-        ([43, 55, 59, 64, 67], 43),
-        ([48, 55, 59, 62, 67], 36),
-        ([45, 52, 55, 60, 64], 45),
-        # Bar 8-11
-        ([53, 57, 60, 64, 67], 41), # Fmaj7, bass F2
-        ([52, 55, 59, 62, 67], 40), # Em7, bass E2
-        ([50, 57, 60, 64, 69], 38), # Dm9, bass D2
-        ([43, 53, 56, 59, 65], 43), # G7b9, bass G2
-        # Bar 12-15
-        ([50, 57, 60, 64, 69], 38),
-        ([43, 55, 59, 64, 67], 43),
-        ([48, 55, 59, 62, 67], 36),
-        ([45, 52, 55, 60, 64], 45),
+        # Part A (Bars 0-7): Cozy morning warehouse
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([43, 53, 59, 64, 67], 43),  # G13
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([45, 52, 55, 60, 64], 45),  # Am9
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([43, 53, 56, 59, 65], 43),  # G7(b9)
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([40, 52, 55, 59, 62], 40),  # Em7
+
+        # Part B (Bars 8-15): Harmonic Elevation
+        ([53, 57, 60, 64, 67], 41),  # Fmaj7
+        ([52, 55, 59, 62, 67], 40),  # Em7
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([43, 53, 59, 64, 67], 43),  # G13
+        ([53, 57, 60, 64, 67], 41),  # Fmaj7
+        ([53, 56, 60, 62, 65], 41),  # Fm6
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([45, 52, 55, 61, 64], 45),  # A7(#9)
+
+        # Part C (Bars 16-23): Variation with gentle counterpoint
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([43, 53, 59, 64, 67], 43),  # G13
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([45, 52, 55, 60, 64], 45),  # Am9
+        ([46, 53, 57, 60, 65], 46),  # Bbmaj7
+        ([45, 52, 55, 61, 65], 45),  # A7(b13)
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([43, 53, 55, 59, 65], 43),  # G7
+
+        # Part D (Bars 24-31): Atmospheric Breather (Drums drop out, spacious chords)
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([50, 57, 60, 64, 69], 38),  # Dm9
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([53, 57, 60, 64, 67], 41),  # Fmaj7
+        ([43, 53, 59, 64, 67], 43),  # G13
+        ([48, 55, 59, 62, 67], 36),  # Cmaj9
+        ([45, 52, 55, 61, 64], 45),  # A7(alt) -> Turnaround
     ]
 
-    # 1. Synthesize Rhodes / Electric Piano Chords
     for bar_idx, (chord, bass_note) in enumerate(chord_seq):
-        start_time = bar_idx * bar_dur
-        start_idx = int(start_time * sr)
-        chord_len = int(bar_dur * 0.95 * sr)
-        t = np.linspace(0, bar_dur * 0.95, chord_len, False)
-        env = adsr(chord_len, a=0.03, d=0.25, s=0.45, r=0.35)
+        start_t = bar_idx * bar_dur
+        start_idx = int(start_t * sr)
 
-        chord_wave_l = np.zeros(chord_len, dtype=np.float32)
-        chord_wave_r = np.zeros(chord_len, dtype=np.float32)
+        # In breather bars 24-27, sustain chords longer and softer
+        is_breather = (24 <= bar_idx <= 27)
+        dur = bar_dur * (1.1 if is_breather else 0.95)
+        cl, cr = synth_rhodes_chord(chord, dur, sr)
+        gain = 0.11 if is_breather else 0.13
+        end_idx = min(start_idx + len(cl), total_samples)
+        left[start_idx:end_idx] += cl[:end_idx - start_idx] * gain
+        right[start_idx:end_idx] += cr[:end_idx - start_idx] * gain
 
-        # Tremolo
-        tremolo_l = 1.0 + 0.18 * np.sin(2.0 * np.pi * 3.5 * t)
-        tremolo_r = 1.0 + 0.18 * np.sin(2.0 * np.pi * 3.5 * t + math.pi * 0.5)
+        # Bassline
+        bass_offsets = [0.0] if is_breather else [0.0, 2.0]
+        for boff in bass_offsets:
+            bt_start = int((start_t + boff * beat_dur) * sr)
+            b_dur = beat_dur * (2.8 if is_breather else 1.7)
+            b_wave = synth_warm_bass(bass_note, b_dur, sr)
+            bend = min(bt_start + len(b_wave), total_samples)
+            left[bt_start:bend] += b_wave[:bend - bt_start] * 0.42
+            right[bt_start:bend] += b_wave[:bend - bt_start] * 0.42
 
-        for note in chord:
-            freq = midi_to_freq(note)
-            w = (np.sin(2 * np.pi * freq * t) +
-                 0.35 * np.sin(2 * np.pi * freq * 2 * t) +
-                 0.12 * np.sin(2 * np.pi * freq * 3 * t))
-            pan = 0.5 + 0.2 * np.sin(note)
-            chord_wave_l += w * (1.0 - pan)
-            chord_wave_r += w * pan
-
-        chord_wave_l = chord_wave_l * env * tremolo_l * 0.08
-        chord_wave_r = chord_wave_r * env * tremolo_r * 0.08
-
-        left[start_idx:start_idx + chord_len] += chord_wave_l
-        right[start_idx:start_idx + chord_len] += chord_wave_r
-
-        # 2. Warm Sub Bass
-        for beat_offset in [0.0, 2.0]:
-            b_start = int((start_time + beat_offset * beat_dur) * sr)
-            b_len = int(beat_dur * 1.8 * sr)
-            bt = np.linspace(0, beat_dur * 1.8, b_len, False)
-            bfreq = midi_to_freq(bass_note)
-            benv = adsr(b_len, a=0.04, d=0.3, s=0.6, r=0.2)
-            bwave = np.sin(2 * np.pi * bfreq * bt) + 0.25 * np.sin(2 * np.pi * bfreq * 2 * bt)
-            bwave = np.tanh(bwave * 1.5) * benv * 0.18
-            left[b_start:b_start + b_len] += bwave * 0.5
-            right[b_start:b_start + b_len] += bwave * 0.5
-
-    # 3. Lo-Fi Drums (Kick, Snare/Rim, Hi-Hat)
+    # Lo-Fi Brushed Drums (Active in bars 0-23 and 28-31; DROPPED in breather 24-27!)
     for bar_idx in range(total_bars):
+        if 24 <= bar_idx <= 27:
+            continue # Acoustic breathing room!
+
         bar_start = bar_idx * bar_dur
+
+        # Mellow pillowy kick on beat 0 and 2.5
         for k_beat in [0.0, 2.5]:
-            k_time = bar_start + k_beat * beat_dur
-            k_idx = int(k_time * sr)
-            k_len = int(0.28 * sr)
-            kt = np.linspace(0, 0.28, k_len, False)
-            k_pitch = 120.0 * np.exp(-18.0 * kt) + 48.0
-            k_phase = 2.0 * np.pi * np.cumsum(k_pitch) / sr
-            kwave = np.sin(k_phase) * np.exp(-12.0 * kt) * 0.24
+            kt = bar_start + k_beat * beat_dur
+            k_idx = int(kt * sr)
+            k_dur = 0.22
+            k_len = int(k_dur * sr)
+            t_k = np.linspace(0, k_dur, k_len, False)
+            pitch = 65.0 * np.exp(-16.0 * t_k) + 40.0
+            phase = 2.0 * np.pi * np.cumsum(pitch) / sr
+            kwave = np.sin(phase) * np.exp(-11.0 * t_k) * 0.15
             left[k_idx:k_idx + k_len] += kwave
             right[k_idx:k_idx + k_len] += kwave
 
+        # Soft wooden rimshot on beat 1.0 and 3.0
         for s_beat in [1.0, 3.0]:
-            s_time = bar_start + s_beat * beat_dur
-            s_idx = int(s_time * sr)
-            s_len = int(0.20 * sr)
-            st = np.linspace(0, 0.20, s_len, False)
+            st = bar_start + s_beat * beat_dur
+            s_idx = int(st * sr)
+            s_dur = 0.12
+            s_len = int(s_dur * sr)
+            t_s = np.linspace(0, s_dur, s_len, False)
+            tone = np.sin(2 * np.pi * 480.0 * t_s) * np.exp(-32.0 * t_s) * 0.09
             noise = np.random.uniform(-1.0, 1.0, s_len).astype(np.float32)
-            tone = np.sin(2 * np.pi * 220.0 * st)
-            swave = (noise * 0.6 + tone * 0.4) * np.exp(-16.0 * st) * 0.15
+            noise_env = np.exp(-28.0 * t_s) * 0.05
+            swave = tone + noise * noise_env
             left[s_idx:s_idx + s_len] += swave
             right[s_idx:s_idx + s_len] += swave
 
+        # Brushed swung hi-hat
         for h_step in range(8):
-            h_time = bar_start + (h_step * 0.5 + (0.02 if h_step % 2 == 1 else 0.0)) * beat_dur
-            h_idx = int(h_time * sr)
-            h_len = int(0.06 * sr)
-            ht = np.linspace(0, 0.06, h_len, False)
+            swing = 0.025 if (h_step % 2 == 1) else 0.0
+            ht = bar_start + (h_step * 0.5 + swing) * beat_dur
+            h_idx = int(ht * sr)
+            h_dur = 0.04
+            h_len = int(h_dur * sr)
+            t_h = np.linspace(0, h_dur, h_len, False)
             h_noise = np.random.uniform(-1.0, 1.0, h_len).astype(np.float32)
-            h_vol = 0.08 if h_step % 2 == 0 else 0.04
-            hwave = h_noise * np.exp(-55.0 * ht) * h_vol
+            vol = 0.035 if (h_step % 2 == 0) else 0.018
+            hwave = h_noise * np.exp(-55.0 * t_h) * vol
             left[h_idx:h_idx + h_len] += hwave * 0.4
             right[h_idx:h_idx + h_len] += hwave * 0.6
 
-    # 4. Mellow Flute/Synth Melody
-    lead_notes = [
-        (4, 0.5, 1.5, 69), (4, 2.0, 1.0, 72), (4, 3.0, 1.0, 71),
-        (5, 0.0, 2.0, 67), (5, 2.5, 1.5, 64),
-        (6, 0.0, 1.5, 67), (6, 2.0, 1.0, 69), (6, 3.0, 1.0, 72),
-        (7, 0.0, 3.0, 71),
-        (8, 0.5, 1.5, 72), (8, 2.0, 1.0, 74), (8, 3.0, 1.0, 76),
-        (9, 0.0, 2.0, 74), (9, 2.5, 1.5, 71),
-        (10, 0.0, 1.5, 69), (10, 2.0, 1.0, 67), (10, 3.0, 1.0, 65),
-        (11, 0.0, 3.0, 64),
+    # Sparse, beautiful melodic motifs (Celesta / Bell tone)
+    melody_notes = [
+        (8, 1.0, 1.5, 72), (8, 3.0, 1.0, 71),
+        (9, 0.5, 2.0, 67),
+        (10, 1.0, 1.5, 69), (10, 3.0, 1.0, 72),
+        (11, 0.0, 3.0, 71),
+        (16, 1.0, 1.5, 76), (16, 3.0, 1.0, 74),
+        (17, 0.5, 2.0, 72),
+        (18, 1.0, 1.5, 69), (18, 3.0, 1.0, 67),
+        (19, 0.0, 3.0, 64),
     ]
-    for bar_num, beat_num, dur_beats, midi_note in lead_notes:
-        n_time = (bar_num * 4.0 + beat_num) * beat_dur
-        n_idx = int(n_time * sr)
-        n_len = int(dur_beats * beat_dur * sr)
-        nt = np.linspace(0, dur_beats * beat_dur, n_len, False)
+    for bar_num, beat_num, dur_beats, midi_note in melody_notes:
+        n_t = (bar_num * 4.0 + beat_num) * beat_dur
+        n_idx = int(n_t * sr)
+        n_dur = dur_beats * beat_dur
+        n_len = int(n_dur * sr)
+        t_n = np.linspace(0, n_dur, n_len, False)
         freq = midi_to_freq(midi_note)
-        vib = 1.0 + 0.006 * np.sin(2 * np.pi * 5.0 * nt)
-        env = adsr(n_len, a=0.1, d=0.2, s=0.7, r=0.3)
-        nwave = (np.sin(2 * np.pi * freq * vib * nt) + 0.2 * np.sin(2 * np.pi * freq * 2 * vib * nt)) * env * 0.07
-        left[n_idx:n_idx + n_len] += nwave * 0.65
-        right[n_idx:n_idx + n_len] += nwave * 0.35
+        env_n = np.exp(-t_n / 1.2) * np.minimum(1.0, t_n / 0.04)
+        mwave = (np.sin(2 * np.pi * freq * t_n) + 0.2 * np.sin(2 * np.pi * 2 * freq * t_n)) * env_n * 0.045
+        pan = 0.6
+        left[n_idx:n_idx + n_len] += mwave * (1.0 - pan)
+        right[n_idx:n_idx + n_len] += mwave * pan
 
-    # 5. Vinyl Texture
-    crackle = np.random.uniform(-0.015, 0.015, total_samples).astype(np.float32)
-    left += crackle * 0.3
-    right += crackle * 0.3
+    # Ambient tape warmth
+    warmth = np.random.uniform(-0.003, 0.003, total_samples).astype(np.float32)
+    left += warmth
+    right += warmth
 
-    # 6. Apply Stereo Reverb
-    rev_l, rev_r = apply_stereo_reverb(left, right, sr=sr, room_size=0.55, damping=0.35)
-
-    # 7. Make Seamless Loop
+    # Fast Stereo Reverb & Loop wrap
+    rev_l, rev_r = apply_fast_stereo_reverb(left, right, sr=sr)
     stereo = np.vstack([rev_l, rev_r])
-    looped_stereo = make_seamless_loop(stereo, loop_samples, tail_samples)
+    looped = make_seamless_loop(stereo, loop_samples, tail_samples)
 
-    peak = np.max(np.abs(looped_stereo))
+    peak = np.max(np.abs(looped))
     if peak > 0:
-        looped_stereo = (looped_stereo / peak) * 0.88
+        looped = (looped / peak) * 0.75
 
-    return looped_stereo, sr
+    return looped, sr
 
 
 # ==============================================================================
-# TRACK 2: "Industrial Pulse" (Tempo 96 BPM, 16 Bars)
+# TRACK 2: "Industrial Pulse" (Ambient Warehouse Soundscape - 32 Bars @ 80 BPM)
 # ==============================================================================
 
 def generate_industrial_track():
-    bpm = 96.0
+    bpm = 80.0
     sr = SAMPLE_RATE
     beat_dur = 60.0 / bpm
     bar_dur = beat_dur * 4.0
-    total_bars = 16
+    total_bars = 32
     loop_samples = int(total_bars * bar_dur * sr)
-    tail_samples = int(3.0 * sr)
+    tail_samples = int(4.0 * sr)
     total_samples = loop_samples + tail_samples
 
     left = np.zeros(total_samples, dtype=np.float32)
     right = np.zeros(total_samples, dtype=np.float32)
 
-    bass_pattern = [
-        (40, 1.0), (40, 0.4), (52, 0.7), (40, 0.5),
-        (40, 0.9), (40, 0.3), (43, 0.8), (40, 0.4),
-        (40, 1.0), (40, 0.4), (55, 0.7), (40, 0.5),
-        (45, 0.8), (43, 0.7), (42, 0.6), (40, 0.5)
+    # Ambient Chords (each chord spans 2 bars = 8 beats)
+    ambient_chords = [
+        [40, 52, 55, 59, 62, 66],  # Em9
+        [36, 48, 55, 59, 62, 67],  # Cmaj9
+        [43, 50, 55, 59, 62, 66],  # Gmaj7
+        [47, 50, 54, 57, 62, 66],  # Bm7
+        [45, 52, 55, 60, 64, 67],  # Am9
+        [38, 50, 54, 57, 62, 64],  # D9
+        [43, 50, 55, 59, 62, 66],  # Gmaj7
+        [47, 51, 54, 57, 62, 65],  # B7(b13)
+        # Part 2
+        [36, 48, 55, 59, 62, 67],  # Cmaj9
+        [38, 50, 54, 57, 62, 66],  # D6/9
+        [40, 52, 55, 59, 62, 66],  # Em9
+        [47, 50, 54, 57, 62, 66],  # Bm7
+        [36, 48, 55, 59, 62, 67],  # Cmaj9
+        [45, 52, 55, 60, 64, 67],  # Am9
+        [47, 50, 54, 57, 62, 66],  # Bm7
+        [40, 52, 55, 59, 62, 66],  # Em9
     ]
-    sixteenth_dur = beat_dur * 0.25
 
+    for chord_idx, chord_midi in enumerate(ambient_chords):
+        t_start = (chord_idx * 2) * bar_dur
+        start_idx = int(t_start * sr)
+        dur = bar_dur * 2.1
+        c_len = int(dur * sr)
+        t = np.linspace(0, dur, c_len, False)
+
+        attack = np.minimum(1.0, t / 1.5)
+        release = np.minimum(1.0, (dur - t) / 1.5)
+        env = attack * release
+
+        p_wave_l = np.zeros(c_len, dtype=np.float32)
+        p_wave_r = np.zeros(c_len, dtype=np.float32)
+
+        for i, midi_val in enumerate(chord_midi):
+            freq = midi_to_freq(midi_val)
+            detune = 1.0 + 0.0018 * math.sin(i * 1.3)
+            filter_lfo = 0.5 + 0.5 * np.sin(2 * np.pi * 0.15 * t + i * 0.4)
+            w1 = np.sin(2 * np.pi * freq * t)
+            w2 = 0.35 * np.sin(2 * np.pi * (freq * detune) * 2 * t) * filter_lfo
+            w3 = 0.15 * np.sin(2 * np.pi * (freq * 0.5) * t)
+            note = (w1 + w2 + w3)
+
+            pan = 0.5 + 0.3 * math.sin(i * 2.1)
+            p_wave_l += note * (1.0 - pan)
+            p_wave_r += note * pan
+
+        p_wave_l = p_wave_l * env * 0.04
+        p_wave_r = p_wave_r * env * 0.04
+        end_idx = min(start_idx + c_len, total_samples)
+        left[start_idx:end_idx] += p_wave_l[:end_idx - start_idx]
+        right[start_idx:end_idx] += p_wave_r[:end_idx - start_idx]
+
+    # Delicate Kalimba / Drop Arpeggio (Atmospheric, sparse)
+    kalimba_notes = [64, 67, 71, 74, 76, 79, 83]
     for bar in range(total_bars):
-        root_offset = 0
-        if bar in [4, 5]:
-            root_offset = 5 # Am
-        elif bar in [8, 9]:
-            root_offset = 8 # C
-        elif bar in [10, 11]:
-            root_offset = 7 # B
+        if bar % 2 == 1:
+            for note_beat in [1.5, 3.25]:
+                k_t = (bar * bar_dur) + (note_beat * beat_dur)
+                k_idx = int(k_t * sr)
+                k_dur = 1.8
+                k_len = int(k_dur * sr)
+                t_k = np.linspace(0, k_dur, k_len, False)
+                midi_val = kalimba_notes[(bar * 3 + int(note_beat * 2)) % len(kalimba_notes)]
+                freq = midi_to_freq(midi_val)
+                k_env = np.exp(-t_k / 0.6) * np.minimum(1.0, t_k / 0.01)
+                kwave = (np.sin(2 * np.pi * freq * t_k) + 0.25 * np.sin(2 * np.pi * 3.0 * freq * t_k) * np.exp(-t_k / 0.15)) * k_env * 0.04
+                pan = 0.5 + 0.35 * math.sin(bar * 1.9)
+                left[k_idx:k_idx + k_len] += kwave * (1.0 - pan)
+                right[k_idx:k_idx + k_len] += kwave * pan
 
-        for step, (note, vel) in enumerate(bass_pattern):
-            t_start = (bar * bar_dur) + (step * sixteenth_dur)
-            idx = int(t_start * sr)
-            dur = sixteenth_dur * 0.85
-            s_len = int(dur * sr)
-            st = np.linspace(0, dur, s_len, False)
-            freq = midi_to_freq(note + root_offset)
-            env = adsr(s_len, a=0.01, d=0.15, s=0.3, r=0.2)
-            saw = (2.0 * (freq * st - np.floor(0.5 + freq * st))) * 0.6
-            sub = np.sin(2 * np.pi * freq * 0.5 * st) * 0.8
-            b_wave = (saw + sub) * env * vel * 0.15
-            b_wave = np.tanh(b_wave * 1.8)
-            left[idx:idx + s_len] += b_wave
-            right[idx:idx + s_len] += b_wave
+    # Sub-bass warmth
+    for chord_idx, chord_midi in enumerate(ambient_chords):
+        t_start = (chord_idx * 2) * bar_dur
+        start_idx = int(t_start * sr)
+        dur = bar_dur * 2.0
+        b_len = int(dur * sr)
+        t = np.linspace(0, dur, b_len, False)
+        root_midi = chord_midi[0]
+        freq = midi_to_freq(root_midi)
+        attack = np.minimum(1.0, t / 0.6)
+        release = np.minimum(1.0, (dur - t) / 0.6)
+        sub = np.sin(2 * np.pi * freq * t) * attack * release * 0.14
+        end_idx = min(start_idx + b_len, total_samples)
+        left[start_idx:end_idx] += sub[:end_idx - start_idx] * 0.5
+        right[start_idx:end_idx] += sub[:end_idx - start_idx] * 0.5
 
-    pad_len = loop_samples + tail_samples
-    pad_t = np.linspace(0, (total_bars * bar_dur) + 3.0, pad_len, False)
-    for p_midi in [40, 47, 52, 55, 59]:
-        p_freq = midi_to_freq(p_midi)
-        w1 = np.sin(2 * np.pi * p_freq * pad_t)
-        w2 = np.sin(2 * np.pi * (p_freq * 1.003) * pad_t)
-        lfo = 0.5 + 0.5 * np.sin(2 * np.pi * 0.12 * pad_t)
-        p_wave = (w1 + w2) * 0.012 * lfo
-        left += p_wave * 0.7
-        right += p_wave * 0.5
-
+    # Gentle clockwork acoustic tick every 2 beats
     for bar in range(total_bars):
-        for clink_beat in [1.5, 3.5, 2.75]:
-            c_time = (bar * bar_dur) + (clink_beat * beat_dur)
-            c_idx = int(c_time * sr)
-            c_len = int(0.35 * sr)
-            ct = np.linspace(0, 0.35, c_len, False)
-            mod = np.sin(2 * np.pi * 820.0 * ct) * np.exp(-18.0 * ct) * 3.5
-            carrier = np.sin(2 * np.pi * 1480.0 * ct + mod) * np.exp(-14.0 * ct)
-            clink = carrier * 0.08
-            pan = 0.3 if clink_beat == 1.5 else 0.7
-            left[c_idx:c_idx + c_len] += clink * (1.0 - pan)
-            right[c_idx:c_idx + c_len] += clink * pan
+        for tick_beat in [0.0, 2.0]:
+            t_t = (bar * bar_dur) + (tick_beat * beat_dur)
+            t_idx = int(t_t * sr)
+            t_dur = 0.03
+            t_len = int(t_dur * sr)
+            tt = np.linspace(0, t_dur, t_len, False)
+            tick = np.sin(2 * np.pi * 1200.0 * tt) * np.exp(-85.0 * tt) * 0.015
+            left[t_idx:t_idx + t_len] += tick * 0.5
+            right[t_idx:t_idx + t_len] += tick * 0.5
 
-        for k_beat in [0.0, 1.0, 2.0, 3.0]:
-            k_time = (bar * bar_dur) + (k_beat * beat_dur)
-            k_idx = int(k_time * sr)
-            k_len = int(0.22 * sr)
-            kt = np.linspace(0, 0.22, k_len, False)
-            k_pitch = 140.0 * np.exp(-24.0 * kt) + 42.0
-            k_phase = 2.0 * np.pi * np.cumsum(k_pitch) / sr
-            kwave = np.sin(k_phase) * np.exp(-10.0 * kt) * 0.22
-            left[k_idx:k_idx + k_len] += kwave
-            right[k_idx:k_idx + k_len] += kwave
-
-        for s_step in range(16):
-            if s_step % 2 == 1:
-                h_time = (bar * bar_dur) + (s_step * sixteenth_dur)
-                h_idx = int(h_time * sr)
-                h_len = int(0.045 * sr)
-                ht = np.linspace(0, 0.045, h_len, False)
-                noise = np.random.uniform(-1.0, 1.0, h_len).astype(np.float32)
-                hwave = noise * np.exp(-60.0 * ht) * (0.07 if s_step % 4 == 2 else 0.04)
-                left[h_idx:h_idx + h_len] += hwave * 0.5
-                right[h_idx:h_idx + h_len] += hwave * 0.5
-
-    arp_notes = [64, 67, 71, 76, 74, 71, 67, 64]
-    for bar in range(4, total_bars):
-        for step in range(8):
-            a_time = (bar * bar_dur) + (step * (bar_dur / 8.0))
-            a_idx = int(a_time * sr)
-            a_len = int((bar_dur / 8.0) * 0.75 * sr)
-            at = np.linspace(0, (bar_dur / 8.0) * 0.75, a_len, False)
-            midi = arp_notes[step % len(arp_notes)]
-            freq = midi_to_freq(midi)
-            env = adsr(a_len, a=0.01, d=0.2, s=0.2, r=0.2)
-            awave = (np.sin(2 * np.pi * freq * at) + 0.3 * np.sin(2 * np.pi * freq * 2 * at)) * env * 0.06
-            pan = 0.5 + 0.35 * np.sin(step * 0.8)
-            left[a_idx:a_idx + a_len] += awave * (1.0 - pan)
-            right[a_idx:a_idx + a_len] += awave * pan
-
-    rev_l, rev_r = apply_stereo_reverb(left, right, sr=sr, room_size=0.6, damping=0.25)
+    rev_l, rev_r = apply_fast_stereo_reverb(left, right, sr=sr)
     stereo = np.vstack([rev_l, rev_r])
-    looped_stereo = make_seamless_loop(stereo, loop_samples, tail_samples)
+    looped = make_seamless_loop(stereo, loop_samples, tail_samples)
 
-    peak = np.max(np.abs(looped_stereo))
+    peak = np.max(np.abs(looped))
     if peak > 0:
-        looped_stereo = (looped_stereo / peak) * 0.88
+        looped = (looped / peak) * 0.72
 
-    return looped_stereo, sr
+    return looped, sr
 
 
-def export_audio_to_ogg(stereo_data, sr, base_filename):
+def export_audio_to_ogg(stereo_data, sr, base_filename, lpf_cutoff=4200):
     wav_path = f"/tmp/{base_filename}.wav"
     ogg_path = os.path.join(ASSETS_AUDIO_DIR, f"{base_filename}.ogg")
 
@@ -369,12 +413,21 @@ def export_audio_to_ogg(stereo_data, sr, base_filename):
         wf.setframerate(sr)
         wf.writeframes(interleaved.tobytes())
 
+    # Studio-grade mastering chain via FFmpeg
+    af_chain = (
+        f"lowpass=f={lpf_cutoff},"
+        "highpass=f=28,"
+        "stereowiden=70,"
+        "acompressor=threshold=-18dB:ratio=2.5:attack=10:release=120"
+    )
+
     cmd = [
         "ffmpeg", "-y", "-i", wav_path,
+        "-af", af_chain,
         "-c:a", "libvorbis", "-q:a", "4",
         ogg_path
     ]
-    subprocess.run(cmd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    subprocess.run(cmd, check=True)
     if os.path.exists(wav_path):
         os.remove(wav_path)
     sz = os.path.getsize(ogg_path)
@@ -382,11 +435,11 @@ def export_audio_to_ogg(stereo_data, sr, base_filename):
 
 
 if __name__ == "__main__":
-    print("Synthesizing Lo-Fi Warehouse Shift...")
+    print("Generating Studio-Grade 'Warehouse Chill' (Lo-Fi Study / Puzzle Beats)...")
     lofi_audio, sr = generate_lofi_track()
-    export_audio_to_ogg(lofi_audio, sr, "bgm_lofi_shift")
+    export_audio_to_ogg(lofi_audio, sr, "bgm_lofi_shift", lpf_cutoff=4200)
 
-    print("Synthesizing Industrial Pulse...")
+    print("Generating Studio-Grade 'Industrial Pulse' (Ambient Warehouse Soundscape)...")
     ind_audio, sr = generate_industrial_track()
-    export_audio_to_ogg(ind_audio, sr, "bgm_industrial_pulse")
-    print("Done generating BGM tracks.")
+    export_audio_to_ogg(ind_audio, sr, "bgm_industrial_pulse", lpf_cutoff=4600)
+    print("All BGM tracks rendered successfully!")

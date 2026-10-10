@@ -190,6 +190,22 @@ func test_bgm_system() -> void:
 	assert_true(audio_mgr.is_music_enabled(), "Reports music re-enabled")
 	assert_true(mock_save.music_enabled, "SaveManager music_enabled is true")
 
+	# 7. Dynamic Ducking & Unducking
+	assert_true(audio_mgr.has_method("duck_music"), "AudioManager has duck_music method")
+	assert_true(audio_mgr.has_method("unduck_music"), "AudioManager has unduck_music method")
+	var base_db: float = audio_mgr.get_effective_music_volume_db()
+	audio_mgr.duck_music(-18.0, 0.0)
+	assert_equal(audio_mgr._duck_offset_db, -18.0, "Ducking offset set to -18 dB")
+	var ducked_db: float = audio_mgr.get_effective_music_volume_db()
+	assert_true(ducked_db < base_db, "Effective volume lower when ducked")
+	audio_mgr.unduck_music(0.0)
+	assert_equal(audio_mgr._duck_offset_db, 0.0, "Ducking offset restored to 0 dB")
+	assert_equal(audio_mgr.get_effective_music_volume_db(), base_db, "Effective volume restored after unducking")
+
+	# 8. Fade in & out
+	assert_true(audio_mgr.has_method("fade_out_music"), "AudioManager has fade_out_music method")
+	assert_true(audio_mgr.has_method("fade_in_music"), "AudioManager has fade_in_music method")
+
 	audio_mgr.stop_music()
 	audio_mgr.queue_free()
 	mock_save.queue_free()
