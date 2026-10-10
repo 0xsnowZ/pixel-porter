@@ -257,6 +257,16 @@ func _show_level_select() -> void:
 	_refresh_level_grid_buttons()
 
 
+func _animate_modal_open(modal: Control) -> void:
+	if modal == null:
+		return
+	modal.show()
+	modal.pivot_offset = modal.size / 2.0
+	modal.scale = Vector2(0.90, 0.90)
+	var tw: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(modal, "scale", Vector2.ONE, 0.20)
+
+
 func _show_credits() -> void:
 	if audio_mgr:
 		audio_mgr.play_click()
@@ -266,7 +276,7 @@ func _show_credits() -> void:
 		locker_modal.hide()
 	if achievements_modal:
 		achievements_modal.hide()
-	credits_modal.show()
+	_animate_modal_open(credits_modal)
 
 
 func _hide_credits() -> void:
@@ -285,7 +295,7 @@ func _show_settings() -> void:
 		achievements_modal.hide()
 	if settings_modal:
 		_update_settings_ui()
-		settings_modal.show()
+		_animate_modal_open(settings_modal)
 
 
 func _hide_settings() -> void:
@@ -310,7 +320,7 @@ func _show_locker() -> void:
 		achievements_modal.hide()
 	if locker_modal:
 		_refresh_locker_ui()
-		locker_modal.show()
+		_animate_modal_open(locker_modal)
 
 
 func _hide_locker() -> void:
@@ -335,7 +345,7 @@ func _show_achievements() -> void:
 		locker_modal.hide()
 	if achievements_modal:
 		_refresh_achievements_ui()
-		achievements_modal.show()
+		_animate_modal_open(achievements_modal)
 
 
 func _hide_achievements() -> void:

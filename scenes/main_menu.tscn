@@ -33,7 +33,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.06, 0.08, 0.12, 0.68)
+color = Color(0.04, 0.06, 0.10, 0.74)
 
 [node name="MainView" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -61,7 +61,10 @@ stretch_mode = 5
 [node name="GameSubtitle" type="Label" parent="MainView/Header"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.82, 0.35, 1)
-theme_override_font_sizes/font_size = 13
+theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
+theme_override_constants/shadow_offset_x = 1
+theme_override_constants/shadow_offset_y = 2
+theme_override_font_sizes/font_size = 14
 text = "★ A CLASSIC SOKOBAN PUZZLE ★"
 horizontal_alignment = 1
 
@@ -82,68 +85,68 @@ theme_override_constants/separation = 11
 alignment = 1
 
 [node name="ContinueBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 52)
+custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 19
 text = "CONTINUE (LEVEL 1)"
 
 [node name="PlayBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 52)
+custom_minimum_size = Vector2(280, 56)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 19
 text = "PLAY"
 
 [node name="LevelSelectBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 50)
+custom_minimum_size = Vector2(280, 50)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 17
 text = "LEVEL SELECT"
 
 [node name="LockerBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 48)
+custom_minimum_size = Vector2(280, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "PORTER LOCKER 🦺"
 
 [node name="AchievementsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 48)
+custom_minimum_size = Vector2(280, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "ACHIEVEMENTS 🏆"
 
 [node name="SettingsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 48)
+custom_minimum_size = Vector2(280, 48)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 16
 text = "SETTINGS ⚙"
 
 [node name="HapticsToggleBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 48)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 16
-text = "HAPTICS: ON"
-
-[node name="LanguageBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 48)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 16
-text = "LANGUAGE: English"
-
-[node name="CreditsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(270, 44)
+custom_minimum_size = Vector2(280, 46)
 layout_mode = 2
 size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 15
+text = "HAPTICS: ON"
+
+[node name="LanguageBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(280, 46)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 15
+text = "LANGUAGE: English"
+
+[node name="CreditsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
+custom_minimum_size = Vector2(280, 44)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_font_sizes/font_size = 14
 text = "CREDITS"
 
 [node name="Footer" type="Label" parent="MainView"]

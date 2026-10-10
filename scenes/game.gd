@@ -648,7 +648,11 @@ func _on_level_won() -> void:
 		var tw_blur: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw_blur.tween_property(win_blur_overlay, "modulate:a", 1.0, 0.25)
 
+	win_modal.pivot_offset = win_modal.size / 2.0
+	win_modal.scale = Vector2(0.88, 0.88)
 	win_modal.show()
+	var tw_modal: Tween = create_tween().set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw_modal.tween_property(win_modal, "scale", Vector2.ONE, 0.24)
 	_animate_stars_sequence(stars, earned_stars, gold_color)
 
 
@@ -1821,4 +1825,3 @@ func _show_achievement_toast(info: Dictionary) -> void:
 		audio_mgr.play_win()
 	if haptic_mgr:
 		haptic_mgr.vibrate_target()
-
