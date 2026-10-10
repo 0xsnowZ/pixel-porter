@@ -1138,25 +1138,25 @@ func _draw_player(rect: Rect2) -> void:
 		x_offset = -radius * 0.04
 	elif player_facing_dir == Vector2i.RIGHT:
 		x_offset = radius * 0.04
-	var shadow_center: Vector2 = Vector2(center.x + x_offset, rect.position.y + rect.size.y * 0.93)
+	var shadow_center: Vector2 = Vector2(center.x + x_offset, rect.position.y + rect.size.y * 0.94)
 
 	# 1. Outer soft ambient shadow
 	var pts_outer: PackedVector2Array = []
-	var rx_outer: float = radius * 0.42
-	var ry_outer: float = radius * 0.13
+	var rx_outer: float = radius * 0.54
+	var ry_outer: float = radius * 0.18
 	for i in range(16):
 		var a: float = i * (TAU / 16.0)
 		pts_outer.append(shadow_center + Vector2(cos(a) * rx_outer, sin(a) * ry_outer))
-	draw_colored_polygon(pts_outer, Color(0.0, 0.0, 0.0, 0.18))
+	draw_colored_polygon(pts_outer, Color(0.0, 0.0, 0.0, 0.22))
 
 	# 2. Inner core contact shadow (tight under soles)
 	var pts_inner: PackedVector2Array = []
-	var rx_inner: float = radius * 0.32
-	var ry_inner: float = radius * 0.08
+	var rx_inner: float = radius * 0.40
+	var ry_inner: float = radius * 0.11
 	for i in range(16):
 		var a: float = i * (TAU / 16.0)
 		pts_inner.append(shadow_center + Vector2(cos(a) * rx_inner, sin(a) * ry_inner))
-	draw_colored_polygon(pts_inner, Color(0.0, 0.0, 0.0, 0.28))
+	draw_colored_polygon(pts_inner, Color(0.0, 0.0, 0.0, 0.32))
 
 	# Pick directional sprite (idle vs walk cycle frame 1/2)
 	var p_tex: Texture2D = tex_player_down

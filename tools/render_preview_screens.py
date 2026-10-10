@@ -230,13 +230,13 @@ def render_gameplay_preview():
                     s_draw = ImageDraw.Draw(s_layer)
                     rad = tile_sz / 2.0
                     sc_x = rad
-                    sc_y = tile_sz * 0.93
+                    sc_y = tile_sz * 0.94
                     # Outer soft ambient shadow
-                    rx_o, ry_o = rad * 0.42, rad * 0.13
-                    s_draw.ellipse([sc_x - rx_o, sc_y - ry_o, sc_x + rx_o, sc_y + ry_o], fill=(0, 0, 0, 46))
+                    rx_o, ry_o = rad * 0.54, rad * 0.18
+                    s_draw.ellipse([sc_x - rx_o, sc_y - ry_o, sc_x + rx_o, sc_y + ry_o], fill=(0, 0, 0, 56))
                     # Inner core contact shadow
-                    rx_i, ry_i = rad * 0.32, rad * 0.08
-                    s_draw.ellipse([sc_x - rx_i, sc_y - ry_i, sc_x + rx_i, sc_y + ry_i], fill=(0, 0, 0, 72))
+                    rx_i, ry_i = rad * 0.40, rad * 0.11
+                    s_draw.ellipse([sc_x - rx_i, sc_y - ry_i, sc_x + rx_i, sc_y + ry_i], fill=(0, 0, 0, 82))
                     game_img.alpha_composite(s_layer, (tx, ty))
                     game_img.alpha_composite(tex_player, (tx, ty))
 
@@ -270,11 +270,11 @@ def preview_shadow_comparison(tile_sz):
         s_draw = ImageDraw.Draw(s_layer)
         rad = tile_sz / 2.0
         sc_x = rad + (-rad * 0.04 if is_left else 0.0)
-        sc_y = tile_sz * 0.93
-        rx_o, ry_o = rad * 0.42, rad * 0.13
-        s_draw.ellipse([sc_x - rx_o, sc_y - ry_o, sc_x + rx_o, sc_y + ry_o], fill=(0, 0, 0, 50))
-        rx_i, ry_i = rad * 0.32, rad * 0.08
-        s_draw.ellipse([sc_x - rx_i, sc_y - ry_i, sc_x + rx_i, sc_y + ry_i], fill=(0, 0, 0, 80))
+        sc_y = tile_sz * 0.94
+        rx_o, ry_o = rad * 0.54, rad * 0.18
+        s_draw.ellipse([sc_x - rx_o, sc_y - ry_o, sc_x + rx_o, sc_y + ry_o], fill=(0, 0, 0, 56))
+        rx_i, ry_i = rad * 0.40, rad * 0.11
+        s_draw.ellipse([sc_x - rx_i, sc_y - ry_i, sc_x + rx_i, sc_y + ry_i], fill=(0, 0, 0, 82))
         comp_img.alpha_composite(s_layer, (bx, by))
         # Character
         comp_img.alpha_composite(p_tex, (bx, by))
