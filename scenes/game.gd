@@ -31,6 +31,70 @@ var grid_origin: Vector2 = Vector2.ZERO
 var player_facing_dir: Vector2i = Vector2i.DOWN
 var win_particles: Array[Dictionary] = []
 
+# 3 Logistics Chapters & Visual Progression (PRD Phase 2)
+# Ch 0: Cargo Bay (Levels 1–15, idx 0–14)
+# Ch 1: Cold Storage (Levels 16–35, idx 15–34)
+# Ch 2: Cyber Depot (Levels 36–50, idx 35–49)
+const CHAPTER_THEMES: Array[Dictionary] = [
+	{
+		"id": 0,
+		"name": "Cargo Bay",
+		"icon": "📦",
+		"frame_base": Color(0.12, 0.15, 0.20),
+		"frame_rim": Color(0.78, 0.60, 0.22),
+		"frame_groove": Color(0.06, 0.08, 0.12),
+		"bolt_dark": Color(0.12, 0.09, 0.05),
+		"bolt_core": Color(0.92, 0.74, 0.28),
+		"bolt_specular": Color(1.0, 0.95, 0.70),
+		"floor_tint": Color(1.0, 1.0, 1.0),
+		"wall_tint": Color(1.0, 1.0, 1.0),
+		"goal_aura": Color(0.98, 0.82, 0.20),
+		"goal_core": Color(1.0, 1.0, 0.85, 0.90),
+		"crate_tint": Color(1.0, 1.0, 1.0),
+		"dim_color": Color(0.02, 0.03, 0.06, 0.40),
+		"badge_color": Color(0.98, 0.82, 0.25)
+	},
+	{
+		"id": 1,
+		"name": "Cold Storage",
+		"icon": "❄",
+		"frame_base": Color(0.08, 0.14, 0.22),
+		"frame_rim": Color(0.35, 0.82, 1.00),
+		"frame_groove": Color(0.04, 0.07, 0.14),
+		"bolt_dark": Color(0.04, 0.08, 0.15),
+		"bolt_core": Color(0.55, 0.90, 1.00),
+		"bolt_specular": Color(0.88, 0.96, 1.00),
+		"floor_tint": Color(0.82, 0.92, 1.00),
+		"wall_tint": Color(0.80, 0.90, 1.00),
+		"goal_aura": Color(0.25, 0.85, 1.00),
+		"goal_core": Color(0.85, 0.98, 1.00, 0.95),
+		"crate_tint": Color(0.92, 0.96, 1.00),
+		"dim_color": Color(0.02, 0.06, 0.12, 0.45),
+		"badge_color": Color(0.35, 0.85, 1.00)
+	},
+	{
+		"id": 2,
+		"name": "Cyber Depot",
+		"icon": "⚡",
+		"frame_base": Color(0.06, 0.07, 0.10),
+		"frame_rim": Color(1.00, 0.65, 0.18),
+		"frame_groove": Color(0.03, 0.04, 0.06),
+		"bolt_dark": Color(0.05, 0.04, 0.02),
+		"bolt_core": Color(1.00, 0.72, 0.24),
+		"bolt_specular": Color(1.00, 0.92, 0.65),
+		"floor_tint": Color(0.88, 0.88, 0.94),
+		"wall_tint": Color(0.78, 0.76, 0.86),
+		"goal_aura": Color(0.20, 1.00, 0.55),
+		"goal_core": Color(0.75, 1.00, 0.85, 0.95),
+		"crate_tint": Color(1.00, 0.94, 0.90),
+		"dim_color": Color(0.05, 0.04, 0.08, 0.45),
+		"badge_color": Color(1.00, 0.65, 0.20)
+	}
+]
+
+var current_chapter_idx: int = 0
+var _last_loaded_chapter: int = -1
+
 # Juice & Micro-interaction state
 var board_trauma: float = 0.0
 var board_shake_offset: Vector2 = Vector2.ZERO
@@ -66,6 +130,7 @@ const SWIPE_THRESHOLD_PIXELS: float = 30.0
 @onready var menu_button: Button = $TopBar/Margin/HBox/MenuBtn
 @onready var music_button: Button = find_child("MusicBtn", true, false) as Button
 @onready var control_button: Button = find_child("ControlBtn", true, false) as Button
+@onready var chapter_badge: Label = find_child("ChapterBadge", true, false) as Label
 @onready var dpad_overlay: Control = find_child("DPadOverlay", true, false) as Control
 @onready var dpad_up: Button = find_child("DPadUp", true, false) as Button
 @onready var dpad_down: Button = find_child("DPadDown", true, false) as Button
@@ -130,6 +195,10 @@ func _initialize_nodes() -> void:
 			music_button = $TopBar/Margin/HBox/MusicBtn
 		if has_node("TopBar/Margin/HBox/ControlBtn"):
 			control_button = $TopBar/Margin/HBox/ControlBtn
+		if has_node("TopBar/Margin/HBox/ChapterBadge"):
+			chapter_badge = $TopBar/Margin/HBox/ChapterBadge
+		elif chapter_badge == null:
+			chapter_badge = find_child("ChapterBadge", true, false) as Label
 		dpad_overlay = find_child("DPadOverlay", true, false) as Control
 		dpad_up = find_child("DPadUp", true, false) as Button
 		dpad_down = find_child("DPadDown", true, false) as Button
@@ -295,12 +364,49 @@ func _on_safe_area_changed(_insets: Dictionary) -> void:
 	_apply_safe_area()
 
 
+func get_chapter_index(level_idx: int = -1) -> int:
+	var l_idx: int = current_level_index if level_idx < 0 else level_idx
+	if save_mgr and save_mgr.has_method("get_chapter_index"):
+		return save_mgr.get_chapter_index(l_idx)
+	if l_idx < 15:
+		return 0
+	elif l_idx < 35:
+		return 1
+	return 2
+
+
+func get_current_chapter_theme() -> Dictionary:
+	var idx: int = clampi(current_chapter_idx, 0, CHAPTER_THEMES.size() - 1)
+	return CHAPTER_THEMES[idx]
+
+
+func announce_chapter(ch_idx: int) -> void:
+	var ch: Dictionary = CHAPTER_THEMES[clampi(ch_idx, 0, CHAPTER_THEMES.size() - 1)]
+	var ch_key: String = "CHAPTER_%d_TITLE" % ch_idx
+	var ch_title: String = loc_mgr.tr_text(ch_key) if loc_mgr else ch["name"]
+	var toast_msg: String = loc_mgr.tr_text("CHAPTER_TOAST", [ch_idx + 1, ch_title]) if loc_mgr else ("★ CHAPTER %d: %s ★" % [ch_idx + 1, ch_title])
+	_show_hint_toast(toast_msg, ch["badge_color"])
+
+
 func load_level(index: int) -> void:
 	var target_index: int = clampi(index, 0, level_paths.size() - 1)
 	if save_mgr and not save_mgr.is_level_unlocked(target_index):
 		return
 
+	var prev_ch: int = current_chapter_idx
 	current_level_index = target_index
+	current_chapter_idx = get_chapter_index(current_level_index)
+	var ch: Dictionary = get_current_chapter_theme()
+
+	if has_node("DimOverlay"):
+		var dim: ColorRect = get_node("DimOverlay") as ColorRect
+		if dim:
+			dim.color = ch["dim_color"]
+
+	if _last_loaded_chapter != -1 and prev_ch != current_chapter_idx:
+		announce_chapter(current_chapter_idx)
+	_last_loaded_chapter = current_chapter_idx
+
 	if save_mgr:
 		save_mgr.last_played_level = current_level_index
 
@@ -348,6 +454,11 @@ func _update_ui() -> void:
 		var rec: Dictionary = save_mgr.get_level_record(current_level_index)
 		var best_m: int = rec.get("best_moves", 0)
 		best_str = " | %s" % (loc_mgr.tr_text("GAME_BEST", [best_m]) if loc_mgr else "BEST: %d" % best_m)
+
+	if chapter_badge != null:
+		var ch_info: Dictionary = get_current_chapter_theme()
+		chapter_badge.text = "%s CH. %d" % [ch_info["icon"], current_chapter_idx + 1]
+		chapter_badge.modulate = ch_info["badge_color"]
 
 	if loc_mgr:
 		level_label.text = loc_mgr.tr_text("GAME_LEVEL_LABEL", [current_level_index + 1, level_paths.size()])
@@ -1117,8 +1228,9 @@ func _draw() -> void:
 	calculate_layout()
 	var effective_origin: Vector2 = grid_origin + board_shake_offset
 	var board_pixel_size: Vector2 = Vector2(grid.width * tile_size, grid.height * tile_size)
+	var ch: Dictionary = get_current_chapter_theme()
 
-	# 1. Industrial Warehouse Loading Bay Board Framing (PRD Section 4)
+	# 1. Industrial Warehouse Loading Bay Board Framing (PRD Section 4 & Phase 2 Themes)
 	var frame_margin: float = 12.0
 	var frame_rect: Rect2 = Rect2(
 		effective_origin - Vector2(frame_margin, frame_margin),
@@ -1129,14 +1241,14 @@ func _draw() -> void:
 	draw_rect(Rect2(frame_rect.position + Vector2(8, 10), frame_rect.size), Color(0.0, 0.0, 0.0, 0.65))
 	draw_rect(Rect2(frame_rect.position + Vector2(4, 5), frame_rect.size), Color(0.0, 0.0, 0.0, 0.40))
 
-	# Heavy dark steel frame base
-	draw_rect(frame_rect, Color(0.12, 0.15, 0.20))
-	# Polished brass bevel rim
-	draw_rect(frame_rect, Color(0.78, 0.60, 0.22), false, 2.5)
+	# Heavy chapter frame base
+	draw_rect(frame_rect, ch["frame_base"])
+	# Polished chapter bevel rim
+	draw_rect(frame_rect, ch["frame_rim"], false, 2.5)
 	# Inner dark groove
-	draw_rect(Rect2(effective_origin - Vector2(2, 2), board_pixel_size + Vector2(4, 4)), Color(0.06, 0.08, 0.12), false, 2.0)
+	draw_rect(Rect2(effective_origin - Vector2(2, 2), board_pixel_size + Vector2(4, 4)), ch["frame_groove"], false, 2.0)
 
-	# 4 Corner industrial brass bolts
+	# 4 Corner industrial chapter bolts
 	var corner_offsets: Array[Vector2] = [
 		Vector2(frame_margin * 0.5, frame_margin * 0.5),
 		Vector2(frame_rect.size.x - frame_margin * 0.5, frame_margin * 0.5),
@@ -1145,11 +1257,11 @@ func _draw() -> void:
 	]
 	for c_offset in corner_offsets:
 		var bolt_center: Vector2 = frame_rect.position + c_offset
-		draw_circle(bolt_center, 4.5, Color(0.12, 0.09, 0.05))
-		draw_circle(bolt_center, 3.5, Color(0.92, 0.74, 0.28))
-		draw_circle(bolt_center - Vector2(1.0, 1.0), 1.2, Color(1.0, 0.95, 0.70))
+		draw_circle(bolt_center, 4.5, ch["bolt_dark"])
+		draw_circle(bolt_center, 3.5, ch["bolt_core"])
+		draw_circle(bolt_center - Vector2(1.0, 1.0), 1.2, ch["bolt_specular"])
 
-	# 2. Draw Floor & Walls with 3D Depth
+	# 2. Draw Floor & Walls with 3D Depth & Chapter Tinting
 	for y in range(grid.height):
 		for x in range(grid.width):
 			var pos: Vector2i = Vector2i(x, y)
@@ -1160,25 +1272,29 @@ func _draw() -> void:
 			else:
 				var is_alt: bool = ((x + y) % 2 == 0)
 				var floor_tex: Texture2D = tex_floor_1 if is_alt else tex_floor_2
-				draw_texture_rect(floor_tex, rect, false)
+				draw_texture_rect(floor_tex, rect, false, ch["floor_tint"])
 
 				# 3D Depth Shadow: if cell above is a wall, cast drop shadow down
 				if y > 0 and grid.is_wall(Vector2i(x, y - 1)):
 					draw_rect(Rect2(rect.position, Vector2(rect.size.x, tile_size * 0.22)), Color(0.0, 0.0, 0.0, 0.42))
 
-	# 3. Draw Goals with Industrial Pressure Plate & Pulsing Aura
+	# 3. Draw Goals with Chapter Pressure Plate & Pulsing Aura
 	var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
 	var pulse: float = sin(time_sec * 3.5) * 0.12
+	var aura_col_base: Color = ch["goal_aura"]
+	var core_col: Color = ch["goal_core"]
 	for goal_pos in grid.goals.keys():
 		var rect: Rect2 = Rect2(effective_origin + Vector2(goal_pos) * tile_size, Vector2(tile_size, tile_size))
 		var center: Vector2 = rect.get_center()
 
 		draw_texture_rect(tex_goal, rect, false)
 
-		# Pulsing dynamic golden aura
+		# Pulsing dynamic chapter aura
 		var aura_radius: float = (tile_size * 0.26) * (1.0 + pulse)
-		draw_circle(center, aura_radius + 4.0, Color(0.98, 0.82, 0.20, 0.22 + pulse * 0.10))
-		draw_circle(center, 3.5, Color(1.0, 1.0, 0.85, 0.90))
+		var aura_color: Color = aura_col_base
+		aura_color.a = 0.22 + pulse * 0.10
+		draw_circle(center, aura_radius + 4.0, aura_color)
+		draw_circle(center, 3.5, core_col)
 
 	# 4. Draw Push Friction Dust Puffs
 	for dp in dust_particles:
@@ -1237,7 +1353,8 @@ func _draw() -> void:
 
 
 func _draw_wall(rect: Rect2) -> void:
-	draw_texture_rect(tex_wall, rect, false)
+	var ch: Dictionary = get_current_chapter_theme()
+	draw_texture_rect(tex_wall, rect, false, ch["wall_tint"])
 
 
 func _draw_crate(rect: Rect2, on_goal: bool, logical_pos: Vector2i = Vector2i.ZERO) -> void:
@@ -1250,13 +1367,17 @@ func _draw_crate(rect: Rect2, on_goal: bool, logical_pos: Vector2i = Vector2i.ZE
 	var scaled_sz: Vector2 = rect.size * scale_fac
 	var draw_r: Rect2 = Rect2(c_center - scaled_sz * 0.5, scaled_sz)
 
+	var ch: Dictionary = get_current_chapter_theme()
 	var c_tex: Texture2D = tex_crate_goal if on_goal else tex_crate
-	draw_texture_rect(c_tex, draw_r, false)
+	var c_mod: Color = Color(1.0, 1.0, 1.0) if on_goal else ch["crate_tint"]
+	draw_texture_rect(c_tex, draw_r, false, c_mod)
 
 	if on_goal:
 		var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
 		var star_pulse: float = sin(time_sec * 4.0) * 0.15
-		draw_circle(c_center, 8.0 * (1.0 + star_pulse), Color(1.0, 0.95, 0.5, 0.45))
+		var aura_spark: Color = ch["goal_aura"]
+		aura_spark.a = 0.45
+		draw_circle(c_center, 8.0 * (1.0 + star_pulse), aura_spark)
 
 
 func _draw_player(rect: Rect2) -> void:

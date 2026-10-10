@@ -22,6 +22,7 @@ func _init() -> void:
 	run_suite("Default State & Unlock Rules", test_defaults_and_unlocks)
 	run_suite("Score Recording & Best Move Tracking", test_score_recording)
 	run_suite("3-Star Rating Calculations & Tracking", test_star_rating_system)
+	run_suite("Warehouse Chapters Progression (Phase 2)", test_warehouse_chapters_progression)
 	run_suite("Persistence (Save & Load to Disk)", test_persistence)
 	run_suite("Corrupt & Missing File Resilience", test_corrupt_and_missing_file)
 
@@ -228,3 +229,41 @@ func test_corrupt_and_missing_file() -> void:
 	assert_false(corrupt_ok, "Loading corrupt JSON returns false gracefully")
 	DirAccess.remove_absolute(bad_path)
 	mgr.free()
+
+
+func test_warehouse_chapters_progression() -> void:
+	var mgr = SaveManagerScript.new()
+
+	# 1. Level to Chapter index mappings
+	assert_equal(mgr.get_chapter_index(0), 0, "Level 0 maps to Chapter 0 (Cargo Bay)")
+	assert_equal(mgr.get_chapter_index(14), 0, "Level 14 maps to Chapter 0 (Cargo Bay)")
+	assert_equal(mgr.get_chapter_index(15), 1, "Level 15 maps to Chapter 1 (Cold Storage)")
+	assert_equal(mgr.get_chapter_index(34), 1, "Level 34 maps to Chapter 1 (Cold Storage)")
+	assert_equal(mgr.get_chapter_index(35), 2, "Level 35 maps to Chapter 2 (Cyber Depot)")
+	assert_equal(mgr.get_chapter_index(49), 2, "Level 49 maps to Chapter 2 (Cyber Depot)")
+
+	# 2. Chapter metadata
+	var ch0: Dictionary = mgr.get_chapter_info(0)
+	assert_equal(ch0.get("name"), "Cargo Bay", "Chapter 0 is named Cargo Bay")
+	assert_equal(ch0.get("icon"), "📦", "Chapter 0 icon is 📦")
+	assert_equal(ch0.get("start_level"), 0, "Chapter 0 starts at 0")
+	assert_equal(ch0.get("end_level"), 14, "Chapter 0 ends at 14")
+
+	var ch1: Dictionary = mgr.get_chapter_info(1)
+	assert_equal(ch1.get("name"), "Cold Storage", "Chapter 1 is named Cold Storage")
+	assert_equal(ch1.get("icon"), "❄", "Chapter 1 icon is ❄")
+
+	var ch2: Dictionary = mgr.get_chapter_info(2)
+	assert_equal(ch2.get("name"), "Cyber Depot", "Chapter 2 is named Cyber Depot")
+	assert_equal(ch2.get("icon"), "⚡", "Chapter 2 icon is ⚡")
+
+	# 3. Chapter stars & completion tracking
+	assert_equal(mgr.get_chapter_stars(0), 0, "Initial Chapter 0 stars is 0")
+	assert_false(mgr.is_chapter_completed(0), "Initial Chapter 0 is not completed")
+
+	mgr.record_level_completion(0, 8, 3, TEST_SAVE_PATH)
+	assert_true(mgr.get_chapter_stars(0) >= 1, "Chapter 0 stars updated after completing level 0")
+	assert_false(mgr.is_chapter_completed(0), "Chapter 0 not completed until all 15 levels are done")
+
+	mgr.free()
+

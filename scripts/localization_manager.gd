@@ -137,6 +137,26 @@ const TRANSLATIONS: Dictionary = {
 		"fr": "CRÉDITS",
 		"ar": "حول اللعبة"
 	},
+	"CHAPTER_0_TITLE": {
+		"en": "Cargo Bay",
+		"fr": "Baie de chargement",
+		"ar": "خليج الشحن"
+	},
+	"CHAPTER_1_TITLE": {
+		"en": "Cold Storage",
+		"fr": "Chambre froide",
+		"ar": "التخزين البارد"
+	},
+	"CHAPTER_2_TITLE": {
+		"en": "Cyber Depot",
+		"fr": "Cyber Dépôt",
+		"ar": "المستودع الذكي"
+	},
+	"CHAPTER_TOAST": {
+		"en": "★ CHAPTER %d: %s ★",
+		"fr": "★ CHAPITRE %d : %s ★",
+		"ar": "★ الفصل %d: %s ★"
+	},
 	"GAME_LEVEL_LABEL": {
 		"en": "LEVEL %d / %d",
 		"fr": "NIVEAU %d / %d",

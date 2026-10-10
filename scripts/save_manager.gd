@@ -88,6 +88,47 @@ func get_total_stars() -> int:
 	return total
 
 
+# 3 Warehouse Logistics Chapters across 50 levels (PRD Phase 2)
+const CHAPTER_TIERS: Array[Dictionary] = [
+	{ "id": 0, "name": "Cargo Bay", "start_level": 0, "end_level": 14, "icon": "📦", "color": Color(0.98, 0.82, 0.25) },
+	{ "id": 1, "name": "Cold Storage", "start_level": 15, "end_level": 34, "icon": "❄", "color": Color(0.35, 0.85, 1.0) },
+	{ "id": 2, "name": "Cyber Depot", "start_level": 35, "end_level": 49, "icon": "⚡", "color": Color(1.0, 0.65, 0.20) }
+]
+
+
+func get_chapter_index(level_index: int) -> int:
+	if level_index < 15:
+		return 0
+	elif level_index < 35:
+		return 1
+	return 2
+
+
+func get_chapter_info(chapter_index: int) -> Dictionary:
+	var idx: int = clampi(chapter_index, 0, CHAPTER_TIERS.size() - 1)
+	return CHAPTER_TIERS[idx]
+
+
+func get_level_chapter_info(level_index: int) -> Dictionary:
+	return get_chapter_info(get_chapter_index(level_index))
+
+
+func get_chapter_stars(chapter_index: int) -> int:
+	var info: Dictionary = get_chapter_info(chapter_index)
+	var s: int = 0
+	for lvl in range(info["start_level"], info["end_level"] + 1):
+		s += get_level_stars(lvl)
+	return s
+
+
+func is_chapter_completed(chapter_index: int) -> bool:
+	var info: Dictionary = get_chapter_info(chapter_index)
+	for lvl in range(info["start_level"], info["end_level"] + 1):
+		if not is_level_completed(lvl):
+			return false
+	return true
+
+
 ## Records a level completion.
 ## Unlocks the next level (level_index + 1) and saves best scores and star rating.
 func record_level_completion(level_index: int, moves: int, pushes: int, file_path: String = "") -> void:

@@ -495,6 +495,10 @@ func _refresh_level_grid_buttons() -> void:
 		var is_unlocked: bool = is_available and (lvl_idx <= unlocked_lvl)
 		var is_completed: bool = save_mgr != null and save_mgr.is_level_completed(lvl_idx)
 
+		var ch_idx: int = save_mgr.get_chapter_index(lvl_idx) if (save_mgr != null and save_mgr.has_method("get_chapter_index")) else (0 if lvl_idx < 15 else (1 if lvl_idx < 35 else 2))
+		var ch_info: Dictionary = save_mgr.get_chapter_info(ch_idx) if (save_mgr != null and save_mgr.has_method("get_chapter_info")) else { "color": Color(1.0, 1.0, 1.0) }
+		var ch_col: Color = ch_info.get("color", Color(1.0, 1.0, 1.0))
+
 		if is_completed:
 			var record: Dictionary = save_mgr.get_level_record(lvl_idx)
 			var stars: int = record.get("stars", 1)
@@ -507,12 +511,12 @@ func _refresh_level_grid_buttons() -> void:
 			child.text = "%d\n%s" % [lvl_idx + 1, star_str]
 			child.disabled = false
 			child.theme_type_variation = &"LevelBtnCompleted"
-			child.modulate = Color(1.0, 1.0, 1.0)
+			child.modulate = Color(1.0, 1.0, 1.0).lerp(ch_col, 0.28)
 		elif is_unlocked:
 			child.text = "%d\n▶" % [lvl_idx + 1]
 			child.disabled = false
 			child.theme_type_variation = &"LevelBtnCurrent"
-			child.modulate = Color(1.0, 1.0, 1.0)
+			child.modulate = ch_col
 		else:
 			if is_available:
 				child.text = "%d\n🔒" % [lvl_idx + 1]
@@ -520,7 +524,7 @@ func _refresh_level_grid_buttons() -> void:
 				child.text = "%d\n—" % [lvl_idx + 1]
 			child.disabled = true
 			child.theme_type_variation = &"LevelBtnLocked"
-			child.modulate = Color(1.0, 1.0, 1.0)
+			child.modulate = Color(0.68, 0.72, 0.82, 0.75).lerp(ch_col, 0.15)
 
 
 func _on_level_button_pressed(level_index: int) -> void:
