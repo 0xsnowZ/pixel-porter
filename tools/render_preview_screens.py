@@ -493,8 +493,176 @@ def render_splash_screen_preview():
         print("Saved preview_splash_screen.png")
 
 
+def render_level_select_preview():
+    # Load warehouse background
+    bg_path = os.path.join(ASSETS_DIR, "warehouse_bg.jpg")
+    bg = Image.open(bg_path).convert("RGBA").resize((W, H))
+
+    # Dim vignette overlay
+    overlay = Image.new("RGBA", (W, H), (12, 16, 24, 210))
+    img = Image.alpha_composite(bg, overlay)
+    draw = ImageDraw.Draw(img)
+
+    f_title = get_font(20)
+    f_badge = get_font(14)
+    f_btn = get_font(15)
+    f_card_title = get_font(13)
+    f_sub = get_regular_font(12)
+    f_lvl_num = get_font(16)
+    f_lvl_sub = get_font(11)
+
+    # 1. Top Bar Panel
+    draw.rectangle([0, 0, W, 62], fill=(20, 28, 41, 245))
+    draw.line([(0, 62), (W, 62)], fill=(184, 138, 51), width=2)
+
+    # Back button: (16, 10, 106, 52)
+    draw_styled_button(draw, (16, 10, 106, 52), "← Back", is_primary=False, font=f_btn)
+
+    # Title: SELECT LEVEL (centered)
+    title_text = "SELECT LEVEL"
+    tb = f_title.getbbox(title_text)
+    tw = tb[2] - tb[0]
+    draw.text(((W - tw) // 2, 19), title_text, font=f_title, fill=(0, 0, 0, 200))
+    draw.text(((W - tw) // 2, 18), title_text, font=f_title, fill=(250, 218, 72))
+
+    # Total Stars Pill Badge: (418, 12, 524, 50)
+    draw.rounded_rectangle([418, 12, 524, 50], radius=8, fill=(18, 26, 38, 240), outline=(173, 133, 46), width=2)
+    draw.line([(426, 50), (516, 50)], fill=(140, 100, 30), width=1)
+    stars_pill_text = "★ 12/150"
+    spb = f_badge.getbbox(stars_pill_text)
+    spw = spb[2] - spb[0]
+    draw.text((418 + (106 - spw) // 2, 21), stars_pill_text, font=f_badge, fill=(0, 0, 0, 220))
+    draw.text((418 + (106 - spw) // 2, 20), stars_pill_text, font=f_badge, fill=(255, 224, 89))
+
+    # 2. Campaign Progress Card (under Top Bar)
+    cx0, cy0, cx1, cy1 = 18, 76, W - 18, 158
+    # Card shadow & body
+    draw.rounded_rectangle([cx0 + 2, cy0 + 3, cx1 + 2, cy1 + 3], radius=12, fill=(0, 0, 0, 130))
+    draw.rounded_rectangle([cx0, cy0, cx1, cy1], radius=12, fill=(20, 28, 41, 240), outline=(173, 128, 46), width=2)
+    draw.line([(cx0 + 10, cy1), (cx1 - 10, cy1)], fill=(120, 85, 25), width=2)
+
+    # Card Header
+    camp_title = "★ WAREHOUSE CAMPAIGN ★"
+    draw.text((cx0 + 14, cy0 + 10), camp_title, font=f_card_title, fill=(250, 217, 89))
+    badge_text = "50 SECTORS"
+    bb = f_sub.getbbox(badge_text)
+    draw.text((cx1 - 14 - (bb[2] - bb[0]), cy0 + 11), badge_text, font=f_sub, fill=(184, 204, 235))
+
+    # Progress bar trough & fill
+    pbx0, pby0, pbx1, pby1 = cx0 + 14, cy0 + 34, cx1 - 14, cy0 + 44
+    draw.rounded_rectangle([pbx0, pby0, pbx1, pby1], radius=5, fill=(15, 20, 31), outline=(51, 64, 89), width=1)
+    # Fill: 12 / 150 stars = 8%
+    p_fill_w = int((pbx1 - pbx0) * (12.0 / 150.0))
+    draw.rounded_rectangle([pbx0 + 1, pby0 + 1, pbx0 + p_fill_w, pby1 - 1], radius=4, fill=(235, 166, 38))
+    draw.line([(pbx0 + 2, pby0 + 2), (pbx0 + p_fill_w - 2, pby0 + 2)], fill=(255, 220, 115), width=1)
+
+    # Footer sub-stats
+    draw.text((cx0 + 14, cy0 + 52), "★ 12 / 150 Stars Collected", font=f_sub, fill=(217, 230, 250))
+    cleared_text = "4/50 Cleared • 8%"
+    cb = f_sub.getbbox(cleared_text)
+    draw.text((cx1 - 14 - (cb[2] - cb[0]), cy0 + 52), cleared_text, font=f_sub, fill=(140, 166, 199))
+
+    # 3. 50-Level Grid (5 columns, starting at y = 172)
+    col_w = 88
+    row_h = 86
+    gap_x = 16
+    gap_y = 12
+    start_x = (W - (5 * col_w + 4 * gap_x)) // 2 # Centered grid
+    start_y = 172
+
+    # Level mock records:
+    # 1: 3★, 5m (Completed)
+    # 2: 3★, 3m (Completed)
+    # 3: 3★, 5m (Completed)
+    # 4: 3★, 7m (Completed)
+    # 5: ▶ Play (Current Unlocked)
+    # 6..50: 🔒 Locked
+    level_moves = {1: 5, 2: 3, 3: 5, 4: 7}
+
+    for idx in range(1, 51):
+        r = (idx - 1) // 5
+        c = (idx - 1) % 5
+        bx0 = start_x + c * (col_w + gap_x)
+        by0 = start_y + r * (row_h + gap_y)
+        bx1 = bx0 + col_w
+        by1 = by0 + row_h
+
+        # Don't draw beyond canvas
+        if by0 >= H:
+            break
+
+        if idx <= 4:
+            # Completed Level: Deep industrial slate + burnished gold bevel
+            draw.rounded_rectangle([bx0 + 1, by0 + 3, bx1 + 1, by1 + 3], radius=10, fill=(0, 0, 0, 90))
+            draw.rounded_rectangle([bx0, by0, bx1, by1], radius=10, fill=(28, 38, 56), outline=(199, 153, 56), width=2)
+            draw.line([(bx0 + 6, by1), (bx1 - 6, by1)], fill=(140, 102, 31), width=4)
+
+            # Top highlight
+            draw.line([(bx0 + 8, by0 + 2), (bx1 - 8, by0 + 2)], fill=(235, 204, 115), width=1)
+
+            # Level number
+            num_str = str(idx)
+            nb = f_lvl_num.getbbox(num_str)
+            nw = nb[2] - nb[0]
+            draw.text((bx0 + (col_w - nw)//2, by0 + 12), num_str, font=f_lvl_num, fill=(0, 0, 0, 200))
+            draw.text((bx0 + (col_w - nw)//2, by0 + 11), num_str, font=f_lvl_num, fill=(255, 240, 200))
+
+            # Sub: ★★★ 5m
+            sub_str = "★★★ %dm" % level_moves[idx]
+            sb = f_lvl_sub.getbbox(sub_str)
+            sw = sb[2] - sb[0]
+            draw.text((bx0 + (col_w - sw)//2, by0 + 48), sub_str, font=f_lvl_sub, fill=(0, 0, 0, 220))
+            draw.text((bx0 + (col_w - sw)//2, by0 + 47), sub_str, font=f_lvl_sub, fill=(250, 212, 77))
+
+        elif idx == 5:
+            # Current Active Level: Glowing Radiant Amber
+            draw.rounded_rectangle([bx0 + 1, by0 + 4, bx1 + 1, by1 + 4], radius=10, fill=(219, 138, 31, 140))
+            draw.rounded_rectangle([bx0, by0, bx1, by1], radius=10, fill=(219, 138, 31), outline=(255, 224, 122), width=2)
+            draw.line([(bx0 + 6, by1), (bx1 - 6, by1)], fill=(140, 77, 10), width=5)
+            # Top gleam
+            draw.line([(bx0 + 8, by0 + 2), (bx1 - 8, by0 + 2)], fill=(255, 245, 184), width=1)
+
+            # Level number
+            num_str = "5"
+            nb = f_lvl_num.getbbox(num_str)
+            nw = nb[2] - nb[0]
+            draw.text((bx0 + (col_w - nw)//2, by0 + 12), num_str, font=f_lvl_num, fill=(0, 0, 0, 200))
+            draw.text((bx0 + (col_w - nw)//2, by0 + 11), num_str, font=f_lvl_num, fill=(255, 255, 255))
+
+            # Play arrow ▶
+            play_str = "▶"
+            pb = f_lvl_num.getbbox(play_str)
+            pw = pb[2] - pb[0]
+            draw.text((bx0 + (col_w - pw)//2, by0 + 46), play_str, font=f_lvl_num, fill=(0, 0, 0, 200))
+            draw.text((bx0 + (col_w - pw)//2, by0 + 45), play_str, font=f_lvl_num, fill=(255, 255, 255))
+
+        else:
+            # Locked Levels: Crisp matte dark slate steel with subtle border and bronze lock
+            draw.rounded_rectangle([bx0 + 1, by0 + 2, bx1 + 1, by1 + 2], radius=10, fill=(0, 0, 0, 60))
+            draw.rounded_rectangle([bx0, by0, bx1, by1], radius=10, fill=(20, 26, 38, 235), outline=(46, 56, 77), width=1)
+            draw.line([(bx0 + 6, by1), (bx1 - 6, by1)], fill=(28, 36, 48), width=2)
+
+            # Subdued level number
+            num_str = str(idx)
+            nb = f_lvl_num.getbbox(num_str)
+            nw = nb[2] - nb[0]
+            draw.text((bx0 + (col_w - nw)//2, by0 + 14), num_str, font=f_lvl_num, fill=(112, 125, 148))
+
+            # Neat lock symbol
+            lock_str = "🔒"
+            lb = f_lvl_sub.getbbox(lock_str)
+            lw = lb[2] - lb[0]
+            draw.text((bx0 + (col_w - lw)//2, by0 + 48), lock_str, font=f_lvl_sub, fill=(184, 150, 77))
+
+    out_path = os.path.join(ARTIFACT_DIR, "preview_level_select.png")
+    img.save(out_path)
+    print("Saved preview_level_select.png")
+
+
 if __name__ == "__main__":
     render_main_menu_preview()
     render_gameplay_preview()
     render_splash_screen_preview()
     render_win_modal_preview()
+    render_level_select_preview()
+

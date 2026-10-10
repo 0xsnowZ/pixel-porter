@@ -423,8 +423,9 @@ func _build_level_grid() -> void:
 
 	for i in range(TOTAL_LEVELS_COUNT):
 		var btn: Button = Button.new()
-		btn.custom_minimum_size = Vector2(72, 72)
+		btn.custom_minimum_size = Vector2(86, 86)
 		btn.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		btn.add_theme_font_size_override("font_size", 14)
 		btn.set_meta("level_index", i)
 		btn.pressed.connect(_on_level_button_pressed.bind(i))
 		_attach_spring_physics(btn)
@@ -435,10 +436,30 @@ func _build_level_grid() -> void:
 
 func _refresh_level_grid_buttons() -> void:
 	var unlocked_lvl: int = save_mgr.unlocked_level if save_mgr else 0
+	var total_stars: int = save_mgr.get_total_stars() if save_mgr != null else 0
 
 	if has_node("LevelSelectView/TopBar/Margin/HBox/TotalStarsLabel") and save_mgr != null:
 		var stars_lbl = get_node("LevelSelectView/TopBar/Margin/HBox/TotalStarsLabel") as Label
-		stars_lbl.text = "★ %d/150" % save_mgr.get_total_stars()
+		stars_lbl.text = "★ %d/150" % total_stars
+
+	# Update Campaign Banner card if present
+	var pb: ProgressBar = find_child("ProgressBar", true, false) as ProgressBar
+	if pb != null:
+		pb.max_value = 150.0
+		pb.value = float(total_stars)
+
+	var stars_count_lbl: Label = find_child("StarsCountLabel", true, false) as Label
+	if stars_count_lbl != null:
+		stars_count_lbl.text = "★ %d / 150 Stars Collected" % total_stars
+
+	var completion_lbl: Label = find_child("CompletionLabel", true, false) as Label
+	if completion_lbl != null and save_mgr != null:
+		var completed_count: int = 0
+		for i in range(TOTAL_LEVELS_COUNT):
+			if save_mgr.is_level_completed(i):
+				completed_count += 1
+		var pct: int = int((float(completed_count) / float(TOTAL_LEVELS_COUNT)) * 100.0)
+		completion_lbl.text = "%d/50 Cleared • %d%%" % [completed_count, pct]
 
 	for child in level_grid.get_children():
 		if not child is Button:
@@ -460,12 +481,12 @@ func _refresh_level_grid_buttons() -> void:
 				_: star_str = "★"
 			child.text = "%d\n%s %dm" % [lvl_idx + 1, star_str, moves]
 			child.disabled = false
-			child.theme_type_variation = &"SuccessButton"
+			child.theme_type_variation = &"LevelBtnCompleted"
 			child.modulate = Color(1.0, 1.0, 1.0)
 		elif is_unlocked:
 			child.text = "%d\n▶" % [lvl_idx + 1]
 			child.disabled = false
-			child.theme_type_variation = &"PrimaryButton"
+			child.theme_type_variation = &"LevelBtnCurrent"
 			child.modulate = Color(1.0, 1.0, 1.0)
 		else:
 			if is_available:
@@ -473,8 +494,8 @@ func _refresh_level_grid_buttons() -> void:
 			else:
 				child.text = "%d\n—" % [lvl_idx + 1]
 			child.disabled = true
-			child.theme_type_variation = &"Button"
-			child.modulate = Color(0.65, 0.65, 0.70, 0.85)
+			child.theme_type_variation = &"LevelBtnLocked"
+			child.modulate = Color(1.0, 1.0, 1.0)
 
 
 func _on_level_button_pressed(level_index: int) -> void:
