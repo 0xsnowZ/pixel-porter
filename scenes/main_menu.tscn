@@ -65,7 +65,7 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 14
-text = "★ A CLASSIC SOKOBAN PUZZLE ★"
+text = "★ A RETRO CRATE PUZZLE ★"
 horizontal_alignment = 1
 
 [node name="ConsoleCard" type="PanelContainer" parent="MainView"]
