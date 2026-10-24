@@ -101,7 +101,7 @@ func _update_localized_text(val: float) -> void:
 			"SPLASH_INIT":
 				status_label.text = "INITIALIZING SYSTEM..."
 			"SPLASH_LEVELS":
-				status_label.text = "LOADING 50 PUZZLE LEVELS..."
+				status_label.text = "LOADING 50 SOKOBAN LEVELS..."
 			"SPLASH_READY":
 				status_label.text = "READY! TAP TO START"
 

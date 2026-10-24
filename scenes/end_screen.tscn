@@ -84,7 +84,7 @@ alignment = 1
 [node name="ThanksLabel" type="Label" parent="Margin/VBox/StatsPanel/PanelMargin/PanelVBox"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 15
-text = "Thank you for playing Pixel Porter!
+text = "Thank you for playing Pixel Sokoban: Warehouse Rush!
 You have mastered all 50 warehouse puzzles."
 horizontal_alignment = 1
 autowrap_mode = 2

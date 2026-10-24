@@ -167,7 +167,7 @@ func test_export_presets_configuration() -> void:
 
 	assert_true(content.contains("platform=\"Android\""), "Target platform is Android")
 	assert_true(content.contains("package/unique_name=\"com.pixelporter.game\""), "Package name is com.pixelporter.game")
-	assert_true(content.contains("package/name=\"Pixel Porter\""), "Application name is Pixel Porter")
+	assert_true(content.contains("package/name=\"Pixel Sokoban: Warehouse Rush\""), "Application name is Pixel Sokoban: Warehouse Rush")
 	assert_true(content.contains("screen/orientation=1"), "Screen orientation locked to Portrait (1)")
 	assert_true(content.contains("screen/immersive_mode=true"), "Immersive mode enabled")
 	assert_true(content.contains("permissions/vibrate=true"), "Haptics permission enabled (permissions/vibrate)")

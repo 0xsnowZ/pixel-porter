@@ -126,7 +126,7 @@ func _update_ui() -> void:
 		menu_btn.text = loc_mgr.tr_text("BTN_MAIN_MENU")
 	else:
 		title_label.text = "CAMPAIGN COMPLETED!"
-		thanks_label.text = "Thank you for playing Pixel Porter!\nYou have mastered all 50 warehouse puzzles."
+		thanks_label.text = "Thank you for playing Pixel Sokoban: Warehouse Rush!\nYou have mastered all 50 warehouse puzzles."
 		more_levels_label.text = "★ More levels coming soon! ★"
 		stats_label.text = "Levels Solved: %d / 50\nTotal Best Moves: %d\nTotal Best Pushes: %d" % [total_solved, total_moves, total_pushes]
 		level_select_btn.text = "Level Select"

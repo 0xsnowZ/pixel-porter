@@ -51,7 +51,7 @@ theme_override_constants/separation = 4
 alignment = 1
 
 [node name="LogoRect" type="TextureRect" parent="MainView/Header"]
-custom_minimum_size = Vector2(230, 230)
+custom_minimum_size = Vector2(250, 240)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = ExtResource("2_logo")
@@ -65,7 +65,7 @@ theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
 theme_override_font_sizes/font_size = 14
-text = "★ A RETRO CRATE PUZZLE ★"
+text = "★ RETRO WAREHOUSE SOKOBAN ★"
 horizontal_alignment = 1
 
 [node name="ConsoleCard" type="PanelContainer" parent="MainView"]
@@ -153,7 +153,7 @@ text = "CREDITS"
 layout_mode = 2
 theme_override_colors/font_color = Color(0.55, 0.60, 0.70, 1)
 theme_override_font_sizes/font_size = 12
-text = "Pixel Porter v1.0 • Android"
+text = "Pixel Sokoban: Warehouse Rush v1.0 • Android"
 horizontal_alignment = 1
 
 [node name="LevelSelectView" type="VBoxContainer" parent="."]
@@ -319,7 +319,7 @@ theme_override_font_sizes/font_size = 14
 text = "A retro box-pushing puzzle game.
 Built with Godot Engine 4.
 
-Design & Mechanics: Pixel Porter Team
+Design & Mechanics: Pixel Sokoban Team
 Pure logic solver and grid engine.
 Assets licensed under commercial open game licenses.
 

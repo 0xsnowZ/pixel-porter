@@ -161,8 +161,29 @@ func play_music(track_index: int = -1) -> void:
 	if stream != null and music_player != null:
 		music_player.stream = stream
 		music_player.volume_db = get_effective_music_volume_db()
-		if music_player.is_inside_tree():
+		if music_player.is_inside_tree() and DisplayServer.get_name() != "headless":
 			music_player.play()
+
+
+func _exit_tree() -> void:
+	cleanup()
+
+
+func _notification(what: int) -> void:
+	if what == NOTIFICATION_PREDELETE:
+		cleanup()
+
+
+func cleanup() -> void:
+	stop_music()
+	if music_player != null and is_instance_valid(music_player):
+		music_player.stop()
+		music_player.stream = null
+	for p in _players:
+		if is_instance_valid(p):
+			p.stop()
+			p.stream = null
+	_bgm_streams.clear()
 
 
 func stop_music() -> void:

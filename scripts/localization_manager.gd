@@ -353,9 +353,9 @@ const TRANSLATIONS: Dictionary = {
 		"ar": "جاري تهيئة النظام..."
 	},
 	"SPLASH_LEVELS": {
-		"en": "LOADING 50 PUZZLE LEVELS...",
-		"fr": "CHARGEMENT DE 50 NIVEAUX...",
-		"ar": "تحميل 50 مرحلة..."
+		"en": "LOADING 50 SOKOBAN LEVELS...",
+		"fr": "CHARGEMENT DE 50 NIVEAUX SOKOBAN...",
+		"ar": "تحميل 50 مرحلة سوكوبان..."
 	},
 	"SPLASH_READY": {
 		"en": "READY! TAP TO START",
@@ -423,14 +423,14 @@ const TRANSLATIONS: Dictionary = {
 		"ar": "لقد قمت بـ %d حركة. هل ترغب في إعادة هذا المستوى؟"
 	},
 	"CREDITS_TITLE": {
-		"en": "PIXEL PORTER CREDITS",
-		"fr": "CRÉDITS PIXEL PORTER",
-		"ar": "معلومات PIXEL PORTER"
+		"en": "PIXEL SOKOBAN CREDITS",
+		"fr": "CRÉDITS PIXEL SOKOBAN",
+		"ar": "معلومات PIXEL SOKOBAN"
 	},
 	"CREDITS_BODY": {
-		"en": "A retro box-pushing puzzle game.\nBuilt with Godot Engine 4.\n\nDesign & Logic: Pixel Porter Team\nSolver & generator verified solvable.\nOpen commercial game assets.\n\nThank you for playing!",
-		"fr": "Jeu de réflexion rétro de poussée de caisses.\nDéveloppé avec Godot Engine 4.\n\nDesign & Logique : Équipe Pixel Porter\nNiveaux vérifiés par solveur automatique.\nActifs sous licences libres commerciales.\n\nMerci d'avoir joué !",
-		"ar": "لعبة ألغاز ريترو كلاسيكية لدفع الصناديق.\nتم التطوير بواسطة محرك Godot 4.\n\nالتصميم والبرمجة: فريق Pixel Porter\nجميع المستويات تم حلها والتحقق منها برمجياً.\nالموارد مرخصة برخص تجارية مفتوحة.\n\nشكراً لك على اللعب!"
+		"en": "A retro box-pushing puzzle game.\nBuilt with Godot Engine 4.\n\nDesign & Logic: Pixel Sokoban Team\nSolver & generator verified solvable.\nOpen commercial game assets.\n\nThank you for playing!",
+		"fr": "Jeu de réflexion rétro de poussée de caisses.\nDéveloppé avec Godot Engine 4.\n\nDesign & Logique : Équipe Pixel Sokoban\nNiveaux vérifiés par solveur automatique.\nActifs sous licences libres commerciales.\n\nMerci d'avoir joué !",
+		"ar": "لعبة ألغاز ريترو كلاسيكية لدفع الصناديق.\nتم التطوير بواسطة محرك Godot 4.\n\nالتصميم والبرمجة: فريق Pixel Sokoban\nجميع المستويات تم حلها والتحقق منها برمجياً.\nالموارد مرخصة برخص تجارية مفتوحة.\n\nشكراً لك على اللعب!"
 	},
 	"BTN_CLOSE": {
 		"en": "Close",
@@ -448,9 +448,9 @@ const TRANSLATIONS: Dictionary = {
 		"ar": "اكتملت الحملة بنجاح!"
 	},
 	"END_THANKS": {
-		"en": "Thank you for playing Pixel Porter!\nYou have mastered all 50 warehouse puzzles.",
-		"fr": "Merci d'avoir joué à Pixel Porter !\nVous avez maîtrisé les 50 défis d'entrepôt.",
-		"ar": "شكراً لك على لعب Pixel Porter!\nلقد تمكنت من حل جميع ألغاز المستودع الـ 50."
+		"en": "Thank you for playing Pixel Sokoban: Warehouse Rush!\nYou have mastered all 50 warehouse puzzles.",
+		"fr": "Merci d'avoir joué à Pixel Sokoban: Warehouse Rush !\nVous avez maîtrisé les 50 défis d'entrepôt.",
+		"ar": "شكراً لك على لعب Pixel Sokoban: Warehouse Rush!\nلقد تمكنت من حل جميع ألغاز المستودع الـ 50."
 	},
 	"END_MORE_LEVELS": {
 		"en": "★ More levels coming soon! ★",
