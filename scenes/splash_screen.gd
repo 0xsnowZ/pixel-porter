@@ -94,16 +94,22 @@ func _update_localized_text(val: float) -> void:
 	else:
 		key = "SPLASH_READY"
 
+	var base_text: String = ""
 	if loc_mgr and loc_mgr.has_method("get_text"):
-		status_label.text = loc_mgr.get_text(key)
+		base_text = loc_mgr.get_text(key)
 	else:
 		match key:
 			"SPLASH_INIT":
-				status_label.text = "INITIALIZING SYSTEM..."
+				base_text = "INITIALIZING SYSTEM..."
 			"SPLASH_LEVELS":
-				status_label.text = "LOADING 50 SOKOBAN LEVELS..."
+				base_text = "LOADING 50 SOKOBAN LEVELS..."
 			"SPLASH_READY":
-				status_label.text = "READY! TAP TO START"
+				base_text = "READY! TAP TO START"
+
+	if val < 90.0:
+		status_label.text = "%s %d%%" % [base_text, int(val)]
+	else:
+		status_label.text = base_text
 
 
 func _start_prompt_pulse() -> void:
