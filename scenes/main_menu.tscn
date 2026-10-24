@@ -33,7 +33,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-color = Color(0.04, 0.06, 0.10, 0.74)
+color = Color(0.04, 0.06, 0.10, 0.45)
 
 [node name="MainView" type="VBoxContainer" parent="."]
 layout_mode = 1
@@ -42,117 +42,128 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-theme_override_constants/separation = 12
-alignment = 1
 
-[node name="Header" type="VBoxContainer" parent="MainView"]
+[node name="TopBarMargin" type="MarginContainer" parent="MainView"]
 layout_mode = 2
-theme_override_constants/separation = 4
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 10
+
+[node name="HBox" type="HBoxContainer" parent="MainView/TopBarMargin"]
+layout_mode = 2
 alignment = 1
 
-[node name="LogoRect" type="TextureRect" parent="MainView/Header"]
-custom_minimum_size = Vector2(250, 240)
+[node name="StarProgressBtn" type="Button" parent="MainView/TopBarMargin/HBox"]
+custom_minimum_size = Vector2(170, 42)
+layout_mode = 2
+theme_type_variation = &"TopBarButton"
+theme_override_colors/font_color = Color(0.98, 0.85, 0.28, 1)
+theme_override_font_sizes/font_size = 13
+text = "★ 0/150 • Sector 1"
+
+[node name="Spacer" type="Control" parent="MainView/TopBarMargin/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="QuickBar" type="HBoxContainer" parent="MainView/TopBarMargin/HBox"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="QuickLangBtn" type="Button" parent="MainView/TopBarMargin/HBox/QuickBar"]
+custom_minimum_size = Vector2(44, 42)
+layout_mode = 2
+theme_type_variation = &"TopBarButton"
+theme_override_font_sizes/font_size = 13
+text = "🌐 EN"
+
+[node name="AchievementsBtn" type="Button" parent="MainView/TopBarMargin/HBox/QuickBar"]
+custom_minimum_size = Vector2(44, 42)
+layout_mode = 2
+theme_type_variation = &"TopBarButton"
+theme_override_font_sizes/font_size = 14
+text = "🏆"
+
+[node name="SettingsBtn" type="Button" parent="MainView/TopBarMargin/HBox/QuickBar"]
+custom_minimum_size = Vector2(44, 42)
+layout_mode = 2
+theme_type_variation = &"TopBarButton"
+theme_override_font_sizes/font_size = 14
+text = "⚙"
+
+[node name="CenterStage" type="VBoxContainer" parent="MainView"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 8
+alignment = 1
+
+[node name="LogoRect" type="TextureRect" parent="MainView/CenterStage"]
+custom_minimum_size = Vector2(300, 168)
 layout_mode = 2
 size_flags_horizontal = 4
 texture = ExtResource("2_logo")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="GameSubtitle" type="Label" parent="MainView/Header"]
+[node name="GameSubtitle" type="Label" parent="MainView/CenterStage"]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.96, 0.82, 0.35, 1)
 theme_override_colors/font_shadow_color = Color(0, 0, 0, 0.85)
 theme_override_constants/shadow_offset_x = 1
 theme_override_constants/shadow_offset_y = 2
-theme_override_font_sizes/font_size = 14
+theme_override_font_sizes/font_size = 13
 text = "★ RETRO WAREHOUSE SOKOBAN ★"
 horizontal_alignment = 1
 
-[node name="ConsoleCard" type="PanelContainer" parent="MainView"]
+[node name="BottomMargin" type="MarginContainer" parent="MainView"]
 layout_mode = 2
-size_flags_horizontal = 4
+theme_override_constants/margin_left = 32
+theme_override_constants/margin_right = 32
+theme_override_constants/margin_bottom = 24
 
-[node name="Margin" type="MarginContainer" parent="MainView/ConsoleCard"]
+[node name="ActionDeck" type="VBoxContainer" parent="MainView/BottomMargin"]
 layout_mode = 2
-theme_override_constants/margin_left = 18
-theme_override_constants/margin_top = 16
-theme_override_constants/margin_right = 18
-theme_override_constants/margin_bottom = 16
-
-[node name="Buttons" type="VBoxContainer" parent="MainView/ConsoleCard/Margin"]
-layout_mode = 2
-theme_override_constants/separation = 11
+theme_override_constants/separation = 12
 alignment = 1
 
-[node name="ContinueBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 56)
+[node name="ContinueBtn" type="Button" parent="MainView/BottomMargin/ActionDeck"]
+custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 18
 text = "CONTINUE (LEVEL 1)"
 
-[node name="PlayBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 56)
+[node name="PlayBtn" type="Button" parent="MainView/BottomMargin/ActionDeck"]
+custom_minimum_size = Vector2(0, 58)
 layout_mode = 2
-size_flags_horizontal = 4
+size_flags_horizontal = 3
 theme_type_variation = &"PrimaryButton"
-theme_override_font_sizes/font_size = 19
+theme_override_font_sizes/font_size = 18
 text = "PLAY"
 
-[node name="LevelSelectBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 50)
+[node name="DualDeck" type="HBoxContainer" parent="MainView/BottomMargin/ActionDeck"]
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 17
+theme_override_constants/separation = 12
+
+[node name="LevelSelectBtn" type="Button" parent="MainView/BottomMargin/ActionDeck/DualDeck"]
+custom_minimum_size = Vector2(0, 50)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
 text = "LEVEL SELECT"
 
-[node name="LockerBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 48)
+[node name="LockerBtn" type="Button" parent="MainView/BottomMargin/ActionDeck/DualDeck"]
+custom_minimum_size = Vector2(0, 50)
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 16
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 15
 text = "PORTER LOCKER 🦺"
 
-[node name="AchievementsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 48)
+[node name="Footer" type="Label" parent="MainView/BottomMargin/ActionDeck"]
 layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 16
-text = "ACHIEVEMENTS 🏆"
-
-[node name="SettingsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 48)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 16
-text = "SETTINGS ⚙"
-
-[node name="HapticsToggleBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 46)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 15
-text = "HAPTICS: ON"
-
-[node name="LanguageBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 46)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 15
-text = "LANGUAGE: English"
-
-[node name="CreditsBtn" type="Button" parent="MainView/ConsoleCard/Margin/Buttons"]
-custom_minimum_size = Vector2(280, 44)
-layout_mode = 2
-size_flags_horizontal = 4
-theme_override_font_sizes/font_size = 14
-text = "CREDITS"
-
-[node name="Footer" type="Label" parent="MainView"]
-layout_mode = 2
-theme_override_colors/font_color = Color(0.55, 0.60, 0.70, 1)
-theme_override_font_sizes/font_size = 12
+theme_override_colors/font_color = Color(0.55, 0.60, 0.70, 0.85)
+theme_override_font_sizes/font_size = 11
 text = "Pixel Sokoban: Warehouse Rush v1.0 • Android"
 horizontal_alignment = 1
 
@@ -438,6 +449,24 @@ custom_minimum_size = Vector2(0, 40)
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "CONTROLS: SWIPE"
+
+[node name="HapticsToggleBtn" type="Button" parent="SettingsModal/Margin/VBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "HAPTICS: ON"
+
+[node name="LanguageBtn" type="Button" parent="SettingsModal/Margin/VBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "LANGUAGE: English"
+
+[node name="CreditsBtn" type="Button" parent="SettingsModal/Margin/VBox"]
+custom_minimum_size = Vector2(0, 38)
+layout_mode = 2
+theme_override_font_sizes/font_size = 14
+text = "★ VIEW CREDITS ★"
 
 [node name="CloseSettingsBtn" type="Button" parent="SettingsModal/Margin/VBox"]
 custom_minimum_size = Vector2(160, 44)

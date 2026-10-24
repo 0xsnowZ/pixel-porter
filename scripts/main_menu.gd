@@ -26,15 +26,15 @@ var achievement_mgr: Node = null
 @onready var settings_modal: PanelContainer = find_child("SettingsModal", true, false) as PanelContainer
 
 # Main View buttons
-@onready var continue_btn: Button = _find_button("ContinueBtn", "MainView/Buttons/ContinueBtn")
-@onready var play_btn: Button = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
-@onready var level_select_btn: Button = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
-@onready var settings_btn: Button = _find_button("SettingsBtn", "MainView/Buttons/SettingsBtn")
+@onready var continue_btn: Button = _find_button("ContinueBtn", "MainView/BottomMargin/ActionDeck/ContinueBtn")
+@onready var play_btn: Button = _find_button("PlayBtn", "MainView/BottomMargin/ActionDeck/PlayBtn")
+@onready var level_select_btn: Button = _find_button("LevelSelectBtn", "MainView/BottomMargin/ActionDeck/DualDeck/LevelSelectBtn")
+@onready var settings_btn: Button = _find_button("SettingsBtn", "MainView/TopBarMargin/HBox/QuickBar/SettingsBtn")
 @onready var sound_btn: Button = _find_button("SoundToggleBtn", "SettingsModal/Margin/VBox/SfxBox/SoundToggleBtn")
-@onready var haptics_btn: Button = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
-@onready var language_btn: Button = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
-@onready var credits_btn: Button = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
-@onready var locker_btn: Button = _find_button("LockerBtn", "MainView/ConsoleCard/Margin/Buttons/LockerBtn")
+@onready var haptics_btn: Button = _find_button("HapticsToggleBtn", "SettingsModal/Margin/VBox/HapticsToggleBtn")
+@onready var language_btn: Button = _find_button("LanguageBtn", "SettingsModal/Margin/VBox/LanguageBtn")
+@onready var credits_btn: Button = _find_button("CreditsBtn", "SettingsModal/Margin/VBox/CreditsBtn")
+@onready var locker_btn: Button = _find_button("LockerBtn", "MainView/BottomMargin/ActionDeck/DualDeck/LockerBtn")
 @onready var locker_modal: PanelContainer = find_child("LockerModal", true, false) as PanelContainer
 @onready var outfits_tab_btn: Button = _find_button("OutfitsTabBtn", "LockerModal/Margin/VBox/TabsHBox/OutfitsTabBtn")
 @onready var crates_tab_btn: Button = _find_button("CratesTabBtn", "LockerModal/Margin/VBox/TabsHBox/CratesTabBtn")
@@ -42,11 +42,13 @@ var achievement_mgr: Node = null
 @onready var locker_title_label: Label = find_child("LockerModal", true, false).find_child("Title", true, false) as Label if find_child("LockerModal", true, false) else null
 @onready var locker_stars_badge: Label = find_child("LockerModal", true, false).find_child("StarsBadge", true, false) as Label if find_child("LockerModal", true, false) else null
 @onready var locker_items_vbox: VBoxContainer = find_child("LockerModal", true, false).find_child("ItemsVBox", true, false) as VBoxContainer if find_child("LockerModal", true, false) else null
+@onready var star_progress_btn: Button = _find_button("StarProgressBtn", "MainView/TopBarMargin/HBox/StarProgressBtn")
+@onready var quick_lang_btn: Button = _find_button("QuickLangBtn", "MainView/TopBarMargin/HBox/QuickBar/QuickLangBtn")
 
 var current_locker_tab: String = "outfits"
 
 # Achievements elements (Phase 4)
-@onready var achievements_btn: Button = _find_button("AchievementsBtn", "MainView/ConsoleCard/Margin/Buttons/AchievementsBtn")
+@onready var achievements_btn: Button = _find_button("AchievementsBtn", "MainView/TopBarMargin/HBox/QuickBar/AchievementsBtn")
 @onready var achievements_modal: PanelContainer = find_child("AchievementsModal", true, false) as PanelContainer
 @onready var close_achievements_btn: Button = _find_button("CloseAchievementsBtn", "AchievementsModal/Margin/VBox/CloseAchievementsBtn")
 @onready var achievements_title_label: Label = find_child("AchievementsModal", true, false).find_child("Title", true, false) as Label if find_child("AchievementsModal", true, false) else null
@@ -85,14 +87,14 @@ func _initialize_nodes() -> void:
 		level_select_view = $LevelSelectView
 		credits_modal = $CreditsModal
 		settings_modal = find_child("SettingsModal", true, false) as PanelContainer
-		continue_btn = _find_button("ContinueBtn", "MainView/Buttons/ContinueBtn")
-		play_btn = _find_button("PlayBtn", "MainView/Buttons/PlayBtn")
-		level_select_btn = _find_button("LevelSelectBtn", "MainView/Buttons/LevelSelectBtn")
-		settings_btn = _find_button("SettingsBtn", "MainView/Buttons/SettingsBtn")
+		continue_btn = _find_button("ContinueBtn", "MainView/BottomMargin/ActionDeck/ContinueBtn")
+		play_btn = _find_button("PlayBtn", "MainView/BottomMargin/ActionDeck/PlayBtn")
+		level_select_btn = _find_button("LevelSelectBtn", "MainView/BottomMargin/ActionDeck/DualDeck/LevelSelectBtn")
+		settings_btn = _find_button("SettingsBtn", "MainView/TopBarMargin/HBox/QuickBar/SettingsBtn")
 		sound_btn = _find_button("SoundToggleBtn", "SettingsModal/Margin/VBox/SfxBox/SoundToggleBtn")
-		haptics_btn = _find_button("HapticsToggleBtn", "MainView/Buttons/HapticsToggleBtn")
-		language_btn = _find_button("LanguageBtn", "MainView/Buttons/LanguageBtn")
-		credits_btn = _find_button("CreditsBtn", "MainView/Buttons/CreditsBtn")
+		haptics_btn = _find_button("HapticsToggleBtn", "SettingsModal/Margin/VBox/HapticsToggleBtn")
+		language_btn = _find_button("LanguageBtn", "SettingsModal/Margin/VBox/LanguageBtn")
+		credits_btn = _find_button("CreditsBtn", "SettingsModal/Margin/VBox/CreditsBtn")
 		music_vol_label = find_child("MusicVolLabel", true, false) as Label
 		music_slider = find_child("MusicSlider", true, false) as HSlider
 		music_toggle_btn = _find_button("MusicToggleBtn", "SettingsModal/Margin/VBox/MusicBox/MusicToggleBtn")
@@ -106,13 +108,15 @@ func _initialize_nodes() -> void:
 		back_btn = _find_button("BackBtn", "LevelSelectView/TopBar/Margin/HBox/BackBtn")
 		close_credits_btn = _find_button("CloseCreditsBtn", "CreditsModal/VBox/CloseCreditsBtn")
 		locker_modal = find_child("LockerModal", true, false) as PanelContainer
-		locker_btn = _find_button("LockerBtn", "MainView/ConsoleCard/Margin/Buttons/LockerBtn")
+		locker_btn = _find_button("LockerBtn", "MainView/BottomMargin/ActionDeck/DualDeck/LockerBtn")
 		outfits_tab_btn = _find_button("OutfitsTabBtn", "LockerModal/Margin/VBox/TabsHBox/OutfitsTabBtn")
 		crates_tab_btn = _find_button("CratesTabBtn", "LockerModal/Margin/VBox/TabsHBox/CratesTabBtn")
 		close_locker_btn = _find_button("CloseLockerBtn", "LockerModal/Margin/VBox/CloseLockerBtn")
 		achievements_modal = find_child("AchievementsModal", true, false) as PanelContainer
-		achievements_btn = _find_button("AchievementsBtn", "MainView/ConsoleCard/Margin/Buttons/AchievementsBtn")
+		achievements_btn = _find_button("AchievementsBtn", "MainView/TopBarMargin/HBox/QuickBar/AchievementsBtn")
 		close_achievements_btn = _find_button("CloseAchievementsBtn", "AchievementsModal/Margin/VBox/CloseAchievementsBtn")
+		star_progress_btn = _find_button("StarProgressBtn", "MainView/TopBarMargin/HBox/StarProgressBtn")
+		quick_lang_btn = _find_button("QuickLangBtn", "MainView/TopBarMargin/HBox/QuickBar/QuickLangBtn")
 		if locker_modal != null:
 			locker_title_label = locker_modal.find_child("Title", true, false) as Label
 			locker_stars_badge = locker_modal.find_child("StarsBadge", true, false) as Label
@@ -198,29 +202,43 @@ func _ready() -> void:
 		achievements_btn.pressed.connect(_show_achievements)
 	if close_achievements_btn and not close_achievements_btn.pressed.is_connected(_hide_achievements):
 		close_achievements_btn.pressed.connect(_hide_achievements)
+	if star_progress_btn and not star_progress_btn.pressed.is_connected(_show_level_select):
+		star_progress_btn.pressed.connect(_show_level_select)
+	if quick_lang_btn and not quick_lang_btn.pressed.is_connected(_on_language_pressed):
+		quick_lang_btn.pressed.connect(_on_language_pressed)
 
 	_show_main_view()
 	_update_menu_state()
 	_build_level_grid()
 
 	# Ambient breathing animation on logo
-	if has_node("MainView/Header/LogoRect"):
-		var logo: TextureRect = $MainView/Header/LogoRect as TextureRect
-		logo.pivot_offset = Vector2(115, 115)
+	var logo: TextureRect = find_child("LogoRect", true, false) as TextureRect
+	if logo != null:
+		logo.pivot_offset = Vector2(150, 84)
 		var tw: Tween = create_tween().set_loops()
 		tw.tween_property(logo, "scale", Vector2(1.03, 1.03), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 		tw.tween_property(logo, "scale", Vector2(1.0, 1.0), 1.6).set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 	# Tactile arcade button physics
-	for b in [continue_btn, play_btn, level_select_btn, locker_btn, achievements_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, close_locker_btn, close_achievements_btn, outfits_tab_btn, crates_tab_btn, music_toggle_btn, track_cycle_btn, control_mode_btn]:
-		_attach_spring_physics(b)
+	for b in [continue_btn, play_btn, level_select_btn, locker_btn, achievements_btn, settings_btn, sound_btn, haptics_btn, language_btn, credits_btn, back_btn, close_credits_btn, close_settings_btn, close_locker_btn, close_achievements_btn, outfits_tab_btn, crates_tab_btn, music_toggle_btn, track_cycle_btn, control_mode_btn, star_progress_btn, quick_lang_btn]:
+		if b != null:
+			_attach_spring_physics(b)
 
 
 func _apply_safe_area() -> void:
-	if safe_area_mgr != null and has_node("LevelSelectView/TopBar/Margin"):
-		var level_top_bar: MarginContainer = get_node("LevelSelectView/TopBar/Margin") as MarginContainer
-		if level_top_bar != null:
-			safe_area_mgr.apply_safe_area_margins(level_top_bar, 16, 12, 16, 12, true, false)
+	if safe_area_mgr != null:
+		if has_node("LevelSelectView/TopBar/Margin"):
+			var level_top_bar: MarginContainer = get_node("LevelSelectView/TopBar/Margin") as MarginContainer
+			if level_top_bar != null:
+				safe_area_mgr.apply_safe_area_margins(level_top_bar, 16, 12, 16, 12, true, false)
+		if has_node("MainView/TopBarMargin"):
+			var main_top_bar: MarginContainer = get_node("MainView/TopBarMargin") as MarginContainer
+			if main_top_bar != null:
+				safe_area_mgr.apply_safe_area_margins(main_top_bar, 20, 20, 20, 0, true, false)
+		if has_node("MainView/BottomMargin"):
+			var main_bottom: MarginContainer = get_node("MainView/BottomMargin") as MarginContainer
+			if main_bottom != null:
+				safe_area_mgr.apply_safe_area_margins(main_bottom, 32, 0, 32, 24, false, true)
 
 
 func _on_safe_area_changed(_insets: Dictionary) -> void:
@@ -775,6 +793,14 @@ func _update_menu_state() -> void:
 		if haptics_btn:
 			haptics_btn.text = "HAPTICS: %s" % ("ON" if is_haptics_on else "OFF")
 		language_btn.text = "LANGUAGE: English"
+
+	var total_stars: int = save_mgr.get_total_stars() if (save_mgr and save_mgr.has_method("get_total_stars")) else 0
+	var sector_num: int = (last_lvl + 1)
+	if star_progress_btn:
+		star_progress_btn.text = "★ %d/150 • Sector %d" % [total_stars, sector_num]
+	if quick_lang_btn:
+		var lang_code: String = loc_mgr.current_language.to_upper() if loc_mgr else "EN"
+		quick_lang_btn.text = "🌐 %s" % lang_code
 
 
 func _on_language_pressed() -> void:
