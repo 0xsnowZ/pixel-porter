@@ -1,10 +1,9 @@
-; Level 29: Fork in the Road (8x8, 2 crates)
-; Verified solvable: 15 moves, 7 pushes
-########
-# #  # #
-#  .   #
-# $  . #
-##     #
-# $    #
-# @    #
-########
+; Level 29: Dual Bay Staging (9x7, 3 crates)
+; Verified solvable: 16 moves, 6 pushes
+#####
+#   #
+#$* #####
+#..   @ #
+##### $ #
+    #   #
+    #####

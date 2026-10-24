@@ -1,10 +1,11 @@
-; Level 18: Bypass Lane (8x8, 2 crates)
-; Verified solvable: 11 moves, 4 pushes
-########
-#      #
-#  @ $ #
-##   # #
-#    # #
-#   .  #
-#   *  #
-########
+; Level 18: Frostbite Loop (7x9, 2 crates)
+; Verified solvable: 12 moves, 6 pushes
+#####
+#   #
+#   ##
+# @  #
+## $ ##
+ # $  #
+ ##.  #
+  #.  #
+  #####

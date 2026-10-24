@@ -14,3 +14,7 @@ Thumbs.db
 *.tmp
 __pycache__/
 *.pyc
+
+# Local reference and scratch folders
+scratch/
+ref_levels/

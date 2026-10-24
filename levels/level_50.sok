@@ -1,12 +1,10 @@
-; Level 50: The Final Gauntlet (10x10, 4 crates)
-; Verified solvable: 16 moves, 12 pushes
-##########
-# #      #
-#    #   #
-#.       #
-#    .   #
-#   $   ##
-#.$ #    #
-#    $ #@#
-#   .  $ #
-##########
+; Level 50: The Final Gauntlet (7x8, 5 crates)
+; Verified solvable: 17 moves, 9 pushes
+####
+#@ ####
+# $ $ #
+#  $  #
+# ..  #
+#.*####
+# *#
+####

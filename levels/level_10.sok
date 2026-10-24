@@ -1,6 +1,9 @@
-; Level 10: Triple Stack (8x5, 3 crates)
-########
-#  . . #
-#  $$$ #
-#   @. #
-########
+; Level 10: Dual Bay Depot (7x7, 2 crates)
+; Verified solvable: 10 moves, 4 pushes
+#####
+# *.#
+#  @###
+#     #
+### $ #
+  #   #
+  #####

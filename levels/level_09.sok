@@ -1,8 +1,11 @@
-; Level 9: Central Depot (8x7, 3 crates)
-########
-#  ... #
-#  $$$ #
-#  #   #
-#   @  #
-#      #
-########
+; Level 9: Staged Warehouse (7x9, 2 crates)
+; Verified solvable: 17 moves, 8 pushes
+#####
+#   #
+#  $##
+#@   #
+##  $##
+ #    #
+ ##.  #
+  #.  #
+  #####

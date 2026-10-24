@@ -1,12 +1,10 @@
-; Level 46: Master's Gallery (10x10, 4 crates)
-; Verified solvable: 15 moves, 6 pushes
-##########
-#@   .   #
-##       #
-#   $    #
-#        #
-# $  .   #
-##    #  #
-#   **  ##
-#  #     #
-##########
+; Level 46: Master's Gallery (12x8, 4 crates)
+; Verified solvable: 18 moves, 11 pushes
+#####  #####
+#   #  #   #
+# $@####   #
+#          #
+#        $.#
+#   #### .*#
+#   #  #  *#
+#####  #####

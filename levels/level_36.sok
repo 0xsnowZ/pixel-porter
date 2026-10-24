@@ -1,11 +1,11 @@
-; Level 36: Labyrinthine (9x9, 3 crates)
-; Verified solvable: 15 moves, 6 pushes
-#########
-#       #
-#   $   #
-#  @   ##
-##      #
-#  .  $.#
-## $.   #
-#     # #
-#########
+; Level 36: Tetris Core (7x9, 3 crates)
+; Verified solvable: 14 moves, 7 pushes
+#####
+#   #
+#   ##
+#    #
+##$  ##
+ # @. #
+ ## **#
+  #   #
+  #####

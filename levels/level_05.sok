@@ -1,8 +1,9 @@
-; Level 5: Double Trouble (7x7, 2 crates)
-#######
-# . $ #
-#  $  #
+; Level 5: T-Junction Depot (7x7, 1 crates)
+; Verified solvable: 8 moves, 2 pushes
+#####
+#   #
+#  @###
 #  .  #
-#  @  #
-#     #
-#######
+### $ #
+  #   #
+  #####

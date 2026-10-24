@@ -1,10 +1,9 @@
-; Level 26: Symmetric Split (8x8, 3 crates)
-; Verified solvable: 12 moves, 7 pushes
-########
-#      #
-#     .#
-#   $$ #
-#    @ #
-#   *# #
-# .  # #
-########
+; Level 26: The Permafrost (9x7, 3 crates)
+; Verified solvable: 23 moves, 8 pushes
+#####
+#   #
+# $ #####
+#  $..  #
+#####.$@#
+    #   #
+    #####

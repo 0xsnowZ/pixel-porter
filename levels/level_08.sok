@@ -1,8 +1,10 @@
-; Level 8: Warehouse Bay (7x7, 2 crates)
-#######
-#  .. #
-#  $$ #
-# ##  #
-# @   #
+; Level 8: Butterfly Hub (7x8, 2 crates)
+; Verified solvable: 10 moves, 6 pushes
+####
+#  ####
+#..   #
 #     #
-#######
+#     #
+#$$####
+#@ #
+####

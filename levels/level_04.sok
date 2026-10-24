@@ -1,7 +1,9 @@
-; Level 4: Corner Caution (7x6, 1 crate)
-#######
-#     #
-# #$# #
-# #.# #
-# @   #
-#######
+; Level 4: Island Loop (7x7, 4 crates)
+; Verified solvable: 7 moves, 4 pushes
+###
+  #.#
+###$###
+#.$@$.#
+###$###
+  #.#
+  ###

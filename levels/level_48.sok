@@ -1,12 +1,10 @@
-; Level 48: The Great Hall (10x10, 4 crates)
-; Verified solvable: 15 moves, 9 pushes
-##########
-#  @ *   #
-#$$# # * #
-#        #
-#        #
-#.   #   #
-#   .    #
-#    #   #
-#  #     #
-##########
+; Level 48: The Great Hall (12x8, 4 crates)
+; Verified solvable: 18 moves, 12 pushes
+#####  #####
+#   #  #   #
+#   #### $ #
+#          #
+#        . #
+# $ ####**.#
+# @ #  #   #
+#####  #####

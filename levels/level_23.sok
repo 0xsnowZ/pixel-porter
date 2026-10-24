@@ -1,10 +1,10 @@
-; Level 23: Narrow Passage (8x8, 2 crates)
-; Verified solvable: 11 moves, 7 pushes
-########
-#      #
-#     ##
-## .   #
-#   #  #
-#    $ #
-# .  $@#
-########
+; Level 23: Glacier Gallery (7x8, 3 crates)
+; Verified solvable: 12 moves, 7 pushes
+####
+#*.####
+#.    #
+#     #
+#     #
+#$$####
+# @#
+####

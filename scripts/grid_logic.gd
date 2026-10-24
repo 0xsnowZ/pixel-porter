@@ -32,6 +32,7 @@ var player_pos: Vector2i = Vector2i.ZERO
 var walls: Dictionary = {}   # Dictionary[Vector2i, bool]
 var goals: Dictionary = {}   # Dictionary[Vector2i, bool]
 var crates: Dictionary = {}  # Dictionary[Vector2i, bool]
+var interior_floor: Dictionary = {} # Dictionary[Vector2i, bool] - Reachable playable floor
 
 var moves_count: int = 0
 var pushes_count: int = 0
@@ -57,6 +58,7 @@ func clear() -> void:
 	walls.clear()
 	goals.clear()
 	crates.clear()
+	interior_floor.clear()
 	moves_count = 0
 	pushes_count = 0
 	last_move_pushed_crate = false
@@ -140,7 +142,37 @@ func load_from_text(level_text: String) -> bool:
 	pushes_count = 0
 	last_move_pushed_crate = false
 
+	_compute_interior_floor()
+
 	return true
+
+
+## Computes playable interior floor cells via flood-fill from player, crates, and goals.
+## Ensures non-square levels with exterior void are properly distinguished.
+func _compute_interior_floor() -> void:
+	interior_floor.clear()
+	var queue: Array[Vector2i] = []
+	if player_pos != Vector2i.ZERO or has_crate(Vector2i.ZERO) or is_goal(Vector2i.ZERO):
+		queue.append(player_pos)
+	for c in crates.keys():
+		if not queue.has(c):
+			queue.append(c)
+	for g in goals.keys():
+		if not queue.has(g):
+			queue.append(g)
+
+	for seed_pos in queue:
+		interior_floor[seed_pos] = true
+
+	var head: int = 0
+	while head < queue.size():
+		var cur: Vector2i = queue[head]
+		head += 1
+		for dir in [Vector2i.UP, Vector2i.DOWN, Vector2i.LEFT, Vector2i.RIGHT]:
+			var nxt: Vector2i = cur + dir
+			if is_in_bounds(nxt) and not is_wall(nxt) and not interior_floor.has(nxt):
+				interior_floor[nxt] = true
+				queue.append(nxt)
 
 
 ## Loads a level from a file containing standard Sokoban text.
@@ -195,8 +227,8 @@ func move(direction: Variant) -> bool:
 
 	var target_pos: Vector2i = player_pos + dir
 
-	# Bounds and wall check for player destination
-	if not is_in_bounds(target_pos) or is_wall(target_pos):
+	# Bounds, void and wall check for player destination
+	if not is_in_bounds(target_pos) or is_wall(target_pos) or (not interior_floor.is_empty() and not is_interior_floor(target_pos)):
 		return false
 
 	var pushed: bool = false
@@ -207,8 +239,8 @@ func move(direction: Variant) -> bool:
 	if has_crate(target_pos):
 		var behind_pos: Vector2i = target_pos + dir
 
-		# Bounds and wall check for crate destination
-		if not is_in_bounds(behind_pos) or is_wall(behind_pos):
+		# Bounds, void and wall check for crate destination
+		if not is_in_bounds(behind_pos) or is_wall(behind_pos) or (not interior_floor.is_empty() and not is_interior_floor(behind_pos)):
 			return false
 
 		# Rule: Two crates cannot be pushed at once
@@ -327,7 +359,17 @@ func has_crate(pos: Vector2i) -> bool:
 
 ## Returns true if the position is inside bounds, not a wall, not occupied by a crate or player.
 func is_empty_tile(pos: Vector2i) -> bool:
-	return is_in_bounds(pos) and not is_wall(pos) and not has_crate(pos) and pos != player_pos
+	return is_in_bounds(pos) and not is_wall(pos) and not has_crate(pos) and pos != player_pos and (interior_floor.is_empty() or is_interior_floor(pos))
+
+
+## Returns true if the position is an interior playable floor tile.
+func is_interior_floor(pos: Vector2i) -> bool:
+	return interior_floor.has(pos)
+
+
+## Returns true if the position is exterior void (outside level boundary walls).
+func is_exterior_void(pos: Vector2i) -> bool:
+	return is_in_bounds(pos) and not is_wall(pos) and not is_interior_floor(pos)
 
 
 ## Returns the player's current position.
@@ -444,6 +486,7 @@ func clone() -> RefCounted:
 	copy.moves_count = moves_count
 	copy.pushes_count = pushes_count
 	copy.last_move_pushed_crate = last_move_pushed_crate
+	copy.interior_floor = interior_floor.duplicate()
 	copy._initial_player_pos = _initial_player_pos
 	copy._initial_crates = _initial_crates.duplicate()
 	copy._raw_level_text = _raw_level_text

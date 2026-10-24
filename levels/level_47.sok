@@ -1,12 +1,11 @@
-; Level 47: Cathedral of Crates (10x10, 4 crates)
-; Verified solvable: 15 moves, 7 pushes
-##########
-#      * #
-#   #    #
-#  # #   #
-# # @$ . #
-#      . #
-#        #
-#   #  $ #
-#   .  $ #
-##########
+; Level 47: Cathedral of Crates (9x9, 4 crates)
+; Verified solvable: 16 moves, 7 pushes
+  #####
+  #   #
+###  *###
+#   #*. #
+#   #.$ #
+# $ #   #
+#     ###
+#@    #
+#######

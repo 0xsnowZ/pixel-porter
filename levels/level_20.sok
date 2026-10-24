@@ -1,10 +1,11 @@
-; Level 20: Divided Hall (8x8, 2 crates)
-; Verified solvable: 10 moves, 6 pushes
-########
-#      #
-#  *## #
-#    @ #
-#.#  $ #
-#      #
-#      #
-########
+; Level 20: Divided Vault (7x9, 2 crates)
+; Verified solvable: 12 moves, 4 pushes
+#####
+#* @#
+#.  ##
+#    #
+## $ ##
+ #    #
+ ##   #
+  #   #
+  #####

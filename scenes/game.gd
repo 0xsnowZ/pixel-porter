@@ -1304,7 +1304,7 @@ func _draw() -> void:
 
 			if grid.is_wall(pos):
 				_draw_wall(rect)
-			else:
+			elif grid.is_interior_floor(pos) or grid.interior_floor.is_empty():
 				var is_alt: bool = ((x + y) % 2 == 0)
 				var floor_tex: Texture2D = tex_floor_1 if is_alt else tex_floor_2
 				draw_texture_rect(floor_tex, rect, false, ch["floor_tint"])
@@ -1312,6 +1312,9 @@ func _draw() -> void:
 				# 3D Depth Shadow: if cell above is a wall, cast drop shadow down
 				if y > 0 and grid.is_wall(Vector2i(x, y - 1)):
 					draw_rect(Rect2(rect.position, Vector2(rect.size.x, tile_size * 0.22)), Color(0.0, 0.0, 0.0, 0.42))
+			else:
+				# Exterior void tile: subtle dim background so organic room boundaries stand out
+				draw_rect(rect, ch.get("dim_color", Color(0.02, 0.03, 0.06, 0.45)))
 
 	# 3. Draw Goals with Chapter Pressure Plate & Pulsing Aura
 	var time_sec: float = float(Time.get_ticks_msec()) / 1000.0

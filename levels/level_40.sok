@@ -1,11 +1,10 @@
-; Level 40: Gridlock (9x9, 4 crates)
-; Verified solvable: 15 moves, 8 pushes
-#########
-#   #   #
-#   # $ #
-#    #  #
-#*    $@#
-#     . #
-#  .  * #
-#       #
-#########
+; Level 40: Grand Depot (12x8, 4 crates)
+; Verified solvable: 14 moves, 6 pushes
+#####  #####
+#  @#  #   #
+#   ####   #
+#     .    #
+#    ***   #
+# $ ####   #
+#   #  #   #
+#####  #####

@@ -1,8 +1,9 @@
-; Level 6: Parallel Tracks (7x7, 2 crates)
+; Level 6: Cruciform Pinwheel (7x7, 2 crates)
+; Verified solvable: 12 moves, 5 pushes
 #######
-# . #.#
-# $ #$#
 #     #
-#  @  #
-#     #
-#######
+#.. $ #
+##  ###
+ #$ #
+ #@ #
+ ####

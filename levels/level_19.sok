@@ -1,10 +1,10 @@
-; Level 19: Square Dance (8x8, 2 crates)
-; Verified solvable: 11 moves, 5 pushes
-########
-#      #
-# . $  #
-#      #
-###    #
-##     #
-# .  $@#
-########
+; Level 19: Freezer Bypass (12x8, 2 crates)
+; Verified solvable: 12 moves, 3 pushes
+#####  #####
+#   #  #   #
+# $ ####   #
+#  .       #
+# $.       #
+#   ####   #
+#  @#  #   #
+#####  #####
