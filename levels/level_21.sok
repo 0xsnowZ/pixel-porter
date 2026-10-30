@@ -1,10 +1,5 @@
-; Level 21: Icebox Tetris (7x8, 2 crates)
-; Verified solvable: 13 moves, 5 pushes
-####
-#@ ####
-# $   #
-#     #
-# $.. #
-#  ####
-#  #
-####
+########
+#. #.  #
+# $@$  #
+#  #.$ #
+########

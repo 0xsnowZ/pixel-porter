@@ -1,11 +1,8 @@
-; Level 2: L-Bend Junction (7x9, 1 crates)
-; Verified solvable: 8 moves, 4 pushes
-#####
-#@  #
-#  $##
-#    #
-##   ##
- #  . #
- ##   #
-  #   #
-  #####
+  ###
+  #.#
+  # ####
+###$ $ .#
+#. $ @##
+####$#
+   #.#
+   ###

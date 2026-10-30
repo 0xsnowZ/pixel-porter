@@ -1,9 +1,7 @@
-; Level 13: Spine & Wings (7x7, 2 crates)
-; Verified solvable: 10 moves, 4 pushes
-#####
-#   #
-#   ###
-# ..$ #
-### $@#
-  #   #
-  #####
+#######
+# @   #
+#$### #
+# #*# #
+#.### #
+#.  $ #
+#######

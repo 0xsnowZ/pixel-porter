@@ -40,7 +40,7 @@ func _init() -> void:
 			continue
 
 		var start_solve: int = Time.get_ticks_msec()
-		var res = SokobanSolverScript.solve(grid, 50000)
+		var res = SokobanSolverScript.solve(grid, 80000)
 		var elapsed_ms: float = float(Time.get_ticks_msec() - start_solve)
 
 		if not res.is_solvable:

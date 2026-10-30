@@ -1,9 +1,7 @@
-; Level 43: Double Bypass (7x7, 2 crates)
-; Verified solvable: 8 moves, 3 pushes
-#####
-#   #
-# $ ###
-#  @  #
-###.* #
-  #   #
-  #####
+  ######
+  #   .#
+### $  #
+# @  # #
+# $### #
+# $ .. #
+########

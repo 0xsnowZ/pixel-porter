@@ -92,7 +92,7 @@ def build_walls_around_floor(floor):
 
 
 # Blueprints with guaranteed non-square exterior void geometry
-def bp_l_bend(w1=3, h1=3, w2=3, h2=3, ox=2, oy=2):
+def bp_l_bend(w1=4, h1=4, w2=4, h2=4, ox=3, oy=3):
     floor = set()
     for x in range(w1):
         for y in range(h1):
@@ -103,7 +103,7 @@ def bp_l_bend(w1=3, h1=3, w2=3, h2=3, ox=2, oy=2):
     return build_walls_around_floor(floor)
 
 
-def bp_t_junction(top_w=6, top_h=2, stem_w=2, stem_h=3, stem_x=2):
+def bp_t_junction(top_w=6, top_h=3, stem_w=3, stem_h=4, stem_x=2):
     floor = set()
     for x in range(top_w):
         for y in range(top_h):
@@ -134,9 +134,9 @@ def bp_cross(center_size=3, arm_len=2, arm_w=2):
     return build_walls_around_floor(floor)
 
 
-def bp_island_loop(w=7, h=7):
+def bp_island_loop(w=8, h=8):
     floor = set()
-    pill = {(3, 2), (3, 3), (3, 4)}
+    pill = {(3, 3), (3, 4), (4, 3), (4, 4)} if w >= 8 else {(3, 2), (3, 3), (3, 4)}
     for x in range(w):
         for y in range(h):
             if x < 2 and y < 2: continue
@@ -147,7 +147,7 @@ def bp_island_loop(w=7, h=7):
     return build_walls_around_floor(floor)
 
 
-def bp_s_curve(ch1_w=3, ch1_h=3, ch2_w=3, ch2_h=3, corr_len=2):
+def bp_s_curve(ch1_w=4, ch1_h=4, ch2_w=4, ch2_h=4, corr_len=2):
     floor = set()
     for x in range(ch1_w):
         for y in range(ch1_h):
@@ -160,7 +160,7 @@ def bp_s_curve(ch1_w=3, ch1_h=3, ch2_w=3, ch2_h=3, corr_len=2):
     return build_walls_around_floor(floor)
 
 
-def bp_butterfly(wing_w=3, wing_h=6, neck_w=4, neck_h=2):
+def bp_butterfly(wing_w=4, wing_h=6, neck_w=3, neck_h=2):
     floor = set()
     for x in range(wing_w):
         for y in range(wing_h):
@@ -189,7 +189,7 @@ def bp_stepped_hall():
     return build_walls_around_floor(floor)
 
 
-def bp_chute_bays(chute_h=6, bay_w=3, bay_h=3):
+def bp_chute_bays(chute_h=7, bay_w=4, bay_h=3):
     floor = set()
     for y in range(chute_h):
         floor.add((1, y))
@@ -200,7 +200,7 @@ def bp_chute_bays(chute_h=6, bay_w=3, bay_h=3):
     return build_walls_around_floor(floor)
 
 
-def solve_bfs(w, h, walls, goals, crates, player, max_states=45000):
+def solve_bfs(w, h, walls, goals, crates, player, max_states=85000):
     if crates == goals:
         return True, 0, 0, ""
 
@@ -266,16 +266,20 @@ def solve_bfs(w, h, walls, goals, crates, player, max_states=45000):
     return False, 0, 0, "UNSOLVABLE"
 
 
-def generate_single_level(blueprint_func, bp_args, num_crates, min_moves, max_moves=70, max_attempts=120):
+def generate_single_level(blueprint_func, bp_args, num_crates, min_moves, max_moves=85, max_attempts=150):
+    curr_min = min_moves
     for attempt in range(max_attempts):
+        if attempt > 0 and attempt % 35 == 0 and curr_min > 14:
+            curr_min -= 2
+
         w, h, walls, floor = blueprint_func(*bp_args)
         floor_cells = list(floor)
-        if len(floor_cells) < num_crates + 2:
+        if len(floor_cells) < num_crates + 3:
             continue
 
-        # Choose goal cluster
-        anchor = random.choice(floor_cells)
-        sorted_by_dist = sorted(floor_cells, key=lambda c: (c[0]-anchor[0])**2 + (c[1]-anchor[1])**2)
+        # Choose goal cluster in an alcove / bay
+        corner = random.choice(floor_cells)
+        sorted_by_dist = sorted(floor_cells, key=lambda c: abs(c[0]-corner[0]) + abs(c[1]-corner[1]))
         goals = set(sorted_by_dist[:num_crates])
         crates = set(goals)
 
@@ -290,33 +294,56 @@ def generate_single_level(blueprint_func, bp_args, num_crates, min_moves, max_mo
             continue
         player = random.choice(adj)
 
-        # Reverse pull walk
-        num_pulls = random.randint(40, 160)
+        def total_dist(c_set):
+            return sum(min(abs(c[0]-g[0]) + abs(c[1]-g[1]) for g in goals) for c in c_set)
+
+        # Deep guided reverse pull walk
+        num_pulls = random.randint(180, 360)
         for _ in range(num_pulls):
-            if random.random() < 0.65:
-                adj_c = []
-                for c in crates:
-                    dx, dy = c[0] - player[0], c[1] - player[1]
-                    if abs(dx) + abs(dy) == 1:
-                        adj_c.append((c, (dx, dy)))
-                if adj_c:
-                    c, (dx, dy) = random.choice(adj_c)
+            adj_c = []
+            for c in crates:
+                dx, dy = c[0] - player[0], c[1] - player[1]
+                if abs(dx) + abs(dy) == 1:
                     new_p = (player[0] - dx, player[1] - dy)
                     if new_p in floor and new_p not in crates:
-                        crates.remove(c)
-                        crates.add(player)
-                        player = new_p
+                        adj_c.append((c, (dx, dy), new_p))
+            if adj_c and random.random() < 0.78:
+                best_score = -999
+                best_pull = None
+                for c, (dx, dy), new_p in adj_c:
+                    cand = (crates - {c}) | {player}
+                    score = total_dist(cand) + random.uniform(0, 1.2)
+                    if score > best_score:
+                        best_score = score
+                        best_pull = (c, new_p)
+                c, new_p = best_pull
+                crates.remove(c)
+                crates.add(player)
+                player = new_p
             else:
-                (dx, dy), _ = random.choice(DIRS)
-                new_p = (player[0] + dx, player[1] + dy)
-                if new_p in floor and new_p not in crates:
-                    player = new_p
+                valid = []
+                for (dx, dy), _ in DIRS:
+                    np = (player[0] + dx, player[1] + dy)
+                    if np in floor and np not in crates:
+                        valid.append(np)
+                if valid:
+                    player = random.choice(valid)
 
         if crates == goals:
             continue
 
-        solvable, moves, pushes, sol = solve_bfs(w, h, walls, goals, crates, player, max_states=40000)
-        if solvable and min_moves <= moves <= max_moves and pushes >= num_crates:
+        # Wander player to natural entry/room position
+        for _ in range(12):
+            valid = []
+            for (dx, dy), _ in DIRS:
+                np = (player[0] + dx, player[1] + dy)
+                if np in floor and np not in crates:
+                    valid.append(np)
+            if valid:
+                player = random.choice(valid)
+
+        solvable, moves, pushes, sol = solve_bfs(w, h, walls, goals, crates, player, max_states=80000)
+        if solvable and curr_min <= moves <= max_moves and pushes >= num_crates:
             return {
                 "width": w,
                 "height": h,
@@ -435,61 +462,74 @@ def generate_all_50_levels():
                 }
 
         if data is None:
-            # Procedural organic generation per Tier:
-            if lvl <= 5: # Tier 1 intro: 1 crate, 8-16 moves
+            # Procedural organic generation scaled to user requirements:
+            # Chapter 1 (Levels 1-15): 1-2 crates (intro & mechanics)
+            # Chapter 2 (Levels 16-35): 3-4 crates (planning & multi-room choke points)
+            # Chapter 3 (Levels 36-50): 4-5 crates (high-difficulty endgame gauntlet)
+            if lvl <= 5: # Tier 1 (Chapter 1 Intro): 1 crate, 16-26 moves
                 bp = random.choice([bp_l_bend, bp_t_junction, bp_stepped_hall])
-                args = (3, 3, 3, 3, 2, 2) if bp == bp_l_bend else ((5, 2, 2, 3, 1) if bp == bp_t_junction else ())
-                data = generate_single_level(bp, args, 1, 8, 16)
-            elif lvl <= 15: # Tier 1-2: 2 crates, 10-22 moves
+                args = (4, 4, 4, 4, 3, 3) if bp == bp_l_bend else ((6, 3, 3, 4, 2) if bp == bp_t_junction else ())
+                data = generate_single_level(bp, args, 1, 16, 26)
+            elif lvl <= 15: # Tier 2 (Chapter 1 Rest): 2 crates, 18-28 moves
                 bp = random.choice([bp_l_bend, bp_s_curve, bp_t_junction, bp_stepped_hall, bp_chute_bays, bp_island_loop])
-                if bp == bp_l_bend: args = (3, 3, 3, 3, 2, 2)
-                elif bp == bp_s_curve: args = (3, 3, 3, 3, 2)
-                elif bp == bp_t_junction: args = (5, 2, 2, 3, 1)
+                if bp == bp_l_bend: args = (4, 4, 4, 4, 3, 3)
+                elif bp == bp_s_curve: args = (4, 4, 4, 4, 2)
+                elif bp == bp_t_junction: args = (6, 3, 3, 4, 2)
                 elif bp == bp_stepped_hall: args = ()
-                elif bp == bp_chute_bays: args = (6, 3, 3)
-                else: args = (7, 7) # bp_island_loop
-                data = generate_single_level(bp, args, 2, 10, 22)
-            elif lvl <= 30: # Tier 3 (Chapter 1 end / Chapter 2): 2-3 crates, 14-28 moves
-                bp = random.choice([bp_cross, bp_island_loop, bp_s_curve, bp_chute_bays, bp_stepped_hall, bp_butterfly])
-                crates_cnt = 2 if lvl <= 22 else 3
+                elif bp == bp_chute_bays: args = (7, 4, 3)
+                else: args = (8, 8) # bp_island_loop
+                data = generate_single_level(bp, args, 2, 18, 28)
+            elif lvl <= 25: # Tier 3 (Chapter 2 Cold Storage Start): 3 CRATES, 22-34 moves
+                bp = random.choice([bp_cross, bp_butterfly, bp_s_curve, bp_chute_bays, bp_stepped_hall, bp_l_bend])
                 if bp == bp_cross: args = (3, 2, 2)
-                elif bp == bp_island_loop: args = (7, 7)
-                elif bp == bp_s_curve: args = (3, 3, 3, 3, 2)
-                elif bp == bp_chute_bays: args = (6, 3, 3)
-                elif bp == bp_stepped_hall: args = ()
-                else: args = (3, 6, 4, 2) # bp_butterfly
-                data = generate_single_level(bp, args, crates_cnt, 12, 28)
-            elif lvl <= 45: # Tier 4 (Chapter 2 end / Chapter 3): 3-4 crates, 16-35 moves
-                bp = random.choice([bp_cross, bp_butterfly, bp_island_loop, bp_s_curve, bp_chute_bays, bp_stepped_hall])
-                crates_cnt = 3 if lvl <= 38 else 4
-                if bp == bp_cross: args = (3, 2, 2)
-                elif bp == bp_butterfly: args = (3, 6, 4, 2)
-                elif bp == bp_island_loop: args = (7, 7)
-                elif bp == bp_s_curve: args = (3, 3, 3, 3, 2)
-                elif bp == bp_chute_bays: args = (6, 3, 3)
+                elif bp == bp_butterfly: args = (4, 6, 3, 2)
+                elif bp == bp_s_curve: args = (4, 4, 4, 4, 2)
+                elif bp == bp_chute_bays: args = (7, 4, 3)
+                elif bp == bp_l_bend: args = (4, 4, 4, 4, 3, 3)
                 else: args = () # bp_stepped_hall
-                data = generate_single_level(bp, args, crates_cnt, 14, 35)
-            else: # Tier 5 (Chapter 3 climax): 4-5 crates, 20-45 moves
-                bp = random.choice([bp_cross, bp_butterfly, bp_island_loop, bp_chute_bays])
-                crates_cnt = 4 if lvl < 50 else 5
+                data = generate_single_level(bp, args, 3, 22, 34)
+            elif lvl <= 35: # Tier 4 (Chapter 2 Cold Storage Climax): 4 CRATES, 24-38 moves
+                bp = random.choice([bp_butterfly, bp_island_loop, bp_cross, bp_s_curve])
                 if bp == bp_cross: args = (3, 2, 2)
-                elif bp == bp_butterfly: args = (3, 6, 4, 2)
-                elif bp == bp_island_loop: args = (7, 7)
-                else: args = (6, 3, 3) # bp_chute_bays
-                data = generate_single_level(bp, args, crates_cnt, 16, 45)
+                elif bp == bp_butterfly: args = (4, 6, 3, 2)
+                elif bp == bp_island_loop: args = (8, 8)
+                else: args = (4, 4, 4, 4, 2) # bp_s_curve
+                data = generate_single_level(bp, args, 4, 24, 38)
+            elif lvl <= 44: # Tier 5 (Chapter 3 Cyber Depot Deep): 4 CRATES, 26-42 moves
+                bp = random.choice([bp_butterfly, bp_island_loop, bp_cross, bp_s_curve])
+                if bp == bp_cross: args = (3, 2, 2)
+                elif bp == bp_butterfly: args = (4, 6, 3, 2)
+                elif bp == bp_island_loop: args = (8, 8)
+                else: args = (4, 4, 4, 4, 2)
+                data = generate_single_level(bp, args, 4, 26, 42)
+            else: # Tier 6 (Chapter 3 Endgame Gauntlet, Levels 45-50): 5 CRATES, 25-45 moves
+                bp = random.choice([bp_island_loop, bp_butterfly, bp_cross])
+                if bp == bp_cross: args = (3, 2, 2)
+                elif bp == bp_butterfly: args = (4, 6, 3, 2)
+                else: args = (8, 8) # bp_island_loop
+                data = generate_single_level(bp, args, 5, 25, 45)
 
         # Fallback if specific generator timed out
         if data is None:
-            data = generate_single_level(bp_l_bend, (3, 3, 3, 3, 2, 2), 2, 8, 30)
+            fb_crates = 1 if lvl <= 5 else (2 if lvl <= 15 else (3 if lvl <= 25 else (4 if lvl <= 44 else 5)))
+            bp = bp_cross if fb_crates >= 4 else (bp_cross if fb_crates == 3 else bp_l_bend)
+            bp_args = (3, 2, 2) if fb_crates >= 3 else (4, 4, 4, 4, 3, 3)
+            data = generate_single_level(bp, bp_args, fb_crates, 18, 45)
 
         results[lvl] = data
         optimal_moves.append(data["moves"])
 
         # Write to disk
-        out_path = f"levels/level_{lvl:02d}.sok"
         content = format_sokoban_text(data, title, lvl)
-        with open(out_path, "w") as f:
+        os.makedirs("/tmp/generated_levels", exist_ok=True)
+        with open(f"/tmp/generated_levels/level_{lvl:02d}.sok", "w") as f:
             f.write(content)
+        try:
+            out_path = f"levels/level_{lvl:02d}.sok"
+            with open(out_path, "w") as f:
+                f.write(content)
+        except OSError:
+            pass
 
         print(f"[{lvl:02d}/50] Level {lvl:02d}: {title:22s} | {data['width']}x{data['height']} | {len(data['crates'])} crates | {data['moves']:2d} moves | {data['pushes']:2d} pushes | PASS ✓")
 
@@ -498,23 +538,29 @@ def generate_all_50_levels():
     print("="*60 + "\n")
 
     # Update save_manager.gd OPTIMAL_MOVES
+    moves_formatted = "const OPTIMAL_MOVES: Array[int] = [\n"
+    for i in range(0, 50, 10):
+        chunk = optimal_moves[i:i+10]
+        moves_formatted += "\t" + ", ".join(str(m) for m in chunk) + (",\n" if i + 10 < 50 else "\n")
+    moves_formatted += "]"
+
+    with open("/tmp/generated_levels/optimal_moves.txt", "w") as f:
+        f.write(moves_formatted)
+
     save_mgr_path = "scripts/save_manager.gd"
     if os.path.exists(save_mgr_path):
-        with open(save_mgr_path, "r") as f:
-            sm_content = f.read()
+        try:
+            with open(save_mgr_path, "r") as f:
+                sm_content = f.read()
 
-        moves_formatted = "const OPTIMAL_MOVES: Array[int] = [\n"
-        for i in range(0, 50, 10):
-            chunk = optimal_moves[i:i+10]
-            moves_formatted += "\t" + ", ".join(str(m) for m in chunk) + (",\n" if i + 10 < 50 else "\n")
-        moves_formatted += "]"
+            pattern = r"const OPTIMAL_MOVES: Array\[int\] = \[[^\]]*\]"
+            new_sm_content = re.sub(pattern, moves_formatted, sm_content, flags=re.MULTILINE)
 
-        pattern = r"const OPTIMAL_MOVES: Array\[int\] = \[[^\]]*\]"
-        new_sm_content = re.sub(pattern, moves_formatted, sm_content, flags=re.MULTILINE)
-
-        with open(save_mgr_path, "w") as f:
-            f.write(new_sm_content)
-        print("Updated scripts/save_manager.gd OPTIMAL_MOVES array.")
+            with open(save_mgr_path, "w") as f:
+                f.write(new_sm_content)
+            print("Updated scripts/save_manager.gd OPTIMAL_MOVES array.")
+        except OSError:
+            print("Notice: scripts/save_manager.gd write skipped due to sandbox mount; will apply directly.")
 
     return optimal_moves
 

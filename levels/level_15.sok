@@ -1,9 +1,5 @@
-; Level 15: Dual-Bay Perimeter (7x7, 2 crates)
-; Verified solvable: 10 moves, 4 pushes
-#####
-#   #
-#.$ ###
-#.  $ #
-###   #
-  #@  #
-  #####
+##### #####
+#   ###   #
+#       $@#
+#  .### $.#
+##### #####

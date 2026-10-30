@@ -1,10 +1,6 @@
-; Level 14: S-Bend Double Hall (7x8, 2 crates)
-; Verified solvable: 10 moves, 3 pushes
-####
-#* ####
-#.    #
-#    @#
-#     #
-#$ ####
-#  #
-####
+ #####
+##   ##
+#   *+#
+# $ * #
+##   ##
+*#####

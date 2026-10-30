@@ -316,8 +316,11 @@ func play_push() -> void:
 
 ## Level won fanfare
 func play_win() -> void:
-	duck_music(-18.0, 0.25)
+	duck_music(-8.0, 0.15)
 	play_stream(sfx_win, 0.0)
+	var tw: Tween = create_tween()
+	tw.tween_interval(0.55)
+	tw.tween_callback(func(): unduck_music(0.40))
 
 
 ## Level restart sound
@@ -436,34 +439,49 @@ func _synth_push() -> AudioStreamWAV:
 	return _create_wav(bytes)
 
 
-## Generates a 320ms celebratory chip-tune ascending arpeggio
+## Generates a sweet, warm 0.52s marimba/bell victory chime
+## Features an ascending 4-note acoustic arpeggio (C5-E5-G5-C6) with pure harmonic resonance
 func _synth_win() -> AudioStreamWAV:
-	var duration: float = 0.32
+	var duration: float = 0.52
 	var total_samples: int = int(duration * MIX_RATE)
 	var bytes: PackedByteArray = PackedByteArray()
 	bytes.resize(total_samples * 2)
 
-	# 4 notes: C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz)
-	var notes: Array[float] = [523.25, 659.25, 783.99, 1046.50]
-	var samples_per_note: int = total_samples / notes.size()
-	var phase: float = 0.0
+	# 4-note cheerful acoustic chime/marimba arpeggio:
+	# C5 (523Hz), E5 (659Hz), G5 (784Hz), C6 (1046Hz, warm bell ring)
+	var notes: Array[Dictionary] = [
+		{"start": 0.00, "end": 0.13, "freq": 523.25, "gain": 0.65}, # C5
+		{"start": 0.10, "end": 0.24, "freq": 659.25, "gain": 0.70}, # E5
+		{"start": 0.21, "end": 0.36, "freq": 783.99, "gain": 0.75}, # G5
+		{"start": 0.32, "end": 0.52, "freq": 1046.50, "gain": 0.85}, # C6 (resolving bell ring)
+	]
 
 	for i in range(total_samples):
-		var note_idx: int = mini(i / samples_per_note, notes.size() - 1)
-		var note_freq: float = notes[note_idx]
-		phase += (note_freq * TAU) / float(MIX_RATE)
+		var t: float = float(i) / float(MIX_RATE)
+		var val: float = 0.0
 
-		var note_t: float = float(i % samples_per_note) / float(samples_per_note)
-		var wave: float = 1.0 if sin(phase) > 0.0 else -1.0
-		# Crisp pulse width modulation
-		if sin(phase * 2.0) > 0.5:
-			wave *= 0.8
+		for n in notes:
+			var start: float = n["start"]
+			var end: float = n["end"]
+			if t >= start and t < end:
+				var dt: float = t - start
+				var note_len: float = end - start
+				# Soft 5ms attack eliminates digital clicks/pops
+				var att: float = minf(1.0, dt / 0.005)
+				var rel_t: float = dt / note_len
+				var decay_exp: float = 1.6 if n["freq"] >= 1000.0 else 2.0
+				var env: float = att * pow(maxf(0.0, 1.0 - rel_t), decay_exp)
 
-		var envelope: float = 1.0 - (note_t * 0.4)
-		if note_idx == notes.size() - 1:
-			envelope = 1.0 - (note_t * 0.7) # ringing tail on top note
+				# Warm acoustic bell / marimba timbre:
+				# Pure sine fundamental + gentle octave harmonic + subtle presence overtone
+				var p1: float = TAU * n["freq"] * dt
+				var p2: float = TAU * (n["freq"] * 2.0) * dt
+				var p3: float = TAU * (n["freq"] * 3.0) * dt
+				var bell_wave: float = 0.72 * sin(p1) + 0.22 * sin(p2) + 0.06 * sin(p3)
 
-		var sample_val: int = int(clampi(int(wave * envelope * 20000.0), -32767, 32767))
+				val += bell_wave * env * n["gain"]
+
+		var sample_val: int = int(clampi(int(val * 24000.0), -32767, 32767))
 		bytes.encode_s16(i * 2, sample_val)
 
 	return _create_wav(bytes)

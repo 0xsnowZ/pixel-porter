@@ -1,10 +1,6 @@
-; Level 22: Twin Pillars (7x8, 2 crates)
-; Verified solvable: 14 moves, 5 pushes
-####
-# .####
-# .   #
-# $   #
-#    @#
-# $####
-#  #
-####
+ #####
+##   ##
+#. $  #
+#..$$ #
+##.$@##
+ #####

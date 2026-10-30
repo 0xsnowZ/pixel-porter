@@ -1,10 +1,6 @@
-; Level 16: Cold Storage Inset (12x8, 2 crates)
-; Verified solvable: 16 moves, 10 pushes
-#####  #####
-#   #  #   #
-# $ ####   #
-#   @     *#
-#         .#
-#   ####   #
-#   #  #   #
-#####  #####
+ #####
+## *@##
+#   $.#
+#  $  #
+## . ##
+ #####

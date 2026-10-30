@@ -1,8 +1,6 @@
-; Level 1: The Cross Bay (7x6, 1 crates)
-; Verified solvable: 5 moves, 3 pushes
 ######
 #   .#
-# $  ##
-# @   #
-#     #
-#######
+# $  #
+# @  #
+#    #
+######

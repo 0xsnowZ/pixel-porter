@@ -1,9 +1,8 @@
-; Level 4: Island Loop (7x7, 4 crates)
-; Verified solvable: 7 moves, 4 pushes
-###
-  #.#
-###$###
-#.$@$.#
-###$###
-  #.#
-  ###
+  #####
+  #.  #
+  #   ##
+###$#. #
+#   #  #
+#   #$##
+# @    #
+########

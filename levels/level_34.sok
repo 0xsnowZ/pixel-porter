@@ -1,11 +1,6 @@
-; Level 34: Terminal Node (9x9, 3 crates)
-; Verified solvable: 19 moves, 12 pushes
-  #####
-  #  @#
-### $$###
-#   #   #
-#   #   #
-#   #   #
-#   *.###
-#    .#
-#######
+ #####
+##  *##
+#+*   #
+#*  $ #
+##   ##
+ #####

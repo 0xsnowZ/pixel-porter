@@ -30,6 +30,10 @@ var tile_size: float = 64.0
 var grid_origin: Vector2 = Vector2.ZERO
 var player_facing_dir: Vector2i = Vector2i.DOWN
 var win_particles: Array[Dictionary] = []
+var is_level_won: bool = false
+var player_celebration_hop: float = 0.0
+var victory_radiance_rings: Array[Dictionary] = []
+var star_burst_particles: Array[Dictionary] = []
 
 # 3 Logistics Chapters & Visual Progression (PRD Phase 2)
 # Ch 0: Cargo Bay (Levels 1–15, idx 0–14)
@@ -170,6 +174,7 @@ var tex_floor_2: Texture2D = preload("res://assets/floor_tile_2.png")
 var tex_goal: Texture2D = preload("res://assets/goal_pad.png")
 var tex_crate: Texture2D = preload("res://assets/crate_normal.png")
 var tex_crate_goal: Texture2D = preload("res://assets/crate_goal.png")
+var tex_void_high_value_crate: Texture2D = preload("res://assets/void_high_value_crate.png")
 var tex_player_down: Texture2D = preload("res://assets/player_down.png")
 var tex_player_down_w1: Texture2D = preload("res://assets/player_down_walk1.png")
 var tex_player_down_w2: Texture2D = preload("res://assets/player_down_walk2.png")
@@ -435,6 +440,11 @@ func load_level(index: int) -> void:
 	current_walk_frame = 0
 	walk_step_count = 0
 	clear_hint()
+	is_level_won = false
+	player_celebration_hop = 0.0
+	victory_radiance_rings.clear()
+	star_burst_particles.clear()
+	win_particles.clear()
 	level_start_time = Time.get_ticks_msec()
 	if win_modal:
 		win_modal.hide()
@@ -563,11 +573,36 @@ func _on_crate_pushed(from_pos: Vector2i, to_pos: Vector2i) -> void:
 
 
 func _on_level_won() -> void:
+	is_level_won = true
 	add_trauma(0.50)
+
+	# Trigger joyous worker celebration hops
+	player_celebration_hop = 0.0
+	var tw_hop: Tween = create_tween().set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw_hop.tween_property(self, "player_celebration_hop", -22.0, 0.16)
+	tw_hop.set_ease(Tween.EASE_IN)
+	tw_hop.tween_property(self, "player_celebration_hop", 0.0, 0.14)
+	tw_hop.set_ease(Tween.EASE_OUT)
+	tw_hop.tween_property(self, "player_celebration_hop", -14.0, 0.14)
+	tw_hop.set_ease(Tween.EASE_IN)
+	tw_hop.tween_property(self, "player_celebration_hop", 0.0, 0.12)
+
+	# Spawn radiant victory shockwave rings on every goal
+	victory_radiance_rings.clear()
+	if grid and not grid.goals.is_empty():
+		for goal_pos in grid.goals.keys():
+			var center_pt: Vector2 = grid_origin + Vector2(goal_pos) * tile_size + Vector2(tile_size * 0.5, tile_size * 0.5)
+			victory_radiance_rings.append({
+				"pos": center_pt,
+				"radius": tile_size * 0.25,
+				"max_radius": tile_size * 2.5,
+				"life": 0.85,
+				"max_life": 0.85,
+				"color": Color(1.0, 0.88, 0.30)
+			})
+
 	if audio_mgr:
 		audio_mgr.play_win()
-		if audio_mgr.has_method("duck_music"):
-			audio_mgr.duck_music(-18.0, 0.3)
 	if haptic_mgr:
 		haptic_mgr.vibrate_win()
 	if save_mgr:
@@ -671,19 +706,25 @@ func _animate_stars_sequence(stars: Array, earned: int, gold_color: Color) -> vo
 			s.modulate = gold_color
 			var s_sz: Vector2 = s.size if s.size != Vector2.ZERO else s.custom_minimum_size
 			s.pivot_offset = s_sz / 2.0
-			s.scale = Vector2(1.35, 1.35)
+			s.scale = Vector2(1.50, 1.50)
 			if audio_mgr:
 				audio_mgr.play_star(star_num)
 			if haptic_mgr:
 				haptic_mgr.vibrate_target()
+			_spawn_star_burst(s.get_global_rect().get_center())
 		)
-		tw.tween_property(s, "scale", Vector2.ONE, 0.22)
+		tw.tween_property(s, "scale", Vector2.ONE, 0.24)
 
 
 func _on_level_reset() -> void:
 	current_walk_frame = 0
 	walk_step_count = 0
 	clear_hint()
+	is_level_won = false
+	player_celebration_hop = 0.0
+	victory_radiance_rings.clear()
+	star_burst_particles.clear()
+	win_particles.clear()
 	visual_player_pos = Vector2(grid.get_player_pos())
 	visual_crates.clear()
 	for crate_pos in grid.crates.keys():
@@ -1113,7 +1154,8 @@ func _spawn_celebration_particles() -> void:
 		Color(0.95, 0.25, 0.30), # Ruby
 		Color(0.30, 0.75, 1.00), # Sky / Diamond
 		Color(1.0, 0.95, 0.85), # Warm Pearl
-		Color(1.0, 0.58, 0.18)  # Amber
+		Color(1.0, 0.58, 0.18), # Amber
+		Color(0.88, 0.40, 1.00)  # Violet
 	]
 
 	var spawn_points: Array[Vector2] = []
@@ -1128,23 +1170,94 @@ func _spawn_celebration_particles() -> void:
 	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
 	rng.randomize()
 
-	for i in range(48):
-		var origin_pt: Vector2 = spawn_points[rng.randi() % spawn_points.size()]
-		var angle: float = rng.randf_range(-PI * 0.92, -PI * 0.08)
-		var speed: float = rng.randf_range(160.0, 440.0)
-		var p_color: Color = palette[rng.randi() % palette.size()]
-		var p_size: float = rng.randf_range(5.0, 10.0)
-		var life: float = rng.randf_range(1.2, 2.0)
+	# 1. Fountain bursts from goal pads
+	for origin_pt in spawn_points:
+		for i in range(12):
+			var angle: float = rng.randf_range(-PI * 0.92, -PI * 0.08)
+			var speed: float = rng.randf_range(180.0, 480.0)
+			var p_color: Color = palette[rng.randi() % palette.size()]
+			var p_size: float = rng.randf_range(6.0, 11.0)
+			var life: float = rng.randf_range(1.4, 2.4)
+			var p_type: String = "star" if (i % 3 == 0) else "ribbon"
 
+			win_particles.append({
+				"type": p_type,
+				"pos": origin_pt + Vector2(rng.randf_range(-10, 10), rng.randf_range(-10, 10)),
+				"vel": Vector2(cos(angle), sin(angle)) * speed,
+				"color": p_color,
+				"size": p_size,
+				"life": life,
+				"max_life": life,
+				"rot": rng.randf_range(0.0, TAU),
+				"vrot": rng.randf_range(-6.0, 6.0),
+				"sway_phase": rng.randf_range(0.0, TAU),
+				"sway_speed": rng.randf_range(4.0, 9.0),
+				"sway_amount": rng.randf_range(25.0, 60.0)
+			})
+
+	# 2. Dual bottom-corner confetti cannons
+	var vp_w: float = size.x if size.x > 0 else 720.0
+	var vp_h: float = size.y if size.y > 0 else 1280.0
+	var left_cannon: Vector2 = Vector2(0.0, vp_h)
+	var right_cannon: Vector2 = Vector2(vp_w, vp_h)
+
+	for i in range(20):
+		# Left cannon fires up-right
+		var angle_l: float = rng.randf_range(-PI * 0.45, -PI * 0.15)
+		var speed_l: float = rng.randf_range(500.0, 840.0)
+		var p_color_l: Color = palette[rng.randi() % palette.size()]
+		var life_l: float = rng.randf_range(1.8, 2.8)
 		win_particles.append({
-			"pos": origin_pt + Vector2(rng.randf_range(-8, 8), rng.randf_range(-8, 8)),
+			"type": "ribbon" if (i % 2 == 0) else "star",
+			"pos": left_cannon + Vector2(rng.randf_range(0, 30), rng.randf_range(-10, 10)),
+			"vel": Vector2(cos(angle_l), sin(angle_l)) * speed_l,
+			"color": p_color_l,
+			"size": rng.randf_range(7.0, 13.0),
+			"life": life_l,
+			"max_life": life_l,
+			"rot": rng.randf_range(0.0, TAU),
+			"vrot": rng.randf_range(-7.0, 7.0),
+			"sway_phase": rng.randf_range(0.0, TAU),
+			"sway_speed": rng.randf_range(5.0, 10.0),
+			"sway_amount": rng.randf_range(30.0, 75.0)
+		})
+
+		# Right cannon fires up-left
+		var angle_r: float = rng.randf_range(-PI * 0.85, -PI * 0.55)
+		var speed_r: float = rng.randf_range(500.0, 840.0)
+		var p_color_r: Color = palette[rng.randi() % palette.size()]
+		var life_r: float = rng.randf_range(1.8, 2.8)
+		win_particles.append({
+			"type": "ribbon" if (i % 2 == 0) else "star",
+			"pos": right_cannon + Vector2(rng.randf_range(-30, 0), rng.randf_range(-10, 10)),
+			"vel": Vector2(cos(angle_r), sin(angle_r)) * speed_r,
+			"color": p_color_r,
+			"size": rng.randf_range(7.0, 13.0),
+			"life": life_r,
+			"max_life": life_r,
+			"rot": rng.randf_range(0.0, TAU),
+			"vrot": rng.randf_range(-7.0, 7.0),
+			"sway_phase": rng.randf_range(0.0, TAU),
+			"sway_speed": rng.randf_range(5.0, 10.0),
+			"sway_amount": rng.randf_range(30.0, 75.0)
+		})
+
+
+func _spawn_star_burst(center_pt: Vector2) -> void:
+	var rng: RandomNumberGenerator = RandomNumberGenerator.new()
+	rng.randomize()
+	for i in range(14):
+		var angle: float = rng.randf_range(0.0, TAU)
+		var speed: float = rng.randf_range(70.0, 220.0)
+		var life: float = rng.randf_range(0.35, 0.65)
+		var col: Color = Color(1.0, rng.randf_range(0.82, 0.98), rng.randf_range(0.20, 0.40))
+		star_burst_particles.append({
+			"pos": center_pt,
 			"vel": Vector2(cos(angle), sin(angle)) * speed,
-			"color": p_color,
-			"size": p_size,
 			"life": life,
 			"max_life": life,
-			"rot": rng.randf_range(0.0, TAU),
-			"vrot": rng.randf_range(-7.0, 7.0)
+			"size": rng.randf_range(3.5, 6.5),
+			"color": col
 		})
 
 
@@ -1206,7 +1319,35 @@ func _process(delta: float) -> void:
 					ge["vel"] *= (1.0 - 3.0 * delta)
 			gi -= 1
 
-	# Update celebration particles
+	# Update victory radiant shockwaves
+	if not victory_radiance_rings.is_empty():
+		needs_redraw = true
+		var vi: int = victory_radiance_rings.size() - 1
+		while vi >= 0:
+			var ring: Dictionary = victory_radiance_rings[vi]
+			ring["life"] -= delta
+			if ring["life"] <= 0.0:
+				victory_radiance_rings.remove_at(vi)
+			else:
+				var t_prog: float = 1.0 - (ring["life"] / ring["max_life"])
+				ring["radius"] = lerpf(tile_size * 0.25, ring["max_radius"], t_prog)
+			vi -= 1
+
+	# Update star award burst sparks
+	if not star_burst_particles.is_empty():
+		needs_redraw = true
+		var si: int = star_burst_particles.size() - 1
+		while si >= 0:
+			var sp: Dictionary = star_burst_particles[si]
+			sp["life"] -= delta
+			if sp["life"] <= 0.0:
+				star_burst_particles.remove_at(si)
+			else:
+				sp["pos"] += sp["vel"] * delta
+				sp["vel"] *= (1.0 - 2.8 * delta)
+			si -= 1
+
+	# Update celebration particles with fluttering ribbon sway
 	if not win_particles.is_empty():
 		needs_redraw = true
 		var i: int = win_particles.size() - 1
@@ -1216,9 +1357,11 @@ func _process(delta: float) -> void:
 			if p["life"] <= 0.0:
 				win_particles.remove_at(i)
 			else:
+				p["sway_phase"] = p.get("sway_phase", 0.0) + p.get("sway_speed", 5.0) * delta
+				p["pos"].x += sin(p["sway_phase"]) * p.get("sway_amount", 40.0) * delta
 				p["pos"] += p["vel"] * delta
-				p["vel"].y += 340.0 * delta # Gravity
-				p["vel"].x *= (1.0 - 0.4 * delta) # Air resistance
+				p["vel"].y += 320.0 * delta # Gravity
+				p["vel"].x *= (1.0 - 0.45 * delta) # Air resistance
 				p["rot"] += p["vrot"] * delta
 			i -= 1
 
@@ -1303,7 +1446,7 @@ func _draw() -> void:
 			var rect: Rect2 = Rect2(effective_origin + Vector2(x, y) * tile_size, Vector2(tile_size, tile_size))
 
 			if grid.is_wall(pos):
-				_draw_wall(rect)
+				_draw_wall(rect, pos)
 			elif grid.is_interior_floor(pos) or grid.interior_floor.is_empty():
 				var is_alt: bool = ((x + y) % 2 == 0)
 				var floor_tex: Texture2D = tex_floor_1 if is_alt else tex_floor_2
@@ -1312,9 +1455,12 @@ func _draw() -> void:
 				# 3D Depth Shadow: if cell above is a wall, cast drop shadow down
 				if y > 0 and grid.is_wall(Vector2i(x, y - 1)):
 					draw_rect(Rect2(rect.position, Vector2(rect.size.x, tile_size * 0.22)), Color(0.0, 0.0, 0.0, 0.42))
+				# Left-wall drop shadow for isometric ambient depth
+				if x > 0 and grid.is_wall(Vector2i(x - 1, y)):
+					draw_rect(Rect2(rect.position, Vector2(tile_size * 0.14, rect.size.y)), Color(0.0, 0.0, 0.0, 0.25))
 			else:
-				# Exterior void tile: subtle dim background so organic room boundaries stand out
-				draw_rect(rect, ch.get("dim_color", Color(0.02, 0.03, 0.06, 0.45)))
+				# Exterior void tile decorated with reference-inspired pine trees / chapter foliage
+				_draw_exterior_void_tile(rect, pos, ch)
 
 	# 3. Draw Goals with Chapter Pressure Plate & Pulsing Aura
 	var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
@@ -1353,6 +1499,15 @@ func _draw() -> void:
 			spark_col.a = alpha
 			draw_circle(ge["pos"], ge["size"] * alpha, spark_col)
 
+	# 5.5. Draw Victory Goal Radiance Shockwaves
+	for ring in victory_radiance_rings:
+		var alpha: float = clampf(ring["life"] / ring["max_life"], 0.0, 1.0)
+		var r_col: Color = ring["color"]
+		r_col.a = alpha * 0.85
+		draw_arc(ring["pos"], ring["radius"], 0.0, TAU, 36, r_col, 4.0, true)
+		var inner_col: Color = Color(1.0, 1.0, 0.90, alpha * 0.50)
+		draw_arc(ring["pos"], ring["radius"] * 0.72, 0.0, TAU, 28, inner_col, 2.0, true)
+
 	# 6. Draw Crates with Drop Shadow, 3D Shading & Squash
 	for logical_pos in grid.crates.keys():
 		var draw_tile_pos: Vector2 = visual_crates.get(logical_pos, Vector2(logical_pos))
@@ -1381,16 +1536,81 @@ func _draw() -> void:
 		var p_col: Color = p["color"]
 		p_col.a = alpha
 		var half_sz: float = p["size"] * 0.5
-		var pts: PackedVector2Array = [
-			p["pos"] + Vector2(-half_sz, -half_sz).rotated(p["rot"]),
-			p["pos"] + Vector2(half_sz, -half_sz).rotated(p["rot"]),
-			p["pos"] + Vector2(half_sz, half_sz).rotated(p["rot"]),
-			p["pos"] + Vector2(-half_sz, half_sz).rotated(p["rot"])
-		]
-		draw_colored_polygon(pts, p_col)
+		var p_type: String = p.get("type", "ribbon")
+
+		if p_type == "star":
+			_draw_star_shape(p["pos"], p["size"] * 0.85, p_col)
+		else:
+			# Ribbon with 3D aspect ratio perspective tumbling based on rotation
+			var cos_r: float = cos(p["rot"])
+			var rib_w: float = half_sz * 1.5
+			var rib_h: float = half_sz * 0.65 * abs(cos_r) + 1.5
+			var pts: PackedVector2Array = [
+				p["pos"] + Vector2(-rib_w, -rib_h).rotated(p["rot"]),
+				p["pos"] + Vector2(rib_w, -rib_h).rotated(p["rot"]),
+				p["pos"] + Vector2(rib_w, rib_h).rotated(p["rot"]),
+				p["pos"] + Vector2(-rib_w, rib_h).rotated(p["rot"])
+			]
+			draw_colored_polygon(pts, p_col)
+
+	# 9. Draw Star Award Burst Sparks
+	for sp in star_burst_particles:
+		var alpha: float = clampf(sp["life"] / sp["max_life"], 0.0, 1.0)
+		var col: Color = sp["color"]
+		col.a = alpha
+		_draw_star_shape(sp["pos"], sp["size"] * alpha, col)
 
 
-func _draw_wall(rect: Rect2) -> void:
+func _draw_star_shape(center: Vector2, radius: float, color: Color) -> void:
+	var pts: PackedVector2Array = []
+	for i in range(8):
+		var a: float = i * (TAU / 8.0) - PI * 0.5
+		var r: float = radius if (i % 2 == 0) else (radius * 0.38)
+		pts.append(center + Vector2(cos(a) * r, sin(a) * r))
+	draw_colored_polygon(pts, color)
+
+
+func _draw_exterior_void_tile(rect: Rect2, pos: Vector2i, ch: Dictionary) -> void:
+	# 1. Dark warehouse yard/perimeter floor base with clean subtle industrial tint
+	var void_bg: Color = ch.get("dim_color", Color(0.02, 0.03, 0.06, 0.45))
+	draw_rect(rect, void_bg)
+
+	# 2. Outer wall drop shadow cast onto exterior void for 2.5D ambient depth
+	if pos.y > 0 and grid.is_wall(Vector2i(pos.x, pos.y - 1)):
+		draw_rect(Rect2(rect.position, Vector2(rect.size.x, tile_size * 0.26)), Color(0.0, 0.0, 0.0, 0.38))
+	if pos.x > 0 and grid.is_wall(Vector2i(pos.x - 1, pos.y)):
+		draw_rect(Rect2(rect.position, Vector2(tile_size * 0.22, rect.size.y)), Color(0.0, 0.0, 0.0, 0.34))
+
+	# 3. Subtle architectural grid lines (faint warehouse blueprint grid)
+	draw_rect(rect, Color(1.0, 1.0, 1.0, 0.022), false, 1.0)
+
+
+func _draw_warehouse_prop(rect: Rect2, _pos: Vector2i, _ch: Dictionary) -> void:
+	var pad: float = tile_size * 0.05
+	var prop_rect: Rect2 = Rect2(rect.position + Vector2(pad, pad), Vector2(tile_size - pad * 2.0, tile_size - pad * 2.0))
+
+	# Chapter-specific atmospheric tint
+	var prop_tint: Color = Color(1.0, 1.0, 1.0, 0.96)
+	if current_chapter_idx == 1:
+		# Cold Storage: Frosted / Icy cool tint
+		prop_tint = Color(0.85, 0.94, 1.0, 0.92)
+	elif current_chapter_idx == 2:
+		# Cyber Depot: Neon high-tech depot tint
+		prop_tint = Color(0.92, 0.88, 1.0, 0.95)
+
+	draw_texture_rect(tex_void_high_value_crate, prop_rect, false, prop_tint)
+
+
+func _draw_cyber_pylon(rect: Rect2, center: Vector2) -> void:
+	var pylon_sz: float = tile_size * 0.42
+	var pylon_r: Rect2 = Rect2(center - Vector2(pylon_sz, pylon_sz) * 0.5, Vector2(pylon_sz, pylon_sz))
+	draw_rect(pylon_r, Color(0.06, 0.08, 0.14))
+	draw_rect(pylon_r, Color(0.18, 0.38, 0.65), false, 1.5)
+	var pulse: float = sin(float(Time.get_ticks_msec()) * 0.004 + (rect.position.x + rect.position.y)) * 0.25 + 0.75
+	draw_circle(center, pylon_sz * 0.22, Color(0.10, 0.85, 1.0, pulse * 0.9))
+
+
+func _draw_wall(rect: Rect2, _pos: Vector2i = Vector2i.ZERO) -> void:
 	var ch: Dictionary = get_current_chapter_theme()
 	draw_texture_rect(tex_wall, rect, false, ch["wall_tint"])
 
@@ -1453,34 +1673,41 @@ func _draw_crate(rect: Rect2, on_goal: bool, logical_pos: Vector2i = Vector2i.ZE
 
 
 func _draw_player(rect: Rect2) -> void:
-	var center: Vector2 = rect.get_center()
-	var radius: float = rect.size.x / 2.0
+	var hopped_rect: Rect2 = Rect2(
+		rect.position + Vector2(0.0, player_celebration_hop),
+		rect.size
+	)
+	var center: Vector2 = hopped_rect.get_center()
+	var radius: float = hopped_rect.size.x / 2.0
 
-	# Ground contact drop shadow (positioned directly under soles of boots)
+	# Ground contact drop shadow (positioned directly under soles of boots on floor)
 	var x_offset: float = 0.0
 	if player_facing_dir == Vector2i.LEFT:
 		x_offset = -radius * 0.04
 	elif player_facing_dir == Vector2i.RIGHT:
 		x_offset = radius * 0.04
-	var shadow_center: Vector2 = Vector2(center.x + x_offset, rect.position.y + rect.size.y * 0.94)
+	var shadow_center: Vector2 = Vector2(rect.get_center().x + x_offset, rect.position.y + rect.size.y * 0.94)
+
+	# As player hops up, ground shadow shrinks slightly for 2.5D jump depth
+	var hop_factor: float = clampf(1.0 + player_celebration_hop / 35.0, 0.45, 1.0)
 
 	# 1. Outer soft ambient shadow
 	var pts_outer: PackedVector2Array = []
-	var rx_outer: float = radius * 0.54
-	var ry_outer: float = radius * 0.18
+	var rx_outer: float = radius * 0.54 * hop_factor
+	var ry_outer: float = radius * 0.18 * hop_factor
 	for i in range(16):
 		var a: float = i * (TAU / 16.0)
 		pts_outer.append(shadow_center + Vector2(cos(a) * rx_outer, sin(a) * ry_outer))
-	draw_colored_polygon(pts_outer, Color(0.0, 0.0, 0.0, 0.22))
+	draw_colored_polygon(pts_outer, Color(0.0, 0.0, 0.0, 0.22 * hop_factor))
 
 	# 2. Inner core contact shadow (tight under soles)
 	var pts_inner: PackedVector2Array = []
-	var rx_inner: float = radius * 0.40
-	var ry_inner: float = radius * 0.11
+	var rx_inner: float = radius * 0.40 * hop_factor
+	var ry_inner: float = radius * 0.11 * hop_factor
 	for i in range(16):
 		var a: float = i * (TAU / 16.0)
 		pts_inner.append(shadow_center + Vector2(cos(a) * rx_inner, sin(a) * ry_inner))
-	draw_colored_polygon(pts_inner, Color(0.0, 0.0, 0.0, 0.32))
+	draw_colored_polygon(pts_inner, Color(0.0, 0.0, 0.0, 0.32 * hop_factor))
 
 	# Pick directional sprite (idle vs walk cycle frame 1/2)
 	var p_tex: Texture2D = tex_player_down
@@ -1498,7 +1725,7 @@ func _draw_player(rect: Rect2) -> void:
 	var skin_id: String = skin_info.get("id", "classic")
 	var p_modulate: Color = skin_info.get("sprite_tint", Color.WHITE)
 
-	draw_texture_rect(p_tex, rect, false, p_modulate)
+	draw_texture_rect(p_tex, hopped_rect, false, p_modulate)
 
 	# Skin Accessory & Visual Accent Overlays
 	match skin_id:
@@ -1522,6 +1749,14 @@ func _draw_player(rect: Rect2) -> void:
 			draw_circle(center + Vector2(0, -rect.size.y * 0.40), 2.5 * shimmer, Color(1.0, 0.95, 0.60, 0.85))
 			draw_circle(center + Vector2(-rect.size.x * 0.32, -rect.size.y * 0.10), 1.8 * (1.2 - shimmer), Color(1.0, 0.85, 0.30, 0.75))
 			draw_circle(center + Vector2(rect.size.x * 0.32, -rect.size.y * 0.15), 1.8 * shimmer, Color(1.0, 0.88, 0.40, 0.75))
+
+	# Joyful victory sparkles above worker when level is won
+	if is_level_won:
+		var time_sec: float = float(Time.get_ticks_msec()) / 1000.0
+		var hop_bounce: float = sin(time_sec * 12.0) * 3.5
+		var star_col: Color = Color(1.0, 0.95, 0.35, 0.92)
+		_draw_star_shape(hopped_rect.position + Vector2(hopped_rect.size.x * 0.20, -8.0 + hop_bounce), 5.0, star_col)
+		_draw_star_shape(hopped_rect.position + Vector2(hopped_rect.size.x * 0.80, -11.0 - hop_bounce), 5.5, star_col)
 
 
 

@@ -1,9 +1,7 @@
-; Level 26: The Permafrost (9x7, 3 crates)
-; Verified solvable: 23 moves, 8 pushes
-#####
-#   #
-# $ #####
-#  $..  #
-#####.$@#
-    #   #
-    #####
+######
+#    #
+# ##$#
+#  $.#
+# ## #
+#@**.#
+######

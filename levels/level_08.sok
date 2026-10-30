@@ -1,10 +1,7 @@
-; Level 8: Butterfly Hub (7x8, 2 crates)
-; Verified solvable: 10 moves, 6 pushes
-####
-#  ####
-#..   #
-#     #
-#     #
-#$$####
-#@ #
-####
+######
+#    #
+#@##$#
+# ** #
+# ## #
+# $..#
+######

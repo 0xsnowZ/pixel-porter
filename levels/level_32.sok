@@ -1,10 +1,6 @@
-; Level 32: Neon Labyrinth (7x8, 3 crates)
-; Verified solvable: 20 moves, 9 pushes
-####
-#  ####
-#   $ #
-# $   #
-#     #
-#@.####
-#.*#
-####
+  #####
+ ##   ##
+## $#  ##
+#.$ $   #
+##+*  .##
+ #######

@@ -100,12 +100,17 @@ static func solve(level_text_or_grid: Variant, max_states: int = 50000) -> Solve
 		{ "dir": Vector2i.RIGHT, "char": "r" }
 	]
 
-	while not queue.is_empty():
+	var queue_head: int = 0
+	while queue_head < queue.size():
 		result.states_explored += 1
 		if result.states_explored >= max_states:
 			break # State space limit reached to prevent infinite loops
 
-		var current: Dictionary = queue.pop_front()
+		var current: Dictionary = queue[queue_head]
+		queue_head += 1
+		if queue_head > 25000:
+			queue = queue.slice(queue_head)
+			queue_head = 0
 		var cur_grid: GridLogic = current["grid"]
 		var cur_moves: String = current["moves"]
 		var cur_pushes: int = current["pushes"]
